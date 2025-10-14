@@ -1,14 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Task } from '../types';
+import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
-import { PROJECT_OPTIONS } from '../constants';
+import { calculateTaskProgress, hasSubtasks } from '../utils/taskUtils';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 interface TaskItemProps {
   task: Task;
   allTasks: Task[];
+  projects: Project[];
   onTaskClick: (task: Task) => void;
   onUpdate: (task: Task) => void;
+  onDelete: (taskId: number) => void;
   level: number;
 }
 
@@ -30,8 +33,10 @@ const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: stri
   }
 };
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick, onUpdate, level }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -52,7 +57,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick,
   
   const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       e.stopPropagation();
-      onUpdate({ ...task, Proyecto: e.target.value });
+      onUpdate({ ...task, Proyecto: parseInt(e.target.value, 10) });
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +71,25 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick,
   
   const handleDateBlur = () => {
     setIsEditingDate(false);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(task.ID);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      // Keep modal open on error so user can try again or cancel
+      alert('Error al eliminar la tarea. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -88,6 +112,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick,
   const children = allTasks
     .filter(child => child.Parent_ID === task.ID)
     .sort((a,b) => new Date(a.Fecha_Creacion).getTime() - new Date(b.Fecha_Creacion).getTime());
+
+  // Calculate progress based on subtasks or manual
+  const hasChildren = children.length > 0;
+  const displayedProgress = hasChildren ? calculateTaskProgress(task, allTasks) : task.Porcentaje_Avance;
+  const isProgressEditable = !hasChildren;
 
   const paddingLeft = `${level * 1.5 + 0.75}rem`;
 
@@ -132,17 +161,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick,
         </div>
         
         <div className="flex items-center gap-2 sm:gap-4 text-sm text-slate-600 shrink-0 pl-8 sm:pl-0 flex-wrap">
-          <div className="relative group flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-0.5 rounded-full cursor-pointer hover:border-blue-500" onClick={e => e.stopPropagation()}>
-              <Icon name="folder" className="w-4 h-4 text-slate-500"/>
-              <select 
-                value={task.Proyecto}
-                onChange={handleProjectChange}
-                className="appearance-none bg-transparent font-medium focus:outline-none cursor-pointer pr-1"
-                aria-label="Cambiar proyecto"
-              >
-                 {PROJECT_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-          </div>
+          {level === 0 && (
+            <div className="relative group flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-0.5 rounded-full cursor-pointer hover:border-blue-500" onClick={e => e.stopPropagation()}>
+                <Icon name="folder" className="w-4 h-4 text-slate-500"/>
+                <select 
+                  value={task.Proyecto}
+                  onChange={handleProjectChange}
+                  className="appearance-none bg-transparent font-medium focus:outline-none cursor-pointer pr-1"
+                  aria-label="Cambiar proyecto"
+                >
+                   {projects.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                </select>
+            </div>
+          )}
            
            <div className={`relative flex items-center gap-1.5 font-medium group ${isOverdue ? 'text-red-600' : 'text-slate-500'}`} onClick={e => e.stopPropagation()}>
                 <Icon name="calendar" className="w-4 h-4"/>
@@ -168,9 +199,23 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick,
                 )}
             </div>
 
-          <div title={`${task.Porcentaje_Avance}% completado`} className="w-24 bg-slate-200/80 rounded-full h-2 hidden md:block">
-              <div className="h-2 rounded-full" style={{ width: `${task.Porcentaje_Avance}%`, backgroundColor: statusColor }}></div>
+          <div title={`${displayedProgress}% completado${hasChildren ? ' (automático)' : ''}`} className="w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative">
+              <div className="h-2 rounded-full" style={{ width: `${displayedProgress}%`, backgroundColor: statusColor }}></div>
+              {hasChildren && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                  <Icon name="auto" className="w-2 h-2 text-white" />
+                </div>
+              )}
           </div>
+
+          <button
+            onClick={handleDeleteClick}
+            className="p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors opacity-60 hover:opacity-100"
+            title="Eliminar tarea"
+            aria-label="Eliminar tarea"
+          >
+            <Icon name="close" className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -181,13 +226,23 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, onTaskClick,
                     key={child.ID}
                     task={child}
                     allTasks={allTasks}
+                    projects={projects}
                     onTaskClick={onTaskClick}
                     onUpdate={onUpdate}
+                    onDelete={onDelete}
                     level={level + 1}
                 />
             ))}
         </ul>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        taskTitle={task.Titulo}
+        isDeleting={isDeleting}
+      />
     </li>
   );
 };

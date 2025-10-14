@@ -1,14 +1,16 @@
 import React from 'react';
-import type { Task } from '../types';
+import type { Task, Project } from '../types';
 import { TaskItem } from './TaskItem';
 
 interface TaskListProps {
   tasks: Task[];
+  projects: Project[];
   onTaskClick: (task: Task) => void;
   onTaskUpdate: (task: Task) => void;
+  onDelete: (taskId: number) => void;
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick, onTaskUpdate }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onTaskClick, onTaskUpdate, onDelete }) => {
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
@@ -20,7 +22,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick, onTaskUp
 
   // Filter for top-level tasks to start the recursive rendering
   const topLevelTasks = tasks
-    .filter(task => task.Parent_ID === 0)
+    .filter(task => task.Parent_ID === 0 || task.Parent_ID === null)
     .sort((a, b) => new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime());
 
   return (
@@ -30,8 +32,10 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick, onTaskUp
           key={task.ID}
           task={task}
           allTasks={tasks}
+          projects={projects}
           onTaskClick={onTaskClick}
           onUpdate={onTaskUpdate}
+          onDelete={onDelete}
           level={0}
         />
       ))}

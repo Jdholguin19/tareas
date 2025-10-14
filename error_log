@@ -1,0 +1,67 @@
+App.tsx:65 Failed to update task: Error: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`portalao_toolscs`.`tareas`, CONSTRAINT `tareas_ibfk_1` FOREIGN KEY (`proyecto_id`) REFERENCES `proyectos` (`id`) ON DELETE SET NULL)
+    at updateTask (apiService.ts:47:25)
+    at async handleUpdateTask (App.tsx:56:25)
+handleUpdateTask @ App.tsx:65
+await in handleUpdateTask
+handleCheckboxChange @ TaskItem.tsx:46
+executeDispatch @ react-dom_client.js?v=f283af18:13620
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+processDispatchQueue @ react-dom_client.js?v=f283af18:13656
+(anónimo) @ react-dom_client.js?v=f283af18:14069
+batchedUpdates$1 @ react-dom_client.js?v=f283af18:2624
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=f283af18:13761
+dispatchEvent @ react-dom_client.js?v=f283af18:16782
+dispatchDiscreteEvent @ react-dom_client.js?v=f283af18:16763
+
+
+App.tsx:65 Failed to update task: Error: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`portalao_toolscs`.`tareas`, CONSTRAINT `tareas_ibfk_1` FOREIGN KEY (`proyecto_id`) REFERENCES `proyectos` (`id`) ON DELETE SET NULL)
+    at updateTask (apiService.ts:47:25)
+    at async handleUpdateTask (App.tsx:56:25)
+    at async onSave (App.tsx:162:13)
+    at async handleSave (EditTaskModal.tsx:77:5)
+handleUpdateTask @ App.tsx:65
+await in handleUpdateTask
+onSave @ App.tsx:162
+handleSave @ EditTaskModal.tsx:77
+executeDispatch @ react-dom_client.js?v=f283af18:13620
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+processDispatchQueue @ react-dom_client.js?v=f283af18:13656
+(anónimo) @ react-dom_client.js?v=f283af18:14069
+batchedUpdates$1 @ react-dom_client.js?v=f283af18:2624
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=f283af18:13761
+dispatchEvent @ react-dom_client.js?v=f283af18:16782
+dispatchDiscreteEvent @ react-dom_client.js?v=f283af18:16763
+<button>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+EditTaskModal @ EditTaskModal.tsx:215
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+<EditTaskModal>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:156
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529

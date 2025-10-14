@@ -1,8 +1,8 @@
 
 export enum TaskState {
-    PENDIENTE = 'Pendiente',
-    EN_PROGRESO = 'En Progreso',
-    COMPLETADA = 'Completada'
+    PENDIENTE = 'pendiente',
+    EN_PROGRESO = 'en_progreso',
+    COMPLETADA = 'completada'
 }
 
 export interface Task {
@@ -15,7 +15,7 @@ export interface Task {
     Fecha_Vencimiento: string | null; // Using string for simplicity
     Usuario_Creador_ID: number;
     Usuario_Asignado_ID: number | null;
-    Proyecto: string;
+    Proyecto: number;
     Parent_ID: number;
     Adjuntos_URL: string[];
 }
@@ -24,4 +24,9 @@ export interface User {
     ID: number;
     Nombre: string;
     Email: string;
+}
+
+export interface Project {
+    id: number;
+    nombre: string;
 }

@@ -101,7 +101,8 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="¿Qué necesitas hacer? Escribe o usa el micrófono..."
-        className="w-full h-24 p-3 text-lg border-0 resize-none focus:ring-0 placeholder-slate-400 bg-transparent"
+        aria-label="Descripción de la tarea"
+        className="w-full h-20 sm:h-24 p-3 text-base sm:text-lg border-0 resize-none focus:ring-0 placeholder-slate-400 bg-transparent"
         disabled={isLoading}
       />
       
@@ -119,7 +120,7 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
           </div>
       )}
 
-      <div className="flex justify-between items-center pt-3 mt-2 border-t border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-3 mt-2 border-t border-slate-100 space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <button onClick={handleMicClick} className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}>
             <Icon name="mic" className="w-6 h-6"/>
@@ -127,7 +128,7 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
           <button onClick={handleAttachmentClick} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors" aria-label="Adjuntar archivo">
             <Icon name="clip" className="w-6 h-6"/>
           </button>
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" aria-label="Adjuntar archivo" />
           
           {(isTranscribing || isUploading) && (
             <div className="flex items-center space-x-2 text-sm text-slate-500">
@@ -139,7 +140,7 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
         <button
           onClick={handleSave}
           disabled={!title.trim() || isLoading}
-          className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center shadow-sm hover:shadow-md"
+          className="bg-blue-600 text-white font-semibold px-4 py-2 sm:px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center shadow-sm hover:shadow-md"
         >
           {isSaving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <Icon name="plus" className="w-5 h-5 mr-2" />}
           Guardar

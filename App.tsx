@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { Icon } from './components/Icon';
-import type { Task } from './types';
-import { getTasks, updateTask, createSubTask } from './services/apiService';
+import type { Task, Project } from './types';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask } from './services/apiService';
+import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -24,9 +26,19 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const initialProjects = await getProjects();
+      setProjects(initialProjects);
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks]);
+    fetchProjects();
+  }, [fetchTasks, fetchProjects]);
 
   const handleAddTask = (newTask: Task) => {
     setTasks(prevTasks => [newTask, ...prevTasks]);
@@ -43,9 +55,28 @@ const App: React.FC = () => {
   const handleUpdateTask = async (taskToUpdate: Task) => {
     try {
       const savedTask = await updateTask(taskToUpdate);
-      setTasks(currentTasks => 
-        currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t))
-      );
+      setTasks(currentTasks => {
+        let updatedTasks = currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t));
+        
+        // If this task has a parent, recalculate parent's progress
+        if (savedTask.Parent_ID && savedTask.Parent_ID > 0) {
+          const parentTask = updatedTasks.find(t => t.ID === savedTask.Parent_ID);
+          if (parentTask && hasSubtasks(parentTask, updatedTasks)) {
+            const newParentProgress = calculateTaskProgress(parentTask, updatedTasks);
+            if (newParentProgress !== parentTask.Porcentaje_Avance) {
+              // Update parent progress automatically
+              const updatedParent = { ...parentTask, Porcentaje_Avance: newParentProgress };
+              updatedTasks = updatedTasks.map(t => (t.ID === parentTask.ID ? updatedParent : t));
+              
+              // Also update parent in backend (fire and forget, don't wait)
+              updateTask(updatedParent).catch(err => console.warn('Failed to update parent progress:', err));
+            }
+          }
+        }
+        
+        return updatedTasks;
+      });
+      
       // Keep modal open if it's open, so user can see changes reflected.
       if (editingTask && editingTask.ID === savedTask.ID) {
         setEditingTask(savedTask);
@@ -62,6 +93,33 @@ const App: React.FC = () => {
       setTasks(currentTasks => [...currentTasks, newSubTask]);
     } catch (error) {
       console.error("Failed to create sub-task:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    try {
+      await deleteTask(taskId);
+      setTasks(currentTasks => {
+        const updatedTasks = currentTasks.filter(task => task.ID !== taskId);
+        // Recalculate progress for parent tasks
+        return updatedTasks.map(task => {
+          if (task.Parent_ID === 0) return task; // Skip root tasks
+          const parent = updatedTasks.find(t => t.ID === task.Parent_ID);
+          if (parent && hasSubtasks(parent, updatedTasks)) {
+            return {
+              ...task,
+              Porcentaje_Avance: calculateTaskProgress(parent, updatedTasks)
+            };
+          }
+          return task;
+        });
+      });
+      // Close modal if the deleted task was being edited
+      if (editingTask?.ID === taskId) {
+        setEditingTask(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete task:", error);
     }
   };
 
@@ -109,16 +167,16 @@ const App: React.FC = () => {
             <div className="bg-slate-900 p-2 rounded-lg">
                 <Icon name="check" className="w-6 h-6 text-white"/>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Mis Tareas</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Mis Tareas</h1>
           </div>
           <button
             onClick={handleExportCSV}
-            className="flex items-center space-x-2 bg-white text-slate-600 px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 bg-white text-slate-600 px-3 py-2 sm:px-4 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
             disabled={tasks.length === 0}
             aria-label="Exportar tareas a CSV"
           >
-            <Icon name="download" className="w-5 h-5"/>
-            <span className="font-medium">Exportar</span>
+            <Icon name="download" className="w-4 h-4 sm:w-5 sm:h-5"/>
+            <span className="font-medium hidden sm:inline">Exportar</span>
           </button>
         </div>
       </header>
@@ -136,7 +194,7 @@ const App: React.FC = () => {
                     <p className="text-slate-500">Cargando tareas...</p>
                 </div>
             ) : (
-                <TaskList tasks={tasks} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} />
+                <TaskList tasks={tasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
             )}
         </section>
       </main>
@@ -145,12 +203,14 @@ const App: React.FC = () => {
         <EditTaskModal 
           task={editingTask} 
           allTasks={tasks}
+          projects={projects}
           onClose={handleCloseModal}
           onSave={async (task) => {
             await handleUpdateTask(task);
             handleCloseModal();
           }}
           onCreateSubtask={handleCreateSubTask}
+          onDelete={handleDeleteTask}
         />
       )}
 
