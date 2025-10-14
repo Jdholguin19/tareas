@@ -159,6 +159,94 @@ const App: React.FC = () => {
     }
   };
 
+  // Filter functions
+  const getCurrentDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
+  const getAllDescendants = (parentIds: Set<number>, allTasks: Task[]): Task[] => {
+    const descendants: Task[] = [];
+    const toProcess = Array.from(parentIds);
+
+    while (toProcess.length > 0) {
+      const currentId = toProcess.shift()!;
+      const children = allTasks.filter(task => task.Parent_ID === currentId);
+
+      for (const child of children) {
+        descendants.push(child);
+        toProcess.push(child.ID);
+      }
+    }
+
+    return descendants;
+  };
+
+  const getTasksForTodayAndNoDate = (allTasks: Task[]) => {
+    const today = getCurrentDate();
+
+    // Get all overdue task IDs
+    const overdueTaskIds = new Set(
+      allTasks
+        .filter(task => {
+          if (!task.Fecha_Vencimiento) return false;
+          const dueDate = new Date(task.Fecha_Vencimiento);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate < today;
+        })
+        .map(task => task.ID)
+    );
+
+    // Return all tasks that are NOT overdue (any level)
+    return allTasks.filter(task => !overdueTaskIds.has(task.ID));
+  };
+
+  const getOverdueTasks = (allTasks: Task[]) => {
+    const today = getCurrentDate();
+
+    // Get all overdue tasks
+    const overdueTasks = allTasks.filter(task => {
+      if (!task.Fecha_Vencimiento) return false;
+      const dueDate = new Date(task.Fecha_Vencimiento);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today;
+    });
+
+    // For each overdue task, include its entire hierarchy
+    const hierarchyTasks = new Set<number>();
+
+    for (const overdueTask of overdueTasks) {
+      // Add the overdue task itself
+      hierarchyTasks.add(overdueTask.ID);
+
+      // Find and add all its ancestors (parents)
+      let currentTask = overdueTask;
+      while (currentTask.Parent_ID && currentTask.Parent_ID !== 0) {
+        const parent = allTasks.find(t => t.ID === currentTask.Parent_ID);
+        if (!parent) break;
+        hierarchyTasks.add(parent.ID);
+        currentTask = parent;
+      }
+
+      // Add all descendants of the overdue task
+      const addDescendants = (parentId: number) => {
+        const children = allTasks.filter(t => t.Parent_ID === parentId);
+        for (const child of children) {
+          hierarchyTasks.add(child.ID);
+          addDescendants(child.ID);
+        }
+      };
+      addDescendants(overdueTask.ID);
+    }
+
+    // Return all tasks in the hierarchies that contain overdue tasks
+    return allTasks.filter(task => hierarchyTasks.has(task.ID));
+  };
+
+  const currentTasks = getTasksForTodayAndNoDate(tasks);
+  const overdueTasks = getOverdueTasks(tasks);
+
   return (
     <div className="min-h-screen font-sans">
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
@@ -187,14 +275,33 @@ const App: React.FC = () => {
            <CreateQuickTask onTaskCreated={handleAddTask} />
         </section>
         
-        <section aria-labelledby="task-list-heading">
-            <h2 id="task-list-heading" className="text-xl font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">Tus Tareas</h2>
+        <section aria-labelledby="current-tasks-heading" className="mb-12">
+            <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">Tareas: Hoy y sin fecha</h2>
             {isLoading ? (
                 <div className="text-center py-10">
                     <p className="text-slate-500">Cargando tareas...</p>
                 </div>
+            ) : currentTasks.length > 0 ? (
+                <TaskList tasks={currentTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
             ) : (
-                <TaskList tasks={tasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                    <p className="text-slate-500">¡Todo al día! No hay tareas pendientes para hoy.</p>
+                </div>
+            )}
+        </section>
+
+        <section aria-labelledby="overdue-tasks-heading">
+            <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700 mb-4 pb-2 border-b border-red-200">Tareas vencidas</h2>
+            {isLoading ? (
+                <div className="text-center py-10">
+                    <p className="text-slate-500">Cargando tareas...</p>
+                </div>
+            ) : overdueTasks.length > 0 ? (
+                <TaskList tasks={overdueTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+            ) : (
+                <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                    <p className="text-slate-500">¡Excelente! No hay tareas vencidas.</p>
+                </div>
             )}
         </section>
       </main>
