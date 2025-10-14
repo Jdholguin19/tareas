@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimalist Task Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+<style>
+  :root {
+    --font-sans: 'Inter', sans-serif;
+    
+    /* Color Palette for Task Statuses */
+    --color-completed: #22C55E; /* green-500 */
+    --color-completed-bg: #F0FDF4; /* green-50 */
+    --color-in-progress: #3B82F6; /* blue-500 */
+    --color-in-progress-bg: #EFF6FF; /* blue-50 */
+    --color-pending: #F97316; /* orange-500 */
+    --color-pending-bg: #FFF7ED; /* orange-50 */
+    --color-overdue: #EF4444; /* red-500 */
+    --color-overdue-bg: #FEF2F2; /* red-50 */
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

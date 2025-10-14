@@ -1,0 +1,7 @@
+{
+  "name": "Minimalist Task Manager",
+  "description": "A rapid-entry task management application designed for simplicity and speed. It allows creating tasks via text, audio transcription, and supports file attachments.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
