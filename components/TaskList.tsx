@@ -21,8 +21,15 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onTaskClick
   }
 
   // Filter for top-level tasks to start the recursive rendering
+  // Include tasks that are root (Parent_ID = 0/null) OR whose parent is not in the list
+  const taskIds = new Set(tasks.map(t => t.ID));
   const topLevelTasks = tasks
-    .filter(task => task.Parent_ID === 0 || task.Parent_ID === null)
+    .filter(task => {
+      // Root tasks
+      if (task.Parent_ID === 0 || task.Parent_ID === null) return true;
+      // Tasks whose parent is not in this filtered list (orphaned branches)
+      return task.Parent_ID && !taskIds.has(task.Parent_ID);
+    })
     .sort((a, b) => new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime());
 
   return (

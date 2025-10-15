@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { Icon } from './components/Icon';
@@ -12,6 +12,14 @@ const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState<boolean>(false);
+  const notificationMenuRef = useRef<HTMLDivElement>(null);
+
+  // Accordion states
+  const [isTodayTasksExpanded, setIsTodayTasksExpanded] = useState<boolean>(true);
+  const [isOverdueTasksExpanded, setIsOverdueTasksExpanded] = useState<boolean>(true);
+  const [isPendingTasksExpanded, setIsPendingTasksExpanded] = useState<boolean>(true);
+  const [isCompletedTasksExpanded, setIsCompletedTasksExpanded] = useState<boolean>(true);
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
@@ -39,6 +47,23 @@ const App: React.FC = () => {
     fetchTasks();
     fetchProjects();
   }, [fetchTasks, fetchProjects]);
+
+  // Close notification menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationMenuRef.current && !notificationMenuRef.current.contains(event.target as Node)) {
+        setIsNotificationMenuOpen(false);
+      }
+    };
+
+    if (isNotificationMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationMenuOpen]);
 
   const handleAddTask = (newTask: Task) => {
     setTasks(prevTasks => [newTask, ...prevTasks]);
@@ -101,19 +126,27 @@ const App: React.FC = () => {
       await deleteTask(taskId);
       setTasks(currentTasks => {
         const updatedTasks = currentTasks.filter(task => task.ID !== taskId);
-        // Recalculate progress for parent tasks
+        
+        // Find parent tasks that need progress recalculation
+        const parentsToUpdate = new Set<number>();
+        currentTasks.forEach(task => {
+          if (task.Parent_ID && task.Parent_ID !== 0) {
+            parentsToUpdate.add(task.Parent_ID);
+          }
+        });
+        
+        // Recalculate progress only for parent tasks
         return updatedTasks.map(task => {
-          if (task.Parent_ID === 0) return task; // Skip root tasks
-          const parent = updatedTasks.find(t => t.ID === task.Parent_ID);
-          if (parent && hasSubtasks(parent, updatedTasks)) {
+          if (parentsToUpdate.has(task.ID) && hasSubtasks(task, updatedTasks)) {
             return {
               ...task,
-              Porcentaje_Avance: calculateTaskProgress(parent, updatedTasks)
+              Porcentaje_Avance: calculateTaskProgress(task, updatedTasks)
             };
           }
           return task;
         });
       });
+      
       // Close modal if the deleted task was being edited
       if (editingTask?.ID === taskId) {
         setEditingTask(null);
@@ -183,69 +216,123 @@ const App: React.FC = () => {
     return descendants;
   };
 
+  const parseProgress = (p: number | string | undefined) => {
+    if (p === undefined || p === null) return 0;
+    if (typeof p === 'number') return p;
+    // remove possible percent sign and parse float
+    const cleaned = String(p).replace('%', '').trim();
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : n;
+  };
+
+  const isCompleted = (task: Task) => parseProgress(task.Porcentaje_Avance) >= 100;
+
   const getTasksForTodayAndNoDate = (allTasks: Task[]) => {
     const today = getCurrentDate();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Get all overdue task IDs
-    const overdueTaskIds = new Set(
+    // Get all completed task IDs (100% progress)
+    const completedTaskIds = new Set(
       allTasks
-        .filter(task => {
-          if (!task.Fecha_Vencimiento) return false;
-          const dueDate = new Date(task.Fecha_Vencimiento);
-          dueDate.setHours(0, 0, 0, 0);
-          return dueDate < today;
-        })
+        .filter(task => isCompleted(task))
         .map(task => task.ID)
     );
 
-    // Return all tasks that are NOT overdue (any level)
-    return allTasks.filter(task => !overdueTaskIds.has(task.ID));
+    // Return tasks that are either:
+    // 1. Due today, OR
+    // 2. Have no due date
+    // AND are NOT completed
+    return allTasks.filter(task => {
+      if (completedTaskIds.has(task.ID)) return false;
+
+      if (!task.Fecha_Vencimiento) {
+        // No due date - include
+        return true;
+      }
+
+      // Check if due today (between start of today and end of today)
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate >= today && dueDate < tomorrow;
+    });
+  };
+
+  const getPendingTasks = (allTasks: Task[]) => {
+    const today = getCurrentDate();
+
+    console.log('=== DEBUG: getPendingTasks ===');
+
+    // Get all completed task IDs (100% progress)
+    const completedTaskIds = new Set(
+      allTasks
+        .filter(task => isCompleted(task))
+        .map(task => task.ID)
+    );
+
+    // Return tasks that are due in the future (tomorrow or later) and NOT completed
+    return allTasks.filter(task => {
+      if (completedTaskIds.has(task.ID)) return false;
+      if (!task.Fecha_Vencimiento) return false;
+
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate > today;
+    });
   };
 
   const getOverdueTasks = (allTasks: Task[]) => {
     const today = getCurrentDate();
 
-    // Get all overdue tasks
+    // Get all overdue tasks that are NOT completed (due date is before today)
     const overdueTasks = allTasks.filter(task => {
       if (!task.Fecha_Vencimiento) return false;
-      const dueDate = new Date(task.Fecha_Vencimiento);
+      if (isCompleted(task)) return false;
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
       dueDate.setHours(0, 0, 0, 0);
+      // Only consider overdue if due date is before today
       return dueDate < today;
     });
 
-    // For each overdue task, include its entire hierarchy
+    // For each overdue task, include only the task and its direct parent
     const hierarchyTasks = new Set<number>();
 
     for (const overdueTask of overdueTasks) {
       // Add the overdue task itself
       hierarchyTasks.add(overdueTask.ID);
 
-      // Find and add all its ancestors (parents)
-      let currentTask = overdueTask;
-      while (currentTask.Parent_ID && currentTask.Parent_ID !== 0) {
-        const parent = allTasks.find(t => t.ID === currentTask.Parent_ID);
-        if (!parent) break;
-        hierarchyTasks.add(parent.ID);
-        currentTask = parent;
+      // If it has a parent, add only the direct parent
+      if (overdueTask.Parent_ID && overdueTask.Parent_ID !== 0) {
+        hierarchyTasks.add(overdueTask.Parent_ID);
       }
-
-      // Add all descendants of the overdue task
-      const addDescendants = (parentId: number) => {
-        const children = allTasks.filter(t => t.Parent_ID === parentId);
-        for (const child of children) {
-          hierarchyTasks.add(child.ID);
-          addDescendants(child.ID);
-        }
-      };
-      addDescendants(overdueTask.ID);
     }
 
-    // Return all tasks in the hierarchies that contain overdue tasks
+    // Return all tasks in the selected hierarchies
     return allTasks.filter(task => hierarchyTasks.has(task.ID));
+  };
+
+  const getCompletedTasks = (allTasks: Task[]) => {
+    return allTasks.filter(task => isCompleted(task));
+  };
+
+  // Get only truly overdue tasks (without parents) for notifications
+  const getOverdueTasksForNotifications = (allTasks: Task[]) => {
+    const today = getCurrentDate();
+    return allTasks.filter(task => {
+      if (!task.Fecha_Vencimiento) return false;
+      if (isCompleted(task)) return false;
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+      dueDate.setHours(0, 0, 0, 0);
+      // Only consider overdue if due date is before today
+      return dueDate < today;
+    });
   };
 
   const currentTasks = getTasksForTodayAndNoDate(tasks);
   const overdueTasks = getOverdueTasks(tasks);
+  const completedTasks = getCompletedTasks(tasks);
+  const overdueTasksForNotifications = getOverdueTasksForNotifications(tasks);
+  const pendingTasks = getPendingTasks(tasks);
 
   return (
     <div className="min-h-screen font-sans">
@@ -257,15 +344,104 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Mis Tareas</h1>
           </div>
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center space-x-2 bg-white text-slate-600 px-3 py-2 sm:px-4 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
-            disabled={tasks.length === 0}
-            aria-label="Exportar tareas a CSV"
-          >
-            <Icon name="download" className="w-4 h-4 sm:w-5 sm:h-5"/>
-            <span className="font-medium hidden sm:inline">Exportar</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <div className="relative" ref={notificationMenuRef}>
+              <button
+                onClick={() => setIsNotificationMenuOpen(!isNotificationMenuOpen)}
+                className={`flex items-center space-x-2 px-3 py-2 sm:px-4 rounded-lg border transition-all duration-200 ${
+                  overdueTasksForNotifications.length > 0
+                    ? 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100 hover:border-red-400'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100 hover:text-slate-800'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                aria-label="Notificaciones de tareas vencidas"
+              >
+                <Icon name="bell" className="w-4 h-4 sm:w-5 sm:h-5"/>
+                {overdueTasksForNotifications.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                    {overdueTasksForNotifications.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown Menu */}
+              {isNotificationMenuOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 z-50 max-h-96 overflow-y-auto">
+                  <div className="p-4 border-b border-slate-200">
+                    <h3 className="text-sm font-semibold text-slate-800">
+                      Tareas Vencidas ({overdueTasksForNotifications.length})
+                    </h3>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {overdueTasksForNotifications.length > 0 ? (
+                      overdueTasksForNotifications.map((task) => (
+                        <div
+                          key={task.ID}
+                          className="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
+                          onClick={() => {
+                            setIsNotificationMenuOpen(false);
+                            handleSelectTask(task);
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate">
+                                {task.Titulo}
+                              </p>
+                              {task.Descripcion && (
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                  {task.Descripcion}
+                                </p>
+                              )}
+                              <div className="flex items-center mt-2 space-x-2">
+                                <span className="text-xs text-red-600 font-medium">
+                                  Vencida: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}
+                                </span>
+                                {task.Parent_ID && task.Parent_ID !== 0 && (
+                                  <span className="text-xs text-slate-400">
+                                    Subtarea
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-slate-500">
+                        <p className="text-sm">¡Excelente! No tienes tareas vencidas.</p>
+                      </div>
+                    )}
+                  </div>
+                  {overdueTasksForNotifications.length > 0 && (
+                    <div className="p-3 bg-slate-50 border-t border-slate-200">
+                      <button
+                        onClick={() => {
+                          setIsNotificationMenuOpen(false);
+                          // Scroll to overdue tasks section
+                          const overdueSection = document.querySelector('[data-section="overdue"]');
+                          if (overdueSection) {
+                            overdueSection.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Ver todas las tareas vencidas
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center space-x-2 bg-white text-slate-600 px-3 py-2 sm:px-4 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
+              disabled={tasks.length === 0}
+              aria-label="Exportar tareas a CSV"
+            >
+              <Icon name="download" className="w-4 h-4 sm:w-5 sm:h-5"/>
+              <span className="font-medium hidden sm:inline">Exportar</span>
+            </button>
+          </div>
         </div>
       </header>
       
@@ -276,33 +452,151 @@ const App: React.FC = () => {
         </section>
         
         <section aria-labelledby="current-tasks-heading" className="mb-12">
-            <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">Tareas: Hoy y sin fecha</h2>
-            {isLoading ? (
-                <div className="text-center py-10">
+            <button
+              onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
+              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-slate-50 transition-colors"
+              aria-expanded={isTodayTasksExpanded ? 'true' : 'false'}
+              aria-controls="current-tasks-content"
+            >
+              <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
+                Tareas: Hoy y sin fecha
+              </h2>
+              <Icon
+                name={isTodayTasksExpanded ? "chevronUp" : "chevronDown"}
+                className="w-5 h-5 text-slate-600 transition-transform duration-200"
+              />
+            </button>
+            <div
+              id="current-tasks-content"
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isTodayTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="mt-4">
+                {isLoading ? (
+                  <div className="text-center py-10">
                     <p className="text-slate-500">Cargando tareas...</p>
-                </div>
-            ) : currentTasks.length > 0 ? (
-                <TaskList tasks={currentTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-            ) : (
-                <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                  </div>
+                ) : currentTasks.length > 0 ? (
+                  <TaskList tasks={currentTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                ) : (
+                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <p className="text-slate-500">¡Todo al día! No hay tareas pendientes para hoy.</p>
-                </div>
-            )}
+                  </div>
+                )}
+              </div>
+            </div>
         </section>
 
-        <section aria-labelledby="overdue-tasks-heading">
-            <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700 mb-4 pb-2 border-b border-red-200">Tareas vencidas</h2>
-            {isLoading ? (
-                <div className="text-center py-10">
+        <section aria-labelledby="overdue-tasks-heading" data-section="overdue">
+            <button
+              onClick={() => setIsOverdueTasksExpanded(!isOverdueTasksExpanded)}
+              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-2 hover:bg-red-50 transition-colors"
+              aria-expanded={isOverdueTasksExpanded ? 'true' : 'false'}
+              aria-controls="overdue-tasks-content"
+            >
+              <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700">
+                Tareas vencidas
+              </h2>
+              <Icon
+                name={isOverdueTasksExpanded ? "chevronUp" : "chevronDown"}
+                className="w-5 h-5 text-red-600 transition-transform duration-200"
+              />
+            </button>
+            <div
+              id="overdue-tasks-content"
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isOverdueTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="mt-4">
+                {isLoading ? (
+                  <div className="text-center py-10">
                     <p className="text-slate-500">Cargando tareas...</p>
-                </div>
-            ) : overdueTasks.length > 0 ? (
-                <TaskList tasks={overdueTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-            ) : (
-                <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                  </div>
+                ) : overdueTasks.length > 0 ? (
+                  <TaskList tasks={overdueTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                ) : (
+                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <p className="text-slate-500">¡Excelente! No hay tareas vencidas.</p>
-                </div>
-            )}
+                  </div>
+                )}
+              </div>
+            </div>
+        </section>
+
+        <section aria-labelledby="pending-tasks-heading" className="mt-12">
+            <button
+              onClick={() => setIsPendingTasksExpanded(!isPendingTasksExpanded)}
+              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-blue-50 transition-colors"
+              aria-expanded={isPendingTasksExpanded ? 'true' : 'false'}
+              aria-controls="pending-tasks-content"
+            >
+              <h2 id="pending-tasks-heading" className="text-xl font-semibold text-blue-700">
+                Tareas pendientes
+              </h2>
+              <Icon
+                name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}
+                className="w-5 h-5 text-blue-600 transition-transform duration-200"
+              />
+            </button>
+            <div
+              id="pending-tasks-content"
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isPendingTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="mt-4">
+                {isLoading ? (
+                  <div className="text-center py-10">
+                    <p className="text-slate-500">Cargando tareas...</p>
+                  </div>
+                ) : pendingTasks.length > 0 ? (
+                  <TaskList tasks={pendingTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                ) : (
+                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                    <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+        </section>
+
+        <section aria-labelledby="completed-tasks-heading" className="mt-12">
+            <button
+              onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
+              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
+              aria-expanded={isCompletedTasksExpanded ? 'true' : 'false'}
+              aria-controls="completed-tasks-content"
+            >
+              <h2 id="completed-tasks-heading" className="text-xl font-semibold text-green-700">
+                Tareas Completadas
+              </h2>
+              <Icon
+                name={isCompletedTasksExpanded ? "chevronUp" : "chevronDown"}
+                className="w-5 h-5 text-green-600 transition-transform duration-200"
+              />
+            </button>
+            <div
+              id="completed-tasks-content"
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isCompletedTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="mt-4">
+                {isLoading ? (
+                  <div className="text-center py-10">
+                    <p className="text-slate-500">Cargando tareas...</p>
+                  </div>
+                ) : completedTasks.length > 0 ? (
+                  <TaskList tasks={completedTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                ) : (
+                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                    <p className="text-slate-500">Aún no has completado ninguna tarea.</p>
+                  </div>
+                )}
+              </div>
+            </div>
         </section>
       </main>
 

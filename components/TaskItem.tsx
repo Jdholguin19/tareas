@@ -16,7 +16,10 @@ interface TaskItemProps {
 }
 
 const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: string, isOverdue: boolean } => {
-  const isOverdue = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) < new Date() && task.Estado !== TaskState.COMPLETADA : false;
+  // Only consider overdue if due date is before today (not including today)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isOverdue = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento + 'T00:00:00') < today && task.Estado !== TaskState.COMPLETADA : false;
 
   if (isOverdue) {
     return { statusClass: 'overdue', statusColor: 'var(--color-overdue)', isOverdue: true };
@@ -214,7 +217,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
             title="Eliminar tarea"
             aria-label="Eliminar tarea"
           >
-            <Icon name="close" className="w-4 h-4" />
+            <Icon name="trash" className="w-4 h-4" />
           </button>
         </div>
       </div>

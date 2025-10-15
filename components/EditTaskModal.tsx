@@ -142,7 +142,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               title="Eliminar tarea"
               aria-label="Eliminar tarea"
             >
-              <Icon name="close" className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Icon name="trash" className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             <button onClick={onClose} className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100" aria-label="Cerrar modal">
                <Icon name="close" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />
