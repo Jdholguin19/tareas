@@ -81,27 +81,7 @@ const App: React.FC = () => {
   const handleUpdateTask = async (taskToUpdate: Task) => {
     try {
       const savedTask = await updateTask(taskToUpdate);
-      setTasks(currentTasks => {
-        let updatedTasks = currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t));
-        
-        // If this task has a parent, recalculate parent's progress
-        if (savedTask.Parent_ID && savedTask.Parent_ID > 0) {
-          const parentTask = updatedTasks.find(t => t.ID === savedTask.Parent_ID);
-          if (parentTask && hasSubtasks(parentTask, updatedTasks)) {
-            const newParentProgress = calculateTaskProgress(parentTask, updatedTasks);
-            if (newParentProgress !== parentTask.Porcentaje_Avance) {
-              // Update parent progress automatically
-              const updatedParent = { ...parentTask, Porcentaje_Avance: newParentProgress };
-              updatedTasks = updatedTasks.map(t => (t.ID === parentTask.ID ? updatedParent : t));
-              
-              // Also update parent in backend (fire and forget, don't wait)
-              updateTask(updatedParent).catch(err => console.warn('Failed to update parent progress:', err));
-            }
-          }
-        }
-        
-        return updatedTasks;
-      });
+      setTasks(currentTasks => currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t)));
       
       // Keep modal open if it's open, so user can see changes reflected.
       if (editingTask && editingTask.ID === savedTask.ID) {

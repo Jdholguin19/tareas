@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
-import { calculateTaskProgress, hasSubtasks } from '../utils/taskUtils';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 interface TaskItemProps {
@@ -116,11 +115,6 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     .filter(child => child.Parent_ID === task.ID)
     .sort((a,b) => new Date(a.Fecha_Creacion).getTime() - new Date(b.Fecha_Creacion).getTime());
 
-  // Calculate progress based on subtasks or manual
-  const hasChildren = children.length > 0;
-  const displayedProgress = hasChildren ? calculateTaskProgress(task, allTasks) : task.Porcentaje_Avance;
-  const isProgressEditable = !hasChildren;
-
   const paddingLeft = `${level * 1.5 + 0.75}rem`;
 
   return (
@@ -202,13 +196,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                 )}
             </div>
 
-          <div title={`${displayedProgress}% completado${hasChildren ? ' (automático)' : ''}`} className="w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative">
-              <div className="h-2 rounded-full" style={{ width: `${displayedProgress}%`, backgroundColor: statusColor }}></div>
-              {hasChildren && (
-                <div className="absolute -top-1 -left-1 w-3 h-3 bg-slate-400 rounded-full flex items-center justify-center">
-                  <Icon name="auto" className="w-2 h-2 text-slate-600" />
-                </div>
-              )}
+          <div title={`${task.Porcentaje_Avance}% completado`} className="w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative">
+              <div className="h-2 rounded-full" style={{ width: `${task.Porcentaje_Avance}%`, backgroundColor: statusColor }}></div>
           </div>
 
           <button

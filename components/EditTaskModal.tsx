@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
-import { calculateTaskProgress, hasSubtasks } from '../utils/taskUtils';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 interface EditTaskModalProps {
@@ -117,11 +116,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const isCompleted = formData.Porcentaje_Avance === 100;
   const subtasks = allTasks.filter(t => t.Parent_ID === task.ID);
 
-  // Calculate progress based on subtasks or manual
-  const hasChildren = subtasks.length > 0;
-  const displayedProgress = hasChildren ? calculateTaskProgress(task, allTasks) : formData.Porcentaje_Avance;
-  const isProgressEditable = !hasChildren;
-
   return (
     <div 
         className="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-center p-2 sm:p-4" 
@@ -207,8 +201,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
           <div>
             <label htmlFor="Porcentaje_Avance" className="block text-sm font-medium text-slate-700 mb-2">
-              Progreso: <span className="font-bold text-blue-600">{displayedProgress}%</span>
-              {hasChildren && <span className="ml-2 text-xs text-blue-600 font-medium">(automático)</span>}
+              Progreso: <span className="font-bold text-blue-600">{formData.Porcentaje_Avance}%</span>
             </label>
             <div className="relative">
               <input 
@@ -218,15 +211,12 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 min="0" 
                 max="100" 
                 step="5" 
-                value={isProgressEditable ? formData.Porcentaje_Avance : displayedProgress} 
+                value={formData.Porcentaje_Avance} 
                 onChange={handleProgressChange} 
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer range-thumb-blue disabled:opacity-50" 
-                disabled={isCompleted || !isProgressEditable} 
+                disabled={isCompleted} 
               />
             </div>
-            {!isProgressEditable && (
-              <p className="text-xs text-slate-500 mt-1">El progreso se calcula automáticamente basado en las subtareas</p>
-            )}
           </div>
 
           {/* Sub-tasks Section */}
