@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiRegister } from '../services/apiService';
 
-export const RegisterForm: React.FC<{ onRegistered: () => void }> = ({ onRegistered }) => {
+export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin: () => void }> = ({ onRegistered, onSwitchToLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -43,6 +43,15 @@ export const RegisterForm: React.FC<{ onRegistered: () => void }> = ({ onRegiste
             <button type="submit" className="w-full bg-green-600 text-white py-2 rounded">Registrarse</button>
           </div>
         </form>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          ¿Ya tienes cuenta?{' '}
+          <button
+            onClick={onSwitchToLogin}
+            className="text-blue-600 hover:text-blue-500 font-medium"
+          >
+            Inicia sesión
+          </button>
+        </p>
       </div>
     </div>
   );

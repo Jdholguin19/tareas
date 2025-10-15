@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiLogin } from '../services/apiService';
 
-export const LoginForm: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+export const LoginForm: React.FC<{ onLogin: () => void; onSwitchToRegister: () => void }> = ({ onLogin, onSwitchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +35,15 @@ export const LoginForm: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Entrar</button>
           </div>
         </form>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          ¿No tienes cuenta?{' '}
+          <button
+            onClick={onSwitchToRegister}
+            className="text-blue-600 hover:text-blue-500 font-medium"
+          >
+            Regístrate
+          </button>
+        </p>
       </div>
     </div>
   );

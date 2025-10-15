@@ -354,9 +354,9 @@ const App: React.FC = () => {
       {isAuthenticated === false && (
         // show login/register flow
         showRegister ? (
-          <RegisterForm onRegistered={() => setShowRegister(false)} />
+          <RegisterForm onRegistered={() => setShowRegister(false)} onSwitchToLogin={() => setShowRegister(false)} />
         ) : (
-          <LoginForm onLogin={() => window.location.reload()} />
+          <LoginForm onLogin={() => window.location.reload()} onSwitchToRegister={() => setShowRegister(true)} />
         )
       )}
       {isAuthenticated === true && (
@@ -464,6 +464,14 @@ const App: React.FC = () => {
             >
               <Icon name="download" className="w-4 h-4 sm:w-5 sm:h-5"/>
               <span className="font-medium hidden sm:inline">Exportar</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 bg-red-50 text-red-700 px-3 py-2 sm:px-4 rounded-lg border border-red-300 hover:bg-red-100 hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 text-sm sm:text-base"
+              aria-label="Cerrar sesión"
+            >
+              <Icon name="logout" className="w-4 h-4 sm:w-5 sm:h-5"/>
+              <span className="font-medium hidden sm:inline">Salir</span>
             </button>
           </div>
         </div>
