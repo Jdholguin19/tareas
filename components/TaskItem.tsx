@@ -42,7 +42,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const [isDraggingProgress, setIsDraggingProgress] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
-  const [dragProgress, setDragProgress] = useState<number | null>(null);
+  const progressFillRef = useRef<HTMLDivElement>(null);
+  const dragProgressRef = useRef<number>(task.Porcentaje_Avance);
 
   useEffect(() => {
     if (isEditingDate) {
@@ -86,7 +87,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const handleProgressMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDraggingProgress(true);
-    setDragProgress(task.Porcentaje_Avance);
+    dragProgressRef.current = task.Porcentaje_Avance;
     updateProgressFromMouse(e);
   };
 
@@ -99,41 +100,71 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const handleProgressMouseUp = () => {
     setIsDraggingProgress(false);
     // Update the task only when drag ends
-    if (dragProgress !== null) {
-      onUpdate({
-        ...task,
-        Porcentaje_Avance: dragProgress,
-        Estado: dragProgress === 100 ? TaskState.COMPLETADA :
-               dragProgress === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO
-      });
-    }
-    setDragProgress(null);
+    onUpdate({
+      ...task,
+      Porcentaje_Avance: dragProgressRef.current,
+      Estado: dragProgressRef.current === 100 ? TaskState.COMPLETADA :
+             dragProgressRef.current === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO
+    });
   };
 
-  const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent) => {
-    if (!progressBarRef.current) return;
+  const handleProgressTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsDraggingProgress(true);
+    dragProgressRef.current = task.Porcentaje_Avance;
+    updateProgressFromMouse(e);
+  };
+
+  const handleProgressTouchMove = (e: TouchEvent) => {
+    if (isDraggingProgress) {
+      e.preventDefault();
+      updateProgressFromMouse(e);
+    }
+  };
+
+  const handleProgressTouchEnd = () => {
+    setIsDraggingProgress(false);
+    // Update the task only when drag ends
+    onUpdate({
+      ...task,
+      Porcentaje_Avance: dragProgressRef.current,
+      Estado: dragProgressRef.current === 100 ? TaskState.COMPLETADA :
+             dragProgressRef.current === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO
+    });
+  };
+
+  const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent | TouchEvent) => {
+    if (!progressBarRef.current || !progressFillRef.current) return;
 
     const rect = progressBarRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const x = clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const roundedPercentage = Math.round(percentage / 5) * 5; // Round to nearest 5%
 
-    setDragProgress(roundedPercentage);
+    dragProgressRef.current = roundedPercentage;
+    progressFillRef.current.style.width = `${roundedPercentage}%`;
+    if (progressBarRef.current) {
+      progressBarRef.current.title = `${roundedPercentage}% completado - Arrastra para cambiar`;
+    }
   };
 
   useEffect(() => {
     if (isDraggingProgress) {
       document.addEventListener('mousemove', handleProgressMouseMove);
       document.addEventListener('mouseup', handleProgressMouseUp);
+      document.addEventListener('touchmove', handleProgressTouchMove, { passive: false });
+      document.addEventListener('touchend', handleProgressTouchEnd);
       
-    return () => {
-      document.removeEventListener('mousemove', handleProgressMouseMove);
-      document.removeEventListener('mouseup', handleProgressMouseUp);
-    };
+      return () => {
+        document.removeEventListener('mousemove', handleProgressMouseMove);
+        document.removeEventListener('mouseup', handleProgressMouseUp);
+        document.removeEventListener('touchmove', handleProgressTouchMove);
+        document.removeEventListener('touchend', handleProgressTouchEnd);
+      };
     }
-  }, [isDraggingProgress]);
-
-  const handleDeleteConfirm = async () => {
+  }, [isDraggingProgress]);  const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
       await onDelete(task.ID);
@@ -251,12 +282,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
 
           <div 
             ref={progressBarRef}
-            title={`${dragProgress !== null ? dragProgress : task.Porcentaje_Avance}% completado - Arrastra para cambiar`}
+            title={`${task.Porcentaje_Avance}% completado - Arrastra para cambiar`}
             className={`w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative cursor-pointer hover:bg-slate-300/80 transition-colors ${isDraggingProgress ? 'bg-slate-300/80' : ''}`}
             onMouseDown={handleProgressMouseDown}
+            onTouchStart={handleProgressTouchStart}
             onClick={(e) => e.stopPropagation()}
           >
-              <div className="h-2 rounded-full" style={{ width: `${dragProgress !== null ? dragProgress : task.Porcentaje_Avance}%`, backgroundColor: statusColor }}></div>
+              <div ref={progressFillRef} className="h-2 rounded-full" style={{ width: `${task.Porcentaje_Avance}%`, backgroundColor: statusColor }}></div>
           </div>
 
           <button
