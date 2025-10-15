@@ -3,10 +3,12 @@ import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { Icon } from './components/Icon';
 import type { Task, Project } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask } from './services/apiService';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -15,6 +17,8 @@ const App: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState<boolean>(false);
   const notificationMenuRef = useRef<HTMLDivElement>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [showRegister, setShowRegister] = useState(false);
 
   // Accordion states
   const [isTodayTasksExpanded, setIsTodayTasksExpanded] = useState<boolean>(true);
@@ -45,8 +49,23 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchTasks();
-    fetchProjects();
+    const init = async () => {
+      try {
+        const auth = await checkAuth();
+        if (auth && auth.authenticated) {
+          setIsAuthenticated(true);
+          await fetchTasks();
+          await fetchProjects();
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error('Auth check failed', err);
+        setIsAuthenticated(false);
+      }
+    };
+
+    init();
   }, [fetchTasks, fetchProjects]);
 
   // Close notification menu when clicking outside
@@ -134,6 +153,19 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to delete task:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await apiLogout();
+      setIsAuthenticated(false);
+      setTasks([]);
+    } catch (error) {
+      console.error("Failed to logout:", error);
+      // Fallback: force logout anyway
+      setIsAuthenticated(false);
+      setTasks([]);
     }
   };
 
@@ -319,6 +351,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen font-sans">
+      {isAuthenticated === false && (
+        // show login/register flow
+        showRegister ? (
+          <RegisterForm onRegistered={() => setShowRegister(false)} />
+        ) : (
+          <LoginForm onLogin={() => window.location.reload()} />
+        )
+      )}
+      {isAuthenticated === true && (
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
@@ -426,7 +467,8 @@ const App: React.FC = () => {
             </button>
           </div>
         </div>
-      </header>
+  </header>
+  )}
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section aria-labelledby="create-task-heading" className="mb-12">

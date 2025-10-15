@@ -7,7 +7,7 @@ const API_BASE = '/api';
 // --- API Functions ---
 
 export const getTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_BASE}/getTasks.php`);
+  const response = await fetch(`${API_BASE}/getTasks.php`, { credentials: 'include' });
   if (!response.ok) throw new Error('Failed to fetch tasks');
   const data = await response.json();
   if (data.error) throw new Error(data.error);
@@ -15,7 +15,7 @@ export const getTasks = async (): Promise<Task[]> => {
 };
 
 export const getProjects = async (): Promise<Project[]> => {
-  const response = await fetch(`${API_BASE}/getProjects.php`);
+  const response = await fetch(`${API_BASE}/getProjects.php`, { credentials: 'include' });
   if (!response.ok) throw new Error('Failed to fetch projects');
   const data = await response.json();
   if (data.error) throw new Error(data.error);
@@ -27,6 +27,7 @@ export const createQuickTask = async (titulo: string, adjuntos: string[]): Promi
   const response = await fetch(`${API_BASE}/createQuickTask.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ titulo, adjuntos })
   });
   if (!response.ok) throw new Error('Failed to create task');
@@ -40,6 +41,7 @@ export const updateTask = async (updatedTask: Task): Promise<Task> => {
   const response = await fetch(`${API_BASE}/updateTask.php?id=${updatedTask.ID}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(updatedTask)
   });
   if (!response.ok) throw new Error('Failed to update task');
@@ -52,6 +54,7 @@ export const updateTask = async (updatedTask: Task): Promise<Task> => {
 export const deleteTask = async (taskId: number): Promise<void> => {
   const response = await fetch(`${API_BASE}/deleteTask.php?id=${taskId}`, {
     method: 'DELETE'
+    , credentials: 'include'
   });
   if (!response.ok) throw new Error('Failed to delete task');
   const data = await response.json();
@@ -63,6 +66,7 @@ export const createSubTask = async (parentTaskId: number, title: string): Promis
   const response = await fetch(`${API_BASE}/createSubTask.php?parentId=${parentTaskId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ titulo: title })
   });
   if (!response.ok) throw new Error('Failed to create subtask');
@@ -115,10 +119,46 @@ export const uploadFile = async (file: File): Promise<{ url: string }> => {
   formData.append('file', file);
   const response = await fetch(`${API_BASE}/uploadFile.php`, {
     method: 'POST',
+    credentials: 'include',
     body: formData
   });
   if (!response.ok) throw new Error('Failed to upload file');
   const data = await response.json();
   if (data.error) throw new Error(data.error);
   return data;
+};
+
+// --- Auth helpers ---
+export const apiLogin = async (username: string, password: string) => {
+  const response = await fetch(`${API_BASE}/login.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ username, password })
+  });
+  const data = await response.json();
+  if (!response.ok || data.error) throw new Error(data.error || 'Login failed');
+  return data;
+};
+
+export const apiRegister = async (username: string, password: string, confirm: string) => {
+  const response = await fetch(`${API_BASE}/register.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ username, password, confirm_password: confirm })
+  });
+  const data = await response.json();
+  if (!response.ok || data.error) throw new Error(data.error || 'Register failed');
+  return data;
+};
+
+export const apiLogout = async () => {
+  const res = await fetch(`${API_BASE}/logout.php`, { method: 'POST', credentials: 'include' });
+  return await res.json();
+};
+
+export const checkAuth = async () => {
+  const res = await fetch(`${API_BASE}/checkAuth.php`, { credentials: 'include' });
+  return await res.json();
 };
