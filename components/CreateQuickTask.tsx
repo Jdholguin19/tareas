@@ -125,11 +125,11 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
           <button onClick={handleMicClick} className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}>
             <Icon name="mic" className="w-6 h-6"/>
           </button>
-          <button onClick={handleAttachmentClick} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors" aria-label="Adjuntar archivo">
+          {/*<button onClick={handleAttachmentClick} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors" aria-label="Adjuntar archivo">
             <Icon name="clip" className="w-6 h-6"/>
           </button>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" aria-label="Adjuntar archivo" />
-          
+          */}
           {(isTranscribing || isUploading) && (
             <div className="flex items-center space-x-2 text-sm text-slate-500">
                 <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
