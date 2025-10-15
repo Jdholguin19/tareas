@@ -205,8 +205,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
           <div title={`${displayedProgress}% completado${hasChildren ? ' (automático)' : ''}`} className="w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative">
               <div className="h-2 rounded-full" style={{ width: `${displayedProgress}%`, backgroundColor: statusColor }}></div>
               {hasChildren && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                  <Icon name="auto" className="w-2 h-2 text-white" />
+                <div className="absolute -top-1 -left-1 w-3 h-3 bg-slate-400 rounded-full flex items-center justify-center">
+                  <Icon name="auto" className="w-2 h-2 text-slate-600" />
                 </div>
               )}
           </div>

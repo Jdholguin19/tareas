@@ -6,6 +6,7 @@ import type { Task, Project } from './types';
 import { getTasks, updateTask, createSubTask, getProjects, deleteTask } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
+import { TaskSkeleton } from './components/TaskSkeleton';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -472,11 +473,9 @@ const App: React.FC = () => {
                 isTodayTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              <div className="mt-4">
+                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
                 {isLoading ? (
-                  <div className="text-center py-10">
-                    <p className="text-slate-500">Cargando tareas...</p>
-                  </div>
+                    <TaskSkeleton />
                 ) : currentTasks.length > 0 ? (
                   <TaskList tasks={currentTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
@@ -509,11 +508,9 @@ const App: React.FC = () => {
                 isOverdueTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              <div className="mt-4">
+                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
                 {isLoading ? (
-                  <div className="text-center py-10">
-                    <p className="text-slate-500">Cargando tareas...</p>
-                  </div>
+                    <TaskSkeleton />
                 ) : overdueTasks.length > 0 ? (
                   <TaskList tasks={overdueTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
@@ -546,11 +543,9 @@ const App: React.FC = () => {
                 isPendingTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              <div className="mt-4">
+                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
                 {isLoading ? (
-                  <div className="text-center py-10">
-                    <p className="text-slate-500">Cargando tareas...</p>
-                  </div>
+                    <TaskSkeleton />
                 ) : pendingTasks.length > 0 ? (
                   <TaskList tasks={pendingTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
@@ -583,11 +578,9 @@ const App: React.FC = () => {
                 isCompletedTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              <div className="mt-4">
+                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
                 {isLoading ? (
-                  <div className="text-center py-10">
-                    <p className="text-slate-500">Cargando tareas...</p>
-                  </div>
+                    <TaskSkeleton />
                 ) : completedTasks.length > 0 ? (
                   <TaskList tasks={completedTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
