@@ -39,7 +39,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDraggingProgress, setIsDraggingProgress] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isEditingDate) {
@@ -79,6 +81,52 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     e.stopPropagation();
     setShowDeleteModal(true);
   };
+
+  const handleProgressMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDraggingProgress(true);
+    updateProgressFromMouse(e);
+  };
+
+  const handleProgressMouseMove = (e: MouseEvent) => {
+    if (isDraggingProgress) {
+      updateProgressFromMouse(e);
+    }
+  };
+
+  const handleProgressMouseUp = () => {
+    setIsDraggingProgress(false);
+  };
+
+  const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent) => {
+    if (!progressBarRef.current) return;
+
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const roundedPercentage = Math.round(percentage / 5) * 5; // Round to nearest 5%
+
+    if (roundedPercentage !== task.Porcentaje_Avance) {
+      onUpdate({
+        ...task,
+        Porcentaje_Avance: roundedPercentage,
+        Estado: roundedPercentage === 100 ? TaskState.COMPLETADA :
+               roundedPercentage === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isDraggingProgress) {
+      document.addEventListener('mousemove', handleProgressMouseMove);
+      document.addEventListener('mouseup', handleProgressMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleProgressMouseMove);
+        document.removeEventListener('mouseup', handleProgressMouseUp);
+      };
+    }
+  }, [isDraggingProgress]);
 
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
@@ -196,7 +244,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                 )}
             </div>
 
-          <div title={`${task.Porcentaje_Avance}% completado`} className="w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative">
+          <div 
+            ref={progressBarRef}
+            title={`${task.Porcentaje_Avance}% completado - Arrastra para cambiar`}
+            className={`w-24 bg-slate-200/80 rounded-full h-2 hidden md:block relative cursor-pointer hover:bg-slate-300/80 transition-colors ${isDraggingProgress ? 'bg-slate-300/80' : ''}`}
+            onMouseDown={handleProgressMouseDown}
+            onClick={(e) => e.stopPropagation()}
+          >
               <div className="h-2 rounded-full" style={{ width: `${task.Porcentaje_Avance}%`, backgroundColor: statusColor }}></div>
           </div>
 
