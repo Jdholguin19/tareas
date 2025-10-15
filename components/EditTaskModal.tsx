@@ -23,7 +23,10 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    setFormData({...task});
+    setFormData({
+      ...task,
+      Fecha_Inicio: task.Fecha_Inicio || task.Fecha_Creacion
+    });
   }, [task]);
   
   useEffect(() => {
@@ -46,8 +49,10 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0));
     let newStatus = TaskState.PENDIENTE;
+    let fechaCompletada = null;
     if (value === 100) {
       newStatus = TaskState.COMPLETADA;
+      fechaCompletada = new Date().toISOString();
     } else if (value > 0) {
       newStatus = TaskState.EN_PROGRESO;
     }
@@ -55,7 +60,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     setFormData(prev => ({ 
       ...prev, 
       Porcentaje_Avance: value,
-      Estado: newStatus
+      Estado: newStatus,
+      Fecha_Completada: fechaCompletada
     }));
   };
 
@@ -65,13 +71,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           setFormData(prev => ({
               ...prev,
               Porcentaje_Avance: 100,
-              Estado: TaskState.COMPLETADA
+              Estado: TaskState.COMPLETADA,
+              Fecha_Completada: new Date().toISOString()
           }));
       } else {
           setFormData(prev => ({
               ...prev,
               Porcentaje_Avance: 0,
-              Estado: TaskState.PENDIENTE
+              Estado: TaskState.PENDIENTE,
+              Fecha_Completada: null
           }));
       }
   };
@@ -189,8 +197,12 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
+              <label htmlFor="Fecha_Inicio" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Inicio</label>
+              <input type="date" id="Fecha_Inicio" name="Fecha_Inicio" value={formatDateForInput(formData.Fecha_Inicio)} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" />
+            </div>
+            <div>
               <label htmlFor="Fecha_Vencimiento" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Vencimiento</label>
-              <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" />
+              <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} min={formData.Fecha_Inicio ? formData.Fecha_Inicio.split('T')[0] : undefined} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" />
             </div>
           </div>
           

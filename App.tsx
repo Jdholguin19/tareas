@@ -140,7 +140,7 @@ const App: React.FC = () => {
   const handleExportCSV = () => {
     const headers = [
       "ID", "Titulo", "Descripcion", "Estado", "Porcentaje_Avance", 
-      "Fecha_Creacion", "Fecha_Vencimiento", "Usuario_Creador_ID", 
+      "Fecha_Creacion", "Fecha_Inicio", "Fecha_Completada", "Fecha_Vencimiento", "Usuario_Creador_ID", 
       "Usuario_Asignado_ID", "Proyecto", "Parent_ID", "Adjuntos_URL"
     ];
 
@@ -151,6 +151,8 @@ const App: React.FC = () => {
       task.Estado,
       task.Porcentaje_Avance,
       task.Fecha_Creacion,
+      task.Fecha_Inicio || '',
+      task.Fecha_Completada || '',
       task.Fecha_Vencimiento || '',
       task.Usuario_Creador_ID,
       task.Usuario_Asignado_ID || '',

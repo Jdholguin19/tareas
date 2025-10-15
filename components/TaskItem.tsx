@@ -100,11 +100,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const handleProgressMouseUp = () => {
     setIsDraggingProgress(false);
     // Update the task only when drag ends
+    const newPercentage = dragProgressRef.current;
+    const newStatus = newPercentage === 100 ? TaskState.COMPLETADA :
+                     newPercentage === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO;
+    const fechaCompletada = newStatus === TaskState.COMPLETADA ? new Date().toISOString() : null;
     onUpdate({
       ...task,
-      Porcentaje_Avance: dragProgressRef.current,
-      Estado: dragProgressRef.current === 100 ? TaskState.COMPLETADA :
-             dragProgressRef.current === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO
+      Porcentaje_Avance: newPercentage,
+      Estado: newStatus,
+      Fecha_Completada: fechaCompletada
     });
   };
 
@@ -126,11 +130,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const handleProgressTouchEnd = () => {
     setIsDraggingProgress(false);
     // Update the task only when drag ends
+    const newPercentage = dragProgressRef.current;
+    const newStatus = newPercentage === 100 ? TaskState.COMPLETADA :
+                     newPercentage === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO;
+    const fechaCompletada = newStatus === TaskState.COMPLETADA ? new Date().toISOString() : null;
     onUpdate({
       ...task,
-      Porcentaje_Avance: dragProgressRef.current,
-      Estado: dragProgressRef.current === 100 ? TaskState.COMPLETADA :
-             dragProgressRef.current === 0 ? TaskState.PENDIENTE : TaskState.EN_PROGRESO
+      Porcentaje_Avance: newPercentage,
+      Estado: newStatus,
+      Fecha_Completada: fechaCompletada
     });
   };
 
