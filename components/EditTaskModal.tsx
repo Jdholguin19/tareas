@@ -44,7 +44,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   };
   
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
+    const value = Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0));
     let newStatus = TaskState.PENDIENTE;
     if (value === 100) {
       newStatus = TaskState.COMPLETADA;
@@ -201,7 +201,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
           <div>
             <label htmlFor="Porcentaje_Avance" className="block text-sm font-medium text-slate-700 mb-2">
-              Progreso: <span className="font-bold text-blue-600">{formData.Porcentaje_Avance}%</span>
+              Progreso: 
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={formData.Porcentaje_Avance} 
+                onChange={handleProgressChange} 
+                className="inline-block w-16 ml-2 px-2 py-1 text-sm font-bold text-blue-600 border border-slate-300 rounded focus:ring-blue-500 focus:border-blue-500"
+              />%
             </label>
             <div className="relative">
               <input 
