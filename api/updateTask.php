@@ -1,6 +1,14 @@
 <?php
 require_once 'config.php';
 
+// Verificar que el usuario esté autenticado
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['error' => 'Usuario no autenticado']);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
 $id = $_GET['id'] ?? null;
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -10,13 +18,19 @@ if (!$id) {
 }
 
 try {
-    // First, get the current task data to check current proyecto_id
-    $stmtCurrent = $pdo->prepare("SELECT proyecto_id FROM tareas WHERE id = ?");
+    // First, get the current task data and verify ownership
+    $stmtCurrent = $pdo->prepare("SELECT proyecto_id, creado_por FROM tareas WHERE id = ?");
     $stmtCurrent->execute([$id]);
     $currentTask = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$currentTask) {
         echo json_encode(['error' => 'Task not found']);
+        exit;
+    }
+
+    // Verificar que la tarea pertenece al usuario autenticado
+    if ($currentTask['creado_por'] != $userId) {
+        echo json_encode(['error' => 'No tienes permiso para modificar esta tarea']);
         exit;
     }
 

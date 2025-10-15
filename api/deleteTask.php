@@ -1,6 +1,14 @@
 <?php
 require_once 'config.php';
 
+// Verificar que el usuario esté autenticado
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['error' => 'Usuario no autenticado']);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
 $id = $_GET['id'] ?? null;
 
 if (!$id) {
@@ -9,19 +17,19 @@ if (!$id) {
 }
 
 try {
-    // Check if task exists
-    $stmtCheck = $pdo->prepare("SELECT id FROM tareas WHERE id = ?");
-    $stmtCheck->execute([$id]);
+    // Check if task exists and belongs to the user
+    $stmtCheck = $pdo->prepare("SELECT id FROM tareas WHERE id = ? AND creado_por = ?");
+    $stmtCheck->execute([$id, $userId]);
     $task = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
     if (!$task) {
-        echo json_encode(['error' => 'Task not found']);
+        echo json_encode(['error' => 'Task not found or you do not have permission to delete it']);
         exit;
     }
 
     // Delete the task
-    $stmt = $pdo->prepare("DELETE FROM tareas WHERE id = ?");
-    $stmt->execute([$id]);
+    $stmt = $pdo->prepare("DELETE FROM tareas WHERE id = ? AND creado_por = ?");
+    $stmt->execute([$id, $userId]);
 
     if ($stmt->rowCount() > 0) {
         echo json_encode(['success' => true, 'message' => 'Task deleted successfully']);

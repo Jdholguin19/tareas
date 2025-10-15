@@ -1,6 +1,14 @@
 <?php
 require_once 'config.php';
 
+// Verificar que el usuario esté autenticado
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['error' => 'Usuario no autenticado']);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
 $data = json_decode(file_get_contents('php://input'), true);
 $titulo = $data['titulo'] ?? '';
 $adjuntos = $data['adjuntos'] ?? [];
@@ -13,9 +21,9 @@ if (empty($titulo)) {
 try {
     $stmt = $pdo->prepare("
         INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, adjuntos_url, tarea_padre_id)
-        VALUES (?, NULL, 'pendiente', 0, NOW(), 1, ?, NULL)
+        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, NULL)
     ");
-    $stmt->execute([$titulo, json_encode($adjuntos)]);
+    $stmt->execute([$titulo, $userId, json_encode($adjuntos)]);
     $taskId = $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("

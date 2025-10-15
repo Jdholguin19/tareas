@@ -1,6 +1,14 @@
 <?php
 require_once 'config.php';
 
+// Verificar que el usuario esté autenticado
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['error' => 'Usuario no autenticado']);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
 $parentId = $_GET['parentId'] ?? null;
 $data = json_decode(file_get_contents('php://input'), true);
 $titulo = $data['titulo'] ?? '';
@@ -11,20 +19,21 @@ if (!$parentId || empty($titulo)) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM tareas WHERE id = ?");
-    $stmt->execute([$parentId]);
+    // Check if parent task exists and belongs to the user
+    $stmt = $pdo->prepare("SELECT * FROM tareas WHERE id = ? AND creado_por = ?");
+    $stmt->execute([$parentId, $userId]);
     $parent = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$parent) {
-        echo json_encode(['error' => 'Parent task not found']);
+        echo json_encode(['error' => 'Parent task not found or you do not have permission to create subtasks']);
         exit;
     }
 
     $stmt = $pdo->prepare("
         INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_vencimiento, adjuntos_url)
-        VALUES (?, NULL, 'pendiente', 0, NOW(), 1, ?, ?, ?, ?, '[]')
+        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]')
     ");
-    $stmt->execute([$titulo, $parentId, $parent['proyecto_id'], $parent['asignado_a'], $parent['fecha_vencimiento']]);
+    $stmt->execute([$titulo, $userId, $parentId, $parent['proyecto_id'], $parent['asignado_a'], $parent['fecha_vencimiento']]);
     $taskId = $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("
