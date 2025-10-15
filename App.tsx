@@ -349,6 +349,30 @@ const App: React.FC = () => {
   const overdueTasksForNotifications = getOverdueTasksForNotifications(tasks);
   const pendingTasks = getPendingTasks(tasks);
 
+  // Counter functions for section titles
+  const getTodayTasksCount = (allTasks: Task[]) => {
+    const today = getCurrentDate();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return allTasks.filter(task => {
+      if (!task.Fecha_Vencimiento || isCompleted(task)) return false;
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate >= today && dueDate < tomorrow;
+    }).length;
+  };
+
+  const getNoDateTasksCount = (allTasks: Task[]) => {
+    return allTasks.filter(task => !task.Fecha_Vencimiento && !isCompleted(task)).length;
+  };
+
+  const todayCount = getTodayTasksCount(tasks);
+  const noDateCount = getNoDateTasksCount(tasks);
+  const overdueCount = overdueTasks.length;
+  const pendingCount = pendingTasks.length;
+  const completedCount = completedTasks.length;
+
   return (
     <div className="min-h-screen font-sans">
       {isAuthenticated === false && (
@@ -492,7 +516,7 @@ const App: React.FC = () => {
               aria-controls="current-tasks-content"
             >
               <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
-                Tareas: Hoy y sin fecha
+                Tareas: Hoy: {todayCount} y sin fecha: {noDateCount}
               </h2>
               <Icon
                 name={isTodayTasksExpanded ? "chevronUp" : "chevronDown"}
@@ -527,7 +551,7 @@ const App: React.FC = () => {
               aria-controls="overdue-tasks-content"
             >
               <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700">
-                Tareas vencidas
+                Tareas atrasadas: {overdueCount}
               </h2>
               <Icon
                 name={isOverdueTasksExpanded ? "chevronUp" : "chevronDown"}
@@ -562,7 +586,7 @@ const App: React.FC = () => {
               aria-controls="pending-tasks-content"
             >
               <h2 id="pending-tasks-heading" className="text-xl font-semibold text-blue-700">
-                Tareas pendientes
+                Tareas pendientes: {pendingCount}
               </h2>
               <Icon
                 name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}
@@ -597,7 +621,7 @@ const App: React.FC = () => {
               aria-controls="completed-tasks-content"
             >
               <h2 id="completed-tasks-heading" className="text-xl font-semibold text-green-700">
-                Tareas Completadas
+                Tareas completadas: {completedCount}
               </h2>
               <Icon
                 name={isCompletedTasksExpanded ? "chevronUp" : "chevronDown"}
