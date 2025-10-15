@@ -36,6 +36,8 @@ try {
             t.progreso AS Porcentaje_Avance,
             t.fecha_creacion AS Fecha_Creacion,
             t.fecha_vencimiento AS Fecha_Vencimiento,
+            t.fecha_inicio AS Fecha_Inicio,
+            t.fecha_completada AS Fecha_Completada,
             t.creado_por AS Usuario_Creador_ID,
             t.asignado_a AS Usuario_Asignado_ID,
             COALESCE(p.nombre, 'General') AS Proyecto,
