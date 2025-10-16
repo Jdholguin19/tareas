@@ -291,12 +291,12 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div>
+            {/*<div> Desactivo por el momento
               <label htmlFor="Estado" className="block text-sm font-medium text-slate-700 mb-1">Estado</label>
               <select id="Estado" name="Estado" value={formData.Estado} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit}>
                 {Object.values(TaskState).map(state => (<option key={state} value={state}>{state}</option>))}
               </select>
-            </div>
+            </div> Estado */}
             {task.Parent_ID === 0 && (
               <div>
                 <label htmlFor="Proyecto" className="block text-sm font-medium text-slate-700 mb-1">Proyecto</label>
