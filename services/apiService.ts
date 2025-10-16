@@ -220,3 +220,17 @@ export const getCurrentUser = async (): Promise<{id: number, username: string, e
   if (data.error) throw new Error(data.error);
   return data;
 };
+
+// Create a new project
+export const createProject = async (nombre: string): Promise<Project> => {
+  const response = await fetch(`${API_BASE}/createProject.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ nombre })
+  });
+  if (!response.ok) throw new Error('Failed to create project');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};

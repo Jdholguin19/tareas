@@ -3,19 +3,20 @@ import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, getCurrentUser } from '../services/apiService';
+import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, getCurrentUser, createProject } from '../services/apiService';
 
 interface EditTaskModalProps {
   task: Task;
   allTasks: Task[];
   projects: Project[];
+  onProjectCreated?: (project: Project) => void;
   onClose: () => void;
   onSave: (updatedTask: Task) => Promise<void>;
   onCreateSubtask: (parentTaskId: number, title: string) => Promise<void>;
   onDelete: (taskId: number) => void;
 }
 
-export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, onClose, onSave, onCreateSubtask, onDelete }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, onClose, onSave, onCreateSubtask, onDelete, onProjectCreated }) => {
   const [formData, setFormData] = useState<Task>({ ...task });
   const [isSaving, setIsSaving] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -36,6 +37,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [projectSearchResults, setProjectSearchResults] = useState<{id: number, nombre: string}[]>([]);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [isSearchingProjects, setIsSearchingProjects] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
   const userSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -131,6 +133,42 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     setProjectSearchQuery('');
     setShowProjectDropdown(false);
     setProjectSearchResults([]);
+  };
+
+  const handleClearProject = async () => {
+    const updatedTask = { ...formData, Proyecto: null as any };
+    setFormData(updatedTask);
+    // keep search query cleared
+    setProjectSearchQuery('');
+    try {
+      await onSave(updatedTask);
+    } catch (error) {
+      console.error('Error removing project:', error);
+      // Revert on error
+      setFormData(formData);
+      alert('Error al quitar el proyecto');
+    }
+  };
+
+  const handleCreateProject = async (nombre: string) => {
+    const trimmed = nombre.trim();
+    if (!trimmed) return;
+    setIsCreatingProject(true);
+    try {
+      const created = await createProject(trimmed);
+      // select created project
+      setFormData(prev => ({ ...prev, Proyecto: created.id }));
+      setProjectSearchQuery('');
+      setShowProjectDropdown(false);
+      setProjectSearchResults([]);
+      // notify parent so it can refresh cached list
+      if (onProjectCreated) onProjectCreated(created as Project);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('No se pudo crear el proyecto');
+    } finally {
+      setIsCreatingProject(false);
+    }
   };
 
   const handleProjectSearchBlur = () => {
@@ -379,11 +417,16 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
               {/* Mostrar proyecto seleccionado */}
               {formData.Proyecto && (
-                <div className="mb-3">
+                <div className="mb-3 flex items-center space-x-2">
                   <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm w-fit">
                     <Icon name="folder" className="w-4 h-4 mr-2"/>
                     <span>{projects.find(p => p.id === Number(formData.Proyecto))?.nombre || 'Proyecto desconocido'}</span>
                   </div>
+                  {canEdit && (
+                    <button type="button" onClick={handleClearProject} className="p-1 rounded-md hover:bg-slate-100" title="Quitar proyecto">
+                      <Icon name="close" className="w-4 h-4 text-slate-500" />
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -404,18 +447,37 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                     <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
                   </div>
                 )}
-                {showProjectDropdown && projectSearchResults.length > 0 && (
+                {showProjectDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {projectSearchResults.map((project) => (
-                      <button
-                        key={project.id}
-                        type="button"
-                        onClick={() => handleProjectSelect(project)}
-                        className="w-full text-left px-3 py-2 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
-                      >
-                        <div className="font-medium text-slate-900">{project.nombre}</div>
-                      </button>
-                    ))}
+                    {projectSearchResults.length > 0 ? (
+                      projectSearchResults.map((project) => (
+                        <button
+                          key={project.id}
+                          type="button"
+                          onClick={() => handleProjectSelect(project)}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-slate-900">{project.nombre}</div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="w-full text-left px-3 py-2 flex items-center justify-between">
+                        <div className="text-sm text-slate-700">No hay proyectos</div>
+                        <button 
+                          type="button" 
+                          onClick={() => handleCreateProject(projectSearchQuery)} 
+                          disabled={isCreatingProject}
+                          className="ml-2 inline-flex items-center px-2 py-1 border border-slate-200 rounded text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isCreatingProject ? (
+                            <div className="w-3 h-3 border border-slate-400 border-t-green-600 rounded-full animate-spin mr-1"></div>
+                          ) : (
+                            <span className="text-green-600 font-bold mr-1">+</span>
+                          )}
+                          {isCreatingProject ? 'Creando...' : 'Crear'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -538,7 +600,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                           <li key={st.ID} className={`flex items-center justify-between bg-slate-50 p-2 sm:p-2.5 rounded-md text-xs sm:text-sm ${st.Estado === TaskState.COMPLETADA ? 'text-slate-500' : 'text-slate-800'}`}>
                               <span className={`truncate mr-2 ${st.Estado === TaskState.COMPLETADA ? 'line-through' : ''}`}>{st.Titulo}</span>
                               <div className="w-12 sm:w-16 bg-slate-200 rounded-full h-1 sm:h-1.5 flex-shrink-0">
-                                <div className="bg-blue-600 h-1 sm:h-1.5 rounded-full" style={{ width: `${st.Porcentaje_Avance}%` }}></div>
+                                <div className="progress-bar-fill"></div>
                               </div>
                           </li>
                       ))}
@@ -583,6 +645,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
         }
         .range-thumb-blue::-webkit-slider-thumb { background-color: #2563eb; cursor: pointer; }
         .range-thumb-blue::-moz-range-thumb { background-color: #2563eb; cursor: pointer; }
+        .progress-bar-fill { background-color: #2563eb; height: 100%; border-radius: 9999px; }
       `}</style>
 
       <DeleteConfirmationModal

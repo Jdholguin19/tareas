@@ -97,6 +97,14 @@ const App: React.FC = () => {
     setEditingTask(null);
   };
 
+  const handleProjectCreated = (project: Project) => {
+    // Add to projects list if not already present
+    setProjects(prev => {
+      if (prev.some(p => p.id === project.id)) return prev;
+      return [...prev, project].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    });
+  };
+
   const handleUpdateTask = async (taskToUpdate: Task) => {
     try {
       const savedTask = await updateTask(taskToUpdate);
@@ -654,6 +662,7 @@ const App: React.FC = () => {
           task={editingTask} 
           allTasks={tasks}
           projects={projects}
+          onProjectCreated={handleProjectCreated}
           onClose={handleCloseModal}
           onSave={async (task) => {
             await handleUpdateTask(task);
