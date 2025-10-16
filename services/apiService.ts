@@ -202,24 +202,24 @@ export const uploadFile = async (file: File): Promise<{ url: string }> => {
 };
 
 // --- Auth helpers ---
-export const apiLogin = async (username: string, password: string) => {
+export const apiLogin = async (email: string, password: string) => {
   const response = await fetch(`${API_BASE}/login.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ email, password })
   });
   const data = await response.json();
   if (!response.ok || data.error) throw new Error(data.error || 'Login failed');
   return data;
 };
 
-export const apiRegister = async (username: string, password: string, confirm: string) => {
+export const apiRegister = async (email: string, password: string, confirm: string) => {
   const response = await fetch(`${API_BASE}/register.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ username, password, confirm_password: confirm })
+    body: JSON.stringify({ email, password, confirm_password: confirm })
   });
   const data = await response.json();
   if (!response.ok || data.error) throw new Error(data.error || 'Register failed');
