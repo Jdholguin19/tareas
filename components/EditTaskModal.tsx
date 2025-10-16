@@ -32,12 +32,17 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [taskCreator, setTaskCreator] = useState<{id: number, username: string, email: string} | null>(null);
   const [isLoadingCreator, setIsLoadingCreator] = useState(false);
+  const [projectSearchQuery, setProjectSearchQuery] = useState('');
+  const [projectSearchResults, setProjectSearchResults] = useState<{id: number, nombre: string}[]>([]);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [isSearchingProjects, setIsSearchingProjects] = useState(false);
   const userSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setFormData({
       ...task,
-      Fecha_Inicio: task.Fecha_Inicio || task.Fecha_Creacion
+      Fecha_Inicio: task.Fecha_Inicio || task.Fecha_Creacion,
+      Proyecto: Number(task.Proyecto) // Ensure Proyecto is always a number
     });
     // Load assigned users and current user
     loadAssignedUsers();
@@ -88,6 +93,49 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     } finally {
       setIsLoadingCreator(false);
     }
+  };
+
+  const handleProjectSearch = async (query: string) => {
+    setProjectSearchQuery(query);
+
+    if (userSearchTimeoutRef.current) {
+      clearTimeout(userSearchTimeoutRef.current);
+    }
+
+    if (query.length < 1) {
+      setProjectSearchResults([]);
+      setShowProjectDropdown(false);
+      return;
+    }
+
+    userSearchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingProjects(true);
+      try {
+        // Filter projects locally since we already have them
+        const filteredProjects = projects.filter(project =>
+          project.nombre.toLowerCase().includes(query.toLowerCase())
+        );
+        setProjectSearchResults(filteredProjects);
+        setShowProjectDropdown(true);
+      } catch (error) {
+        console.error('Error searching projects:', error);
+        setProjectSearchResults([]);
+      } finally {
+        setIsSearchingProjects(false);
+      }
+    }, 300);
+  };
+
+  const handleProjectSelect = (project: {id: number, nombre: string}) => {
+    setFormData(prev => ({ ...prev, Proyecto: project.id }));
+    setProjectSearchQuery('');
+    setShowProjectDropdown(false);
+    setProjectSearchResults([]);
+  };
+
+  const handleProjectSearchBlur = () => {
+    // Delay hiding dropdown to allow click on options
+    setTimeout(() => setShowProjectDropdown(false), 150);
   };
   
   useEffect(() => {
@@ -323,15 +371,55 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 {Object.values(TaskState).map(state => (<option key={state} value={state}>{state}</option>))}
               </select>
             </div> Estado */}
-            {task.Parent_ID === 0 && (
-              <div>
-                <label htmlFor="Proyecto" className="block text-sm font-medium text-slate-700 mb-1">Proyecto</label>
-                <select id="Proyecto" name="Proyecto" value={formData.Proyecto} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit}>
-                  {projects.map(project => (<option key={project.id} value={project.id}>{project.nombre}</option>))}
-                </select>
-              </div>
-            )}
           </div>
+
+          {/* Campo de proyecto - movido arriba de asignar usuarios */}
+          <div>
+            <label htmlFor="projectSearch" className="block text-sm font-medium text-slate-700 mb-1">Proyecto</label>
+
+              {/* Mostrar proyecto seleccionado */}
+              {formData.Proyecto && (
+                <div className="mb-3">
+                  <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm w-fit">
+                    <Icon name="folder" className="w-4 h-4 mr-2"/>
+                    <span>{projects.find(p => p.id === Number(formData.Proyecto))?.nombre || 'Proyecto desconocido'}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Campo de búsqueda para cambiar proyecto */}
+              <div className="relative">
+                <input
+                  type="text"
+                  id="projectSearch"
+                  value={projectSearchQuery}
+                  onChange={(e) => handleProjectSearch(e.target.value)}
+                  onBlur={handleProjectSearchBlur}
+                  placeholder="Buscar proyecto..."
+                  className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  disabled={!canEdit}
+                />
+                {isSearchingProjects && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                )}
+                {showProjectDropdown && projectSearchResults.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {projectSearchResults.map((project) => (
+                      <button
+                        key={project.id}
+                        type="button"
+                        onClick={() => handleProjectSelect(project)}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-slate-900">{project.nombre}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
           <div>
             <label htmlFor="assignedUser" className="block text-sm font-medium text-slate-700 mb-1">Asignar usuarios</label>
