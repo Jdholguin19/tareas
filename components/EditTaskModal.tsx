@@ -234,7 +234,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const handleSave = async () => {
     setIsSaving(true);
     await onSave(formData);
-    // isSaving will be false when the modal closes after a successful save
+    // Reload page to ensure all changes are visually reflected
+    window.location.reload();
   };
   
   const handleAddNewSubtask = async () => {
@@ -416,7 +417,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             <label htmlFor="projectSearch" className="block text-sm font-medium text-slate-700 mb-1">Proyecto</label>
 
               {/* Mostrar proyecto seleccionado */}
-              {formData.Proyecto && (
+              {formData.Proyecto ? (
                 <div className="mb-3 flex items-center space-x-2">
                   <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm w-fit">
                     <Icon name="folder" className="w-4 h-4 mr-2"/>
@@ -427,6 +428,13 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                       <Icon name="close" className="w-4 h-4 text-slate-500" />
                     </button>
                   )}
+                </div>
+              ) : (
+                <div className="mb-3">
+                  <div className="flex items-center bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm w-fit">
+                    <Icon name="folder" className="w-4 h-4 mr-2"/>
+                    <span>No hay proyectos seleccionados</span>
+                  </div>
                 </div>
               )}
 
