@@ -31,10 +31,12 @@ try {
         FROM tareas t
         LEFT JOIN usuarios u ON t.asignado_a = u.id
         LEFT JOIN proyectos p ON t.proyecto_id = p.id
-        WHERE t.creado_por = ?
+        WHERE t.creado_por = ? OR t.id IN (
+            SELECT ta.tarea_id FROM tareas_asignados ta WHERE ta.usuario_id = ?
+        )
         ORDER BY t.fecha_creacion DESC
     ");
-    $stmt->execute([$userId]);
+    $stmt->execute([$userId, $userId]);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Convert Adjuntos_URL from JSON string to array

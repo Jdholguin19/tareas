@@ -3,6 +3,7 @@ import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { getTaskAssigneesForDisplay } from '../services/apiService';
 
 interface TaskItemProps {
   task: Task;
@@ -40,6 +41,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDraggingProgress, setIsDraggingProgress] = useState(false);
+  const [assignedUsers, setAssignedUsers] = useState<{id: number, username: string}[]>([]);
+  const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressFillRef = useRef<HTMLDivElement>(null);
@@ -50,6 +53,22 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
       dateInputRef.current?.focus();
     }
   }, [isEditingDate]);
+
+  useEffect(() => {
+    loadAssignedUsers();
+  }, [task.ID]);
+
+  const loadAssignedUsers = async () => {
+    setIsLoadingAssignees(true);
+    try {
+      const assignees = await getTaskAssigneesForDisplay(task.ID);
+      setAssignedUsers(assignees);
+    } catch (error) {
+      console.error('Error loading assigned users:', error);
+    } finally {
+      setIsLoadingAssignees(false);
+    }
+  };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
@@ -261,6 +280,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                 >
                    {projects.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
+            </div>
+          )}
+
+          {/* Mostrar usuarios asignados */}
+          {assignedUsers.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                <Icon name="user" className="w-4 h-4 text-blue-600"/>
+                <span className="text-xs font-medium text-blue-700">
+                  {assignedUsers.length === 1 
+                    ? assignedUsers[0].username 
+                    : `${assignedUsers.length} asignados`}
+                </span>
             </div>
           )}
            

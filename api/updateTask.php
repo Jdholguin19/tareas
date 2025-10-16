@@ -28,8 +28,16 @@ try {
         exit;
     }
 
-    // Verificar que la tarea pertenece al usuario autenticado
-    if ($currentTask['creado_por'] != $userId) {
+    // Verificar que el usuario tenga permisos para editar (creador o asignado)
+    $stmtPermisos = $pdo->prepare("
+        SELECT 1 FROM tareas t
+        WHERE t.id = ? AND (t.creado_por = ? OR EXISTS (
+            SELECT 1 FROM tareas_asignados ta WHERE ta.tarea_id = t.id AND ta.usuario_id = ?
+        ))
+    ");
+    $stmtPermisos->execute([$id, $userId, $userId]);
+    
+    if ($stmtPermisos->rowCount() === 0) {
         echo json_encode(['error' => 'No tienes permiso para modificar esta tarea']);
         exit;
     }

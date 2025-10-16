@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, getCurrentUser } from '../services/apiService';
 
 interface EditTaskModalProps {
   task: Task;
@@ -21,13 +22,49 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState<{id: number, username: string, email: string}[]>([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [assignedUsers, setAssignedUsers] = useState<{id: number, username: string, email: string, fecha_asignacion: string}[]>([]);
+  const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const userSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setFormData({
       ...task,
       Fecha_Inicio: task.Fecha_Inicio || task.Fecha_Creacion
     });
+    // Load assigned users and current user
+    loadAssignedUsers();
+    loadCurrentUser();
   }, [task]);
+
+  const loadAssignedUsers = async () => {
+    setIsLoadingAssignees(true);
+    try {
+      const assignees = await getTaskAssignees(task.ID);
+      setAssignedUsers(assignees);
+    } catch (error) {
+      console.error('Error loading assigned users:', error);
+    } finally {
+      setIsLoadingAssignees(false);
+    }
+  };
+
+  const loadCurrentUser = async () => {
+    setIsLoadingUser(true);
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('Error loading current user:', error);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
   
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -98,6 +135,70 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     setIsAddingSubtask(false);
   };
 
+  const handleUserSearch = async (query: string) => {
+    setUserSearchQuery(query);
+    
+    if (userSearchTimeoutRef.current) {
+      clearTimeout(userSearchTimeoutRef.current);
+    }
+
+    if (query.length < 1) {
+      setUserSearchResults([]);
+      setShowUserDropdown(false);
+      return;
+    }
+
+    userSearchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingUsers(true);
+      try {
+        const results = await searchUsers(query);
+        setUserSearchResults(results);
+        setShowUserDropdown(true);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        setUserSearchResults([]);
+      } finally {
+        setIsSearchingUsers(false);
+      }
+    }, 300);
+  };
+
+  const handleUserSelect = async (user: {id: number, username: string, email: string}) => {
+    // Check if user is already assigned
+    if (assignedUsers.some(assigned => assigned.id === user.id)) {
+      setUserSearchQuery('');
+      setShowUserDropdown(false);
+      setUserSearchResults([]);
+      return;
+    }
+
+    try {
+      await assignUserToTask(task.ID, user.id);
+      setAssignedUsers(prev => [...prev, { ...user, fecha_asignacion: new Date().toISOString() }]);
+      setUserSearchQuery('');
+      setShowUserDropdown(false);
+      setUserSearchResults([]);
+    } catch (error) {
+      console.error('Error assigning user:', error);
+      alert('Error al asignar usuario');
+    }
+  };
+
+  const handleRemoveAssignee = async (assigneeId: number) => {
+    try {
+      await unassignUserFromTask(task.ID, assigneeId);
+      setAssignedUsers(prev => prev.filter(user => user.id !== assigneeId));
+    } catch (error) {
+      console.error('Error unassigning user:', error);
+      alert('Error al quitar asignación');
+    }
+  };
+
+  const handleUserSearchBlur = () => {
+    // Delay hiding dropdown to allow click on options
+    setTimeout(() => setShowUserDropdown(false), 150);
+  };
+
   const handleDeleteClick = () => {
     setShowDeleteModal(true);
   };
@@ -121,6 +222,13 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     return dateString.split('T')[0];
   };
 
+  const isCreator = currentUser && currentUser.id === task.Usuario_Creador_ID;
+  const isAssigned = currentUser && assignedUsers.some(user => user.id === currentUser.id);
+  const canEdit = isCreator || isAssigned;
+  const canAssign = isCreator || isAssigned;
+  const canUnassign = isCreator; // Solo el creador puede quitar asignaciones
+  const canDelete = isCreator; // Solo el creador puede eliminar la tarea
+
   const isCompleted = formData.Porcentaje_Avance === 100;
   const subtasks = allTasks.filter(t => t.Parent_ID === task.ID);
 
@@ -138,14 +246,16 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Modifica los detalles de tu tarea.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={handleDeleteClick}
-              className="p-1.5 sm:p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-              title="Eliminar tarea"
-              aria-label="Eliminar tarea"
-            >
-              <Icon name="trash" className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
+            {canDelete && (
+              <button
+                onClick={handleDeleteClick}
+                className="p-1.5 sm:p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                title="Eliminar tarea"
+                aria-label="Eliminar tarea"
+              >
+                <Icon name="trash" className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
             <button onClick={onClose} className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100" aria-label="Cerrar modal">
                <Icon name="close" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />
             </button>
@@ -163,6 +273,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               onChange={handleChange}
               rows={2}
               className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+              disabled={!canEdit}
             />
           </div>
           
@@ -175,22 +286,86 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               onChange={handleChange}
               rows={3}
               className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+              disabled={!canEdit}
             />
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label htmlFor="Estado" className="block text-sm font-medium text-slate-700 mb-1">Estado</label>
-              <select id="Estado" name="Estado" value={formData.Estado} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base">
+              <select id="Estado" name="Estado" value={formData.Estado} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit}>
                 {Object.values(TaskState).map(state => (<option key={state} value={state}>{state}</option>))}
               </select>
             </div>
             {task.Parent_ID === 0 && (
               <div>
                 <label htmlFor="Proyecto" className="block text-sm font-medium text-slate-700 mb-1">Proyecto</label>
-                <select id="Proyecto" name="Proyecto" value={formData.Proyecto} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base">
+                <select id="Proyecto" name="Proyecto" value={formData.Proyecto} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit}>
                   {projects.map(project => (<option key={project.id} value={project.id}>{project.nombre}</option>))}
                 </select>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="assignedUser" className="block text-sm font-medium text-slate-700 mb-1">Asignar usuarios</label>
+            
+            {/* Mostrar usuarios asignados */}
+            {assignedUsers.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-xs font-medium text-slate-600 mb-2">Usuarios asignados:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {assignedUsers.map((user) => (
+                    <div key={user.id} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                      <span>{user.username}</span>
+                      {canUnassign && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAssignee(user.id)}
+                          className="ml-2 text-blue-600 hover:text-blue-800"
+                          title="Quitar asignación"
+                        >
+                          <Icon name="close" className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Campo de búsqueda para asignar nuevos usuarios */}
+            {canAssign && (
+              <div className="relative">
+                <input
+                  type="text"
+                  id="assignedUser"
+                  value={userSearchQuery}
+                  onChange={(e) => handleUserSearch(e.target.value)}
+                  onBlur={handleUserSearchBlur}
+                  placeholder="Buscar usuario para asignar..."
+                  className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                />
+                {isSearchingUsers && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                )}
+                {showUserDropdown && userSearchResults.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {userSearchResults.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => handleUserSelect(user)}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-slate-900">{user.username}</div>
+                        <div className="text-sm text-slate-500">{user.email}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -198,16 +373,16 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label htmlFor="Fecha_Inicio" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Inicio</label>
-              <input type="date" id="Fecha_Inicio" name="Fecha_Inicio" value={formatDateForInput(formData.Fecha_Inicio)} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" />
+              <input type="date" id="Fecha_Inicio" name="Fecha_Inicio" value={formatDateForInput(formData.Fecha_Inicio)} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit} />
             </div>
             <div>
               <label htmlFor="Fecha_Vencimiento" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Vencimiento</label>
-              <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} min={formData.Fecha_Inicio ? formData.Fecha_Inicio.split('T')[0] : undefined} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" />
+              <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} min={formData.Fecha_Inicio ? formData.Fecha_Inicio.split('T')[0] : undefined} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit} />
             </div>
           </div>
           
           <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
-            <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+            <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!canEdit} />
             <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">Marcar como completada</label>
           </div>
 
@@ -221,6 +396,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 value={formData.Porcentaje_Avance} 
                 onChange={handleProgressChange} 
                 className="inline-block w-16 ml-2 px-2 py-1 text-sm font-bold text-blue-600 border border-slate-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                disabled={!canEdit}
               />%
             </label>
             <div className="relative">
@@ -234,7 +410,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 value={formData.Porcentaje_Avance} 
                 onChange={handleProgressChange} 
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer range-thumb-blue disabled:opacity-50" 
-                disabled={isCompleted} 
+                disabled={isCompleted || !canEdit}
               />
             </div>
           </div>
@@ -262,11 +438,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                       onKeyDown={e => e.key === 'Enter' && handleAddNewSubtask()}
                       placeholder="Añadir nueva sub-tarea..."
                       className="flex-grow p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                      disabled={isAddingSubtask}
+                      disabled={isAddingSubtask || !canEdit}
                   />
                   <button
                       onClick={handleAddNewSubtask}
-                      disabled={!newSubtaskTitle.trim() || isAddingSubtask}
+                      disabled={!newSubtaskTitle.trim() || isAddingSubtask || !canEdit}
                       className="px-3 sm:px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 disabled:bg-slate-300 flex items-center transition-colors text-sm sm:text-base"
                   >
                       {isAddingSubtask ? <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Icon name="plus" className="w-4 h-4 sm:w-5 sm:h-5"/>}
@@ -279,7 +455,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           <button onClick={onClose} className="w-full sm:w-auto px-4 sm:px-5 py-2 bg-white text-slate-700 rounded-lg border border-slate-300 hover:bg-slate-100 font-semibold transition-all text-sm sm:text-base">
             Cancelar
           </button>
-          <button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-300 flex items-center justify-center shadow-sm hover:shadow-md transition-all text-sm sm:text-base">
+          <button onClick={handleSave} disabled={isSaving || !canEdit} className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-300 flex items-center justify-center shadow-sm hover:shadow-md transition-all text-sm sm:text-base">
              {isSaving ? <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <Icon name="save" className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />}
             Guardar Cambios
           </button>

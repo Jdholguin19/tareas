@@ -20,6 +20,7 @@ export interface Task {
     Proyecto: number;
     Parent_ID: number;
     Adjuntos_URL: string[];
+    asignado_a_username?: string; // Optional field for displaying assigned user name
 }
 
 export interface User {

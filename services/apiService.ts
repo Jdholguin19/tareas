@@ -162,3 +162,61 @@ export const checkAuth = async () => {
   const res = await fetch(`${API_BASE}/checkAuth.php`, { credentials: 'include' });
   return await res.json();
 };
+
+export const searchUsers = async (query: string): Promise<{id: number, username: string, email: string}[]> => {
+  const response = await fetch(`${API_BASE}/searchUsers.php?q=${encodeURIComponent(query)}`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to search users');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
+
+export const getTaskAssignees = async (taskId: number): Promise<{id: number, username: string, email: string, fecha_asignacion: string}[]> => {
+  const response = await fetch(`${API_BASE}/getTaskAssignees.php?taskId=${taskId}`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to get task assignees');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
+
+export const assignUserToTask = async (taskId: number, assigneeId: number): Promise<{success: boolean, message: string}> => {
+  const response = await fetch(`${API_BASE}/assignUserToTask.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ taskId, assigneeId })
+  });
+  if (!response.ok) throw new Error('Failed to assign user');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
+
+export const unassignUserFromTask = async (taskId: number, assigneeId: number): Promise<{success: boolean, message: string}> => {
+  const response = await fetch(`${API_BASE}/unassignUserFromTask.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ taskId, assigneeId })
+  });
+  if (!response.ok) throw new Error('Failed to unassign user');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
+
+export const getTaskAssigneesForDisplay = async (taskId: number): Promise<{id: number, username: string}[]> => {
+  const response = await fetch(`${API_BASE}/getTaskAssignees.php?taskId=${taskId}`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to get task assignees');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data.map((user: any) => ({ id: user.id, username: user.username }));
+};
+
+export const getCurrentUser = async (): Promise<{id: number, username: string, email: string}> => {
+  const response = await fetch(`${API_BASE}/getCurrentUser.php`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to get current user');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
