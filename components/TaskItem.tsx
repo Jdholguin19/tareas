@@ -161,7 +161,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     });
   };
 
-  const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent | TouchEvent) => {
+  const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent | React.TouchEvent | TouchEvent) => {
     if (!progressBarRef.current || !progressFillRef.current) return;
 
     const rect = progressBarRef.current.getBoundingClientRect();
@@ -286,7 +286,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
           {/* Mostrar usuarios asignados */}
           {assignedUsers.length > 0 && (
             <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                <Icon name="user" className="w-4 h-4 text-blue-600"/>
+                <Icon name={assignedUsers.length === 1 ? "user" : "users"} className="w-4 h-4 text-blue-600"/>
                 <span className="text-xs font-medium text-blue-700">
                   {assignedUsers.length === 1 
                     ? assignedUsers[0].username 
