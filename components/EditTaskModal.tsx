@@ -289,7 +289,9 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
         <div className="mt-4 sm:mt-6 lg:mt-6 xl:mt-8 space-y-4 sm:space-y-6 lg:space-y-6 xl:space-y-8 max-h-[60vh] sm:max-h-[65vh] lg:max-h-[70vh] xl:max-h-[75vh] overflow-y-auto">
           {/* Main Form Fields */}
           <div>
-            <label htmlFor="Titulo" className="block text-sm font-medium text-slate-700 mb-1">Título</label>
+            <label htmlFor="Titulo" className="block text-sm font-medium text-slate-700 mb-1">
+              {isLoadingCreator ? 'Tarea creada por...' : taskCreator ? `Tarea creada por ${taskCreator.username}` : 'Tarea creada por Desconocido'}
+            </label>
             <textarea
               id="Titulo"
               name="Titulo"
@@ -332,22 +334,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           </div>
 
           <div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Creador por:</label>
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                <Icon name="user" className="w-4 h-4 text-slate-500"/>
-                {isLoadingCreator ? (
-                  <span className="text-slate-500 text-sm">Cargando...</span>
-                ) : taskCreator ? (
-                  <span className="text-slate-800 font-medium">{taskCreator.username}</span>
-                ) : (
-                  <span className="text-slate-500 text-sm">Desconocido</span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="assignedUser" className="block text-sm font-medium text-slate-700 mb-1">Asignar usuarios</label>
+            <label htmlFor="assignedUser" className="block text-sm font-medium text-slate-700 mb-1">Asignar usuarios</label>
             
             {/* Mostrar usuarios asignados */}
             {assignedUsers.length > 0 && (
@@ -408,7 +395,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               </div>
             )}
           </div>
-        </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
