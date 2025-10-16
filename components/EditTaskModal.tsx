@@ -30,6 +30,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
   const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [taskCreator, setTaskCreator] = useState<{id: number, username: string, email: string} | null>(null);
+  const [isLoadingCreator, setIsLoadingCreator] = useState(false);
   const userSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     // Load assigned users and current user
     loadAssignedUsers();
     loadCurrentUser();
+    loadTaskCreator();
   }, [task]);
 
   const loadAssignedUsers = async () => {
@@ -63,6 +66,27 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
       console.error('Error loading current user:', error);
     } finally {
       setIsLoadingUser(false);
+    }
+  };
+
+  const loadTaskCreator = async () => {
+    setIsLoadingCreator(true);
+    try {
+      // We need to get the creator info. Since we don't have a direct API, we'll use the task's creator ID
+      // For now, we'll assume the creator info is available or we can fetch it
+      // Since we have the creator ID in task.Usuario_Creador_ID, we could create an API endpoint
+      // But for simplicity, let's create a simple fetch to get user by ID
+      const response = await fetch(`/api/getUserById.php?id=${task.Usuario_Creador_ID}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to get task creator');
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setTaskCreator(data);
+    } catch (error) {
+      console.error('Error loading task creator:', error);
+      // Fallback: set creator as unknown
+      setTaskCreator({ id: task.Usuario_Creador_ID, username: 'Usuario desconocido', email: '' });
+    } finally {
+      setIsLoadingCreator(false);
     }
   };
   
@@ -308,7 +332,22 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           </div>
 
           <div>
-            <label htmlFor="assignedUser" className="block text-sm font-medium text-slate-700 mb-1">Asignar usuarios</label>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Creador por:</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                <Icon name="user" className="w-4 h-4 text-slate-500"/>
+                {isLoadingCreator ? (
+                  <span className="text-slate-500 text-sm">Cargando...</span>
+                ) : taskCreator ? (
+                  <span className="text-slate-800 font-medium">{taskCreator.username}</span>
+                ) : (
+                  <span className="text-slate-500 text-sm">Desconocido</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="assignedUser" className="block text-sm font-medium text-slate-700 mb-1">Asignar usuarios</label>
             
             {/* Mostrar usuarios asignados */}
             {assignedUsers.length > 0 && (
@@ -369,6 +408,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               </div>
             )}
           </div>
+        </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
