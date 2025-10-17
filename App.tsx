@@ -602,7 +602,7 @@ const App: React.FC = () => {
               aria-controls="pending-tasks-content"
             >
               <h2 id="pending-tasks-heading" className="text-xl font-semibold text-blue-700">
-                Tareas pendientes: {pendingCount}
+                Tareas proximas: {pendingCount}
               </h2>
               <Icon
                 name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}

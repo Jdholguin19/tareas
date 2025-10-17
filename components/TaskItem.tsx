@@ -32,10 +32,13 @@ const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: stri
     case TaskState.EN_PROGRESO:
       return { statusClass: 'in-progress', statusColor: 'var(--color-in-progress)', isOverdue: false };
     case TaskState.PENDIENTE:
+      
     default:
       return { statusClass: 'pending', statusColor: 'var(--color-pending)', isOverdue: false };
+
   }
 };
+
 
 export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
