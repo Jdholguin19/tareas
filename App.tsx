@@ -156,6 +156,12 @@ const App: React.FC = () => {
         });
       });
       
+      setTaskAssigneesRecord(prev => {
+        const newRecord = { ...prev };
+        delete newRecord[taskId];
+        return newRecord;
+      });
+      
       // Close modal if the deleted task was being edited
       if (editingTask?.ID === taskId) {
         setEditingTask(null);
