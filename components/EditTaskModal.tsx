@@ -426,7 +426,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 <div className="mb-3 flex items-center space-x-2">
                   <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm w-fit">
                     <Icon name="folder" className="w-4 h-4 mr-2"/>
-                    <span>{projects.find(p => p.id === Number(formData.Proyecto))?.nombre || 'Proyecto desconocido'}</span>
+                    <span>{task.proyecto_nombre || projects.find(p => p.id === Number(formData.Proyecto))?.nombre || 'Proyecto desconocido'}</span>
                   </div>
                   {canEdit && (
                     <button type="button" onClick={handleClearProject} className="p-1 rounded-md hover:bg-slate-100" title="Quitar proyecto">

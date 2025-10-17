@@ -18,6 +18,7 @@ export interface Task {
     Usuario_Creador_ID: number;
     Usuario_Asignado_ID: number | null;
     Proyecto: number;
+    proyecto_nombre?: string; // Optional field for displaying project name
     Parent_ID: number;
     Adjuntos_URL: string[];
     asignado_a_username?: string; // Optional field for displaying assigned user name
