@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { Icon } from './components/Icon';
 import type { Task, Project } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks } from './services/apiService';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
@@ -19,12 +19,13 @@ const App: React.FC = () => {
   const notificationMenuRef = useRef<HTMLDivElement>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showRegister, setShowRegister] = useState(false);
+  const [taskAssigneesRecord, setTaskAssigneesRecord] = useState<Record<number, {id: number, username: string}[]>>({});
 
   // Accordion states
   const [isTodayTasksExpanded, setIsTodayTasksExpanded] = useState<boolean>(true);
   const [isOverdueTasksExpanded, setIsOverdueTasksExpanded] = useState<boolean>(true);
-  const [isPendingTasksExpanded, setIsPendingTasksExpanded] = useState<boolean>(true);
-  const [isCompletedTasksExpanded, setIsCompletedTasksExpanded] = useState<boolean>(true);
+  const [isPendingTasksExpanded, setIsPendingTasksExpanded] = useState<boolean>(false);
+  const [isCompletedTasksExpanded, setIsCompletedTasksExpanded] = useState<boolean>(false);
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
@@ -351,11 +352,12 @@ const App: React.FC = () => {
     });
   };
 
-  const currentTasks = getTasksForTodayAndNoDate(tasks);
-  const overdueTasks = getOverdueTasks(tasks);
-  const completedTasks = getCompletedTasks(tasks);
-  const overdueTasksForNotifications = getOverdueTasksForNotifications(tasks);
-  const pendingTasks = getPendingTasks(tasks);
+  const currentTasks = useMemo(() => getTasksForTodayAndNoDate(tasks), [tasks]);
+  const overdueTasks = useMemo(() => getOverdueTasks(tasks), [tasks]);
+  const completedTasks = useMemo(() => getCompletedTasks(tasks), [tasks]);
+  const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
+  const pendingTasks = useMemo(() => getPendingTasks(tasks), [tasks]);
+  const allTaskIds = useMemo(() => tasks.map(t => t.ID), [tasks]);
 
   // Counter functions for section titles
   const getTodayTasksCount = (allTasks: Task[]) => {
@@ -541,7 +543,7 @@ const App: React.FC = () => {
                 {isLoading ? (
                     <TaskSkeleton />
                 ) : currentTasks.length > 0 ? (
-                  <TaskList tasks={currentTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                  <TaskList tasks={currentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
                   <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <p className="text-slate-500">¡Todo al día! No hay tareas pendientes para hoy.</p>
@@ -576,7 +578,7 @@ const App: React.FC = () => {
                 {isLoading ? (
                     <TaskSkeleton />
                 ) : overdueTasks.length > 0 ? (
-                  <TaskList tasks={overdueTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                  <TaskList tasks={overdueTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
                   <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <p className="text-slate-500">¡Excelente! No hay tareas vencidas.</p>
@@ -611,7 +613,7 @@ const App: React.FC = () => {
                 {isLoading ? (
                     <TaskSkeleton />
                 ) : pendingTasks.length > 0 ? (
-                  <TaskList tasks={pendingTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                  <TaskList tasks={pendingTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
                   <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
@@ -646,7 +648,7 @@ const App: React.FC = () => {
                 {isLoading ? (
                     <TaskSkeleton />
                 ) : completedTasks.length > 0 ? (
-                  <TaskList tasks={completedTasks} projects={projects} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                  <TaskList tasks={completedTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                 ) : (
                   <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                     <p className="text-slate-500">Aún no has completado ninguna tarea.</p>

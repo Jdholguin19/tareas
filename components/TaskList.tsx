@@ -1,34 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import type { Task, Project } from '../types';
 import { TaskItem } from './TaskItem';
-import { getAllTaskAssignees } from '../services/apiService';
 
 interface TaskListProps {
   tasks: Task[];
   projects: Project[];
+  taskAssigneesRecord: Record<number, {id: number, username: string}[]>;
   onTaskClick: (task: Task) => void;
   onTaskUpdate: (task: Task) => void;
   onDelete: (taskId: number) => void;
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onTaskClick, onTaskUpdate, onDelete }) => {
-  const [taskAssignees, setTaskAssignees] = useState<Record<number, {id: number, username: string}[]>>({});
-
-  useEffect(() => {
-    const loadAllTaskAssignees = async () => {
-      if (tasks.length === 0) return;
-
-      try {
-        const taskIds = tasks.map(task => task.ID);
-        const assignees = await getAllTaskAssignees(taskIds);
-        setTaskAssignees(assignees);
-      } catch (error) {
-        console.error('Error loading task assignees:', error);
-      }
-    };
-
-    loadAllTaskAssignees();
-  }, [tasks]);
+export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete }) => {
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
@@ -58,7 +41,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onTaskClick
           task={task}
           allTasks={tasks}
           projects={projects}
-          taskAssigneesRecord={taskAssignees}
+          taskAssigneesRecord={taskAssigneesRecord}
           onTaskClick={onTaskClick}
           onUpdate={onTaskUpdate}
           onDelete={onDelete}

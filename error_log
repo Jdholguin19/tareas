@@ -1,2 +1,148 @@
-
-quiero que en Editar Tarea, se pueda asignar una tarea a otro usuario,, quiero que añadas un nuevo campo en editar tare que  sea por ejemplo Asignado a: aqui se va a buscar por medio de un filtro interactivo digamos en que en tiempo real y aparesca las opciones en un combo box, ejemplo busca j y te aparecen todos los nombres de los usuarios que comienzen con j o que contenga j por ejmplo jose, juan joffre, asi susecivamente por ejemlo jo, aparece joffre y jose, el punto aparte de esto esque si yo le asigno una tarea a otro usuario ese usuario pueda ver esa tarea a la que se la asigne
+Fri Oct 17 10:04:38 2025] [::1]:56911 [200]: GET /api/getTaskAssignees.php?taskId=70
+[Fri Oct 17 10:04:38 2025] [::1]:56911 Closing
+[Fri Oct 17 10:04:38 2025] [::1]:56913 Accepted
+[Fri Oct 17 10:04:39 2025] [::1]:56912 [200]: GET /api/getTaskAssignees.php?taskId=69
+[Fri Oct 17 10:04:39 2025] [::1]:56912 Closing
+[Fri Oct 17 10:04:39 2025] [::1]:60589 Accepted
+[Fri Oct 17 10:04:40 2025] [::1]:56913 [200]: GET /api/getTaskAssignees.php?taskId=68
+[Fri Oct 17 10:04:40 2025] [::1]:56913 Closing
+[Fri Oct 17 10:04:40 2025] [::1]:50623 Accepted
+[Fri Oct 17 10:04:41 2025] [::1]:60589 [200]: GET /api/getTaskAssignees.php?taskId=67
+[Fri Oct 17 10:04:41 2025] [::1]:60589 Closing
+[Fri Oct 17 10:04:41 2025] [::1]:53004 Accepted
+[Fri Oct 17 10:04:41 2025] [::1]:50623 [200]: GET /api/getTaskAssignees.php?taskId=66
+[Fri Oct 17 10:04:41 2025] [::1]:50623 Closing
+[Fri Oct 17 10:04:41 2025] [::1]:61579 Accepted
+[Fri Oct 17 10:04:42 2025] [::1]:53004 [200]: GET /api/getTaskAssignees.php?taskId=58
+[Fri Oct 17 10:04:42 2025] [::1]:53004 Closing
+[Fri Oct 17 10:04:42 2025] [::1]:62621 Accepted
+[Fri Oct 17 10:04:43 2025] [::1]:61579 [200]: GET /api/getTaskAssignees.php?taskId=53
+[Fri Oct 17 10:04:43 2025] [::1]:61579 Closing
+[Fri Oct 17 10:04:43 2025] [::1]:54983 Accepted
+[Fri Oct 17 10:04:43 2025] [::1]:62621 [200]: GET /api/getTaskAssignees.php?taskId=50
+[Fri Oct 17 10:04:43 2025] [::1]:62621 Closing
+[Fri Oct 17 10:04:43 2025] [::1]:58635 Accepted
+[Fri Oct 17 10:04:44 2025] [::1]:54983 [200]: GET /api/getTaskAssignees.php?taskId=46
+[Fri Oct 17 10:04:44 2025] [::1]:54983 Closing
+[Fri Oct 17 10:04:44 2025] [::1]:62820 Accepted
+[Fri Oct 17 10:04:45 2025] [::1]:58635 [200]: GET /api/getProjects.php
+[Fri Oct 17 10:04:45 2025] [::1]:58635 Closing
+[Fri Oct 17 10:04:45 2025] [::1]:49977 Accepted
+[Fri Oct 17 10:04:46 2025] [::1]:62820 [200]: GET /api/getTaskAssignees.php?taskId=71
+[Fri Oct 17 10:04:46 2025] [::1]:62820 Closing
+[Fri Oct 17 10:04:46 2025] [::1]:52963 Accepted
+[Fri Oct 17 10:04:46 2025] [::1]:49977 [200]: GET /api/getTaskAssignees.php?taskId=70
+[Fri Oct 17 10:04:46 2025] [::1]:49977 Closing
+[Fri Oct 17 10:04:46 2025] [::1]:61433 Accepted
+[Fri Oct 17 10:04:47 2025] [::1]:52963 [200]: GET /api/getTaskAssignees.php?taskId=69
+[Fri Oct 17 10:04:47 2025] [::1]:52963 Closing
+[Fri Oct 17 10:04:47 2025] [::1]:51064 Accepted
+[Fri Oct 17 10:04:48 2025] [::1]:61433 [200]: GET /api/getTaskAssignees.php?taskId=68
+[Fri Oct 17 10:04:48 2025] [::1]:61433 Closing
+[Fri Oct 17 10:04:48 2025] [::1]:62855 Accepted
+[Fri Oct 17 10:04:49 2025] [::1]:51064 [200]: GET /api/getTaskAssignees.php?taskId=67
+[Fri Oct 17 10:04:49 2025] [::1]:51064 Closing
+[Fri Oct 17 10:04:49 2025] [::1]:55781 Accepted
+[Fri Oct 17 10:04:50 2025] [::1]:62855 [200]: GET /api/getTaskAssignees.php?taskId=66
+[Fri Oct 17 10:04:50 2025] [::1]:62855 Closing
+[Fri Oct 17 10:04:50 2025] [::1]:51345 Accepted
+[Fri Oct 17 10:04:51 2025] [::1]:55781 [200]: GET /api/getTaskAssignees.php?taskId=58
+[Fri Oct 17 10:04:51 2025] [::1]:55781 Closing
+[Fri Oct 17 10:04:51 2025] [::1]:62088 Accepted
+[Fri Oct 17 10:04:51 2025] [::1]:51345 [200]: GET /api/getTaskAssignees.php?taskId=53
+[Fri Oct 17 10:04:51 2025] [::1]:51345 Closing
+[Fri Oct 17 10:04:51 2025] [::1]:57737 Accepted
+[Fri Oct 17 10:04:52 2025] [::1]:62088 [200]: GET /api/getTaskAssignees.php?taskId=50
+[Fri Oct 17 10:04:52 2025] [::1]:62088 Closing
+[Fri Oct 17 10:04:52 2025] [::1]:58141 Accepted
+[Fri Oct 17 10:04:53 2025] [::1]:57737 [200]: GET /api/getTaskAssignees.php?taskId=46
+[Fri Oct 17 10:04:53 2025] [::1]:57737 Closing
+[Fri Oct 17 10:04:53 2025] [::1]:54881 Accepted
+[Fri Oct 17 10:04:53 2025] [::1]:58141 [200]: GET /api/getTaskAssignees.php?taskId=71
+[Fri Oct 17 10:04:53 2025] [::1]:58141 Closing
+[Fri Oct 17 10:04:53 2025] [::1]:53016 Accepted
+[Fri Oct 17 10:04:54 2025] [::1]:54881 [200]: GET /api/getTaskAssignees.php?taskId=70
+[Fri Oct 17 10:04:54 2025] [::1]:54881 Closing
+[Fri Oct 17 10:04:54 2025] [::1]:57887 Accepted
+[Fri Oct 17 10:04:55 2025] [::1]:53016 [200]: GET /api/getTaskAssignees.php?taskId=50
+[Fri Oct 17 10:04:55 2025] [::1]:53016 Closing
+[Fri Oct 17 10:04:55 2025] [::1]:61903 Accepted
+[Fri Oct 17 10:04:56 2025] [::1]:57887 [200]: GET /api/getTaskAssignees.php?taskId=46
+[Fri Oct 17 10:04:56 2025] [::1]:57887 Closing
+[Fri Oct 17 10:04:56 2025] [::1]:65327 Accepted
+[Fri Oct 17 10:04:56 2025] [::1]:61903 [200]: GET /api/getTaskAssignees.php?taskId=71
+[Fri Oct 17 10:04:56 2025] [::1]:61903 Closing
+[Fri Oct 17 10:04:56 2025] [::1]:59554 Accepted
+[Fri Oct 17 10:04:57 2025] [::1]:65327 [200]: GET /api/getTaskAssignees.php?taskId=69
+[Fri Oct 17 10:04:57 2025] [::1]:65327 Closing
+[Fri Oct 17 10:04:57 2025] [::1]:64393 Accepted
+[Fri Oct 17 10:04:58 2025] [::1]:59554 [200]: GET /api/getTaskAssignees.php?taskId=50
+[Fri Oct 17 10:04:58 2025] [::1]:59554 Closing
+[Fri Oct 17 10:04:58 2025] [::1]:64394 Accepted
+[Fri Oct 17 10:04:58 2025] [::1]:64393 [200]: GET /api/getTaskAssignees.php?taskId=71
+[Fri Oct 17 10:04:58 2025] [::1]:64393 Closing
+[Fri Oct 17 10:04:58 2025] [::1]:51638 Accepted
+[Fri Oct 17 10:04:59 2025] [::1]:64394 [200]: GET /api/getTaskAssignees.php?taskId=70
+[Fri Oct 17 10:04:59 2025] [::1]:64394 Closing
+[Fri Oct 17 10:04:59 2025] [::1]:50191 Accepted
+[Fri Oct 17 10:05:00 2025] [::1]:51638 [200]: GET /api/getTaskAssignees.php?taskId=68
+[Fri Oct 17 10:05:00 2025] [::1]:51638 Closing
+[Fri Oct 17 10:05:00 2025] [::1]:50192 Accepted
+[Fri Oct 17 10:05:01 2025] [::1]:50191 [200]: GET /api/getTaskAssignees.php?taskId=50
+[Fri Oct 17 10:05:01 2025] [::1]:50191 Closing
+[Fri Oct 17 10:05:01 2025] [::1]:56100 Accepted
+[Fri Oct 17 10:05:01 2025] [::1]:50192 [200]: GET /api/getTaskAssignees.php?taskId=46
+[Fri Oct 17 10:05:01 2025] [::1]:50192 Closing
+[Fri Oct 17 10:05:01 2025] [::1]:56101 Accepted
+[Fri Oct 17 10:05:02 2025] [::1]:56100 [200]: GET /api/getTaskAssignees.php?taskId=70
+[Fri Oct 17 10:05:02 2025] [::1]:56100 Closing
+[Fri Oct 17 10:05:02 2025] [::1]:54325 Accepted
+[Fri Oct 17 10:05:03 2025] [::1]:56101 [200]: GET /api/getTaskAssignees.php?taskId=69
+[Fri Oct 17 10:05:03 2025] [::1]:56101 Closing
+[Fri Oct 17 10:05:03 2025] [::1]:53552 Accepted
+[Fri Oct 17 10:05:04 2025] [::1]:54325 [200]: GET /api/getTaskAssignees.php?taskId=67
+[Fri Oct 17 10:05:04 2025] [::1]:54325 Closing
+[Fri Oct 17 10:05:04 2025] [::1]:62412 Accepted
+[Fri Oct 17 10:05:04 2025] [::1]:53552 [200]: GET /api/getTaskAssignees.php?taskId=46
+[Fri Oct 17 10:05:04 2025] [::1]:53552 Closing
+[Fri Oct 17 10:05:04 2025] [::1]:49322 Accepted
+[Fri Oct 17 10:05:05 2025] [::1]:62412 [200]: GET /api/getTaskAssignees.php?taskId=69
+[Fri Oct 17 10:05:05 2025] [::1]:62412 Closing
+[Fri Oct 17 10:05:05 2025] [::1]:59415 Accepted
+[Fri Oct 17 10:05:06 2025] [::1]:49322 [200]: GET /api/getTaskAssignees.php?taskId=68
+[Fri Oct 17 10:05:06 2025] [::1]:49322 Closing
+[Fri Oct 17 10:05:06 2025] [::1]:59415 [200]: GET /api/getTaskAssignees.php?taskId=66
+[Fri Oct 17 10:05:06 2025] [::1]:59415 Closing
+[Fri Oct 17 10:05:06 2025] [::1]:61446 Accepted
+[Fri Oct 17 10:05:06 2025] [::1]:61447 Accepted
+[Fri Oct 17 10:05:07 2025] [::1]:61446 [200]: GET /api/getTaskAssignees.php?taskId=68
+[Fri Oct 17 10:05:07 2025] [::1]:61446 Closing
+[Fri Oct 17 10:05:07 2025] [::1]:63019 Accepted
+[Fri Oct 17 10:05:08 2025] [::1]:61447 [200]: GET /api/getTaskAssignees.php?taskId=67
+[Fri Oct 17 10:05:08 2025] [::1]:61447 Closing
+[Fri Oct 17 10:05:09 2025] [::1]:63019 [200]: GET /api/getTaskAssignees.php?taskId=58
+[Fri Oct 17 10:05:09 2025] [::1]:63019 Closing
+[Fri Oct 17 10:05:09 2025] [::1]:49687 Accepted
+[Fri Oct 17 10:05:09 2025] [::1]:56505 Accepted
+[Fri Oct 17 10:05:09 2025] [::1]:49687 [200]: GET /api/getTaskAssignees.php?taskId=67
+[Fri Oct 17 10:05:09 2025] [::1]:49687 Closing
+[Fri Oct 17 10:05:09 2025] [::1]:63727 Accepted
+[Fri Oct 17 10:05:10 2025] [::1]:56505 [200]: GET /api/getTaskAssignees.php?taskId=66
+[Fri Oct 17 10:05:10 2025] [::1]:56505 Closing
+[Fri Oct 17 10:05:11 2025] [::1]:63727 [200]: GET /api/getTaskAssignees.php?taskId=53
+[Fri Oct 17 10:05:11 2025] [::1]:63727 Closing
+[Fri Oct 17 10:05:11 2025] [::1]:55224 Accepted
+[Fri Oct 17 10:05:11 2025] [::1]:64379 Accepted
+[Fri Oct 17 10:05:11 2025] [::1]:55224 [200]: GET /api/getTaskAssignees.php?taskId=66
+[Fri Oct 17 10:05:11 2025] [::1]:55224 Closing
+[Fri Oct 17 10:05:12 2025] [::1]:64379 [200]: GET /api/getTaskAssignees.php?taskId=58
+[Fri Oct 17 10:05:12 2025] [::1]:64379 Closing
+[Fri Oct 17 10:05:12 2025] [::1]:52323 Accepted
+[Fri Oct 17 10:05:12 2025] [::1]:52324 Accepted
+[Fri Oct 17 10:05:13 2025] [::1]:52323 [200]: GET /api/getTaskAssignees.php?taskId=58
+[Fri Oct 17 10:05:13 2025] [::1]:52323 Closing
+[Fri Oct 17 10:05:14 2025] [::1]:52324 [200]: GET /api/getTaskAssignees.php?taskId=53
+[Fri Oct 17 10:05:14 2025] [::1]:52324 Closing
+[Fri Oct 17 10:05:14 2025] [::1]:55351 Accepted
+[Fri Oct 17 10:05:15 2025] [::1]:55351 [200]: GET /api/getTaskAssignees.php?taskId=53
+[Fri Oct 17 10:05:15 2025] [::1]:55351 Closing
