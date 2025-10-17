@@ -3,7 +3,7 @@ import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { Icon } from './components/Icon';
 import type { Task, Project } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getTaskDetails } from './services/apiService';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
@@ -89,16 +89,8 @@ const App: React.FC = () => {
     setTasks(prevTasks => [newTask, ...prevTasks]);
   };
 
-  const handleSelectTask = async (task: Task) => {
-    try {
-      // Load full task details for editing
-      const fullTaskDetails = await getTaskDetails(task.ID);
-      setEditingTask(fullTaskDetails);
-    } catch (error) {
-      console.error("Failed to load task details:", error);
-      // Fallback to minimal task data if full details fail to load
-      setEditingTask(task);
-    }
+  const handleSelectTask = (task: Task) => {
+    setEditingTask(task);
   };
 
   const handleCloseModal = () => {

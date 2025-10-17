@@ -29,12 +29,28 @@ $user = getenv('DB_USER') ?: 'portalao_jholguin';
 $password = getenv('DB_PASSWORD') ?: 'jofCTV321!*';
 $database = getenv('DB_DATABASE') ?: 'portalao_ReunionesCS';
 
+// Opciones de PDO: 
+// 1. Forzar manejo de errores con excepciones.
+$timezone = getenv('DB_TIMEZONE') ?: '-05:00'; // Lee la nueva variable del .env
+
+// 2. Ejecutar comando SET time_zone = '-05:00' (Ecuador) al conectar.
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '{$timezone}'" // Usa la variable
+];
+
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $user, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Usamos las opciones en la función new PDO
+    $pdo = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $user, $password, $options);
+    
+    // Ya no es necesario $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // porque está incluido en $options.
+
 } catch (PDOException $e) {
-    echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
-    exit;
+    // Manejo de errores de conexión...
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de conexión a la base de datos: ' . $e->getMessage()]);
+    exit();
 }
 
 // Ensure session cookie params are set reasonably for local dev
