@@ -601,12 +601,12 @@ const App: React.FC = () => {
               aria-expanded={isPendingTasksExpanded}
               aria-controls="pending-tasks-content"
             >
-              <h2 id="pending-tasks-heading" className="text-xl font-semibold text-blue-700">
+              <h2 id="pending-tasks-heading" className="text-xl font-semibold text-[var(--color-proximate)]">
                 Tareas proximas: {pendingCount}
               </h2>
               <Icon
                 name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}
-                className="w-5 h-5 text-blue-600 transition-transform duration-200"
+                className="w-5 h-5 text-[var(--color-proximate)] transition-transform duration-200"
               />
             </button>
             <div
@@ -632,16 +632,16 @@ const App: React.FC = () => {
         <section aria-labelledby="completed-tasks-heading" className="mt-12">
             <button
               onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
-              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
+              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
               aria-expanded={isCompletedTasksExpanded}
               aria-controls="completed-tasks-content"
             >
-              <h2 id="completed-tasks-heading" className="text-xl font-semibold text-green-700">
+              <h2 id="completed-tasks-heading" className="text-xl font-semibold text-blue-700">
                 Tareas completadas: {completedCount}
               </h2>
               <Icon
                 name={isCompletedTasksExpanded ? "chevronUp" : "chevronDown"}
-                className="w-5 h-5 text-green-600 transition-transform duration-200"
+                className="w-5 h-5 text-blue-600 transition-transform duration-200"
               />
             </button>
             <div

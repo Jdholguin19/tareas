@@ -30,9 +30,25 @@ const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: stri
     case TaskState.COMPLETADA:
       return { statusClass: 'completed', statusColor: 'var(--color-completed)', isOverdue: false };
     case TaskState.EN_PROGRESO:
+      // For in-progress tasks, use proximate color if due in future, else in-progress color
+      if (task.Fecha_Vencimiento) {
+        const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+        dueDate.setHours(0, 0, 0, 0);
+        if (dueDate > today) {
+          return { statusClass: 'proximate', statusColor: 'var(--color-proximate)', isOverdue: false };
+        }
+      }
       return { statusClass: 'in-progress', statusColor: 'var(--color-in-progress)', isOverdue: false };
     case TaskState.PENDIENTE:
-      
+      // For pending tasks, use proximate color if due in future, else pending color
+      if (task.Fecha_Vencimiento) {
+        const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+        dueDate.setHours(0, 0, 0, 0);
+        if (dueDate > today) {
+          return { statusClass: 'proximate', statusColor: 'var(--color-proximate)', isOverdue: false };
+        }
+      }
+      return { statusClass: 'pending', statusColor: 'var(--color-pending)', isOverdue: false };
     default:
       return { statusClass: 'pending', statusColor: 'var(--color-pending)', isOverdue: false };
 
