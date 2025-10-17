@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Task, Project } from '../types';
 import { TaskItem } from './TaskItem';
+import { getAllTaskAssignees } from '../services/apiService';
 
 interface TaskListProps {
   tasks: Task[];
@@ -11,6 +12,23 @@ interface TaskListProps {
 }
 
 export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onTaskClick, onTaskUpdate, onDelete }) => {
+  const [taskAssignees, setTaskAssignees] = useState<Record<number, {id: number, username: string}[]>>({});
+
+  useEffect(() => {
+    const loadAllTaskAssignees = async () => {
+      if (tasks.length === 0) return;
+
+      try {
+        const taskIds = tasks.map(task => task.ID);
+        const assignees = await getAllTaskAssignees(taskIds);
+        setTaskAssignees(assignees);
+      } catch (error) {
+        console.error('Error loading task assignees:', error);
+      }
+    };
+
+    loadAllTaskAssignees();
+  }, [tasks]);
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
@@ -40,6 +58,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onTaskClick
           task={task}
           allTasks={tasks}
           projects={projects}
+          taskAssignees={taskAssignees[task.ID] || []}
           onTaskClick={onTaskClick}
           onUpdate={onTaskUpdate}
           onDelete={onDelete}
