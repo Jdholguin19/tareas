@@ -307,3 +307,25 @@ export const createProject = async (nombre: string): Promise<Project> => {
   if (data.error) throw new Error(data.error);
   return data;
 };
+
+export const getMinimalTasks = getTasks;
+
+export const getTaskDetails = async (id: number): Promise<Task> => {
+  const tasks = await getTasks();
+  const task = tasks.find(t => t.ID === id);
+  if (!task) throw new Error('Task not found');
+  return task;
+};
+
+export const getAllTaskAssignees = async (taskIds: number[]): Promise<Record<number, {id: number, username: string}[]>> => {
+  const result: Record<number, {id: number, username: string}[]> = {};
+  for (const taskId of taskIds) {
+    try {
+      result[taskId] = await getTaskAssigneesForDisplay(taskId);
+    } catch (error) {
+      console.error(`Failed to load assignees for task ${taskId}:`, error);
+      result[taskId] = [];
+    }
+  }
+  return result;
+};

@@ -112,9 +112,10 @@ try {
             t.fecha_completada AS Fecha_Completada,
             t.creado_por AS Usuario_Creador_ID,
             t.asignado_a AS Usuario_Asignado_ID,
-            COALESCE(p.nombre, 'General') AS Proyecto,
+            t.proyecto_id AS Proyecto,
             t.tarea_padre_id AS Parent_ID,
-            t.adjuntos_url AS Adjuntos_URL
+            t.adjuntos_url AS Adjuntos_URL,
+            p.nombre AS proyecto_nombre
         FROM tareas t
         LEFT JOIN proyectos p ON t.proyecto_id = p.id
         WHERE t.id = ?

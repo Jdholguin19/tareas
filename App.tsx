@@ -528,7 +528,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-slate-50 transition-colors"
-              aria-expanded={isTodayTasksExpanded ? 'true' : 'false'}
+              aria-expanded={isTodayTasksExpanded}
               aria-controls="current-tasks-content"
             >
               <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
@@ -598,7 +598,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsPendingTasksExpanded(!isPendingTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-blue-50 transition-colors"
-              aria-expanded={isPendingTasksExpanded ? 'true' : 'false'}
+              aria-expanded={isPendingTasksExpanded}
               aria-controls="pending-tasks-content"
             >
               <h2 id="pending-tasks-heading" className="text-xl font-semibold text-blue-700">
@@ -633,7 +633,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
-              aria-expanded={isCompletedTasksExpanded ? 'true' : 'false'}
+              aria-expanded={isCompletedTasksExpanded}
               aria-controls="completed-tasks-content"
             >
               <h2 id="completed-tasks-heading" className="text-xl font-semibold text-green-700">

@@ -13,6 +13,7 @@ interface TaskItemProps {
   onUpdate: (task: Task) => void;
   onDelete: (taskId: number) => void;
   level: number;
+  taskAssigneesRecord: Record<number, {id: number, username: string}[]>;
 }
 
 const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: string, isOverdue: boolean } => {
@@ -36,7 +37,7 @@ const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: stri
   }
 };
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -228,6 +229,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
 
   const paddingLeft = `${level * 1.5 + 0.75}rem`;
 
+  const taskAssignees = taskAssigneesRecord[task.ID] || [];
+
   return (
     <li>
       <div 
@@ -349,6 +352,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                     task={child}
                     allTasks={allTasks}
                     projects={projects}
+                    taskAssigneesRecord={taskAssigneesRecord}
                     onTaskClick={onTaskClick}
                     onUpdate={onUpdate}
                     onDelete={onDelete}

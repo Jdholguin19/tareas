@@ -421,11 +421,12 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
               {/* Mostrar proyecto seleccionado */}
               {formData.Proyecto ? (
+                <>
+                  {console.log('EditTaskModal - formData.Proyecto:', formData.Proyecto, 'projects:', projects.map(p => ({id: p.id, nombre: p.nombre})))}
                 <div className="mb-3 flex items-center space-x-2">
                   <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm w-fit">
                     <Icon name="folder" className="w-4 h-4 mr-2"/>
                     <span>{projects.find(p => p.id === Number(formData.Proyecto))?.nombre || 'Proyecto desconocido'}</span>
-                    {console.log('EditTaskModal - formData.Proyecto:', formData.Proyecto, 'projects:', projects)}
                   </div>
                   {canEdit && (
                     <button type="button" onClick={handleClearProject} className="p-1 rounded-md hover:bg-slate-100" title="Quitar proyecto">
@@ -433,6 +434,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                     </button>
                   )}
                 </div>
+                </>
               ) : (
                 <div className="mb-3">
                   <div className="flex items-center bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm w-fit">
