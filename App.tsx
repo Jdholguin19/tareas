@@ -3,7 +3,7 @@ import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { Icon } from './components/Icon';
 import type { Task, Project } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees } from './services/apiService';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
@@ -20,6 +20,96 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showRegister, setShowRegister] = useState(false);
   const [taskAssigneesRecord, setTaskAssigneesRecord] = useState<Record<number, {id: number, username: string}[]>>({});
+
+  // Current user state
+  const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [appliedSearchFilter, setAppliedSearchFilter] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Search handlers
+  const handleSearchInput = (query: string) => {
+    setSearchQuery(query);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (query.length >= 1) {
+      setShowSearchDropdown(true);
+    } else {
+      setShowSearchDropdown(false);
+    }
+  };
+
+  const handleSearchSelect = (item: { type: 'task' | 'project', id: number, name: string }) => {
+    if (item.type === 'task') {
+      // For tasks, set search to task title
+      setAppliedSearchFilter(item.name);
+      setSelectedProjectId(null);
+      setSearchQuery(item.name);
+    } else {
+      // For projects, set project filter
+      setSelectedProjectId(item.id);
+      setAppliedSearchFilter(item.name);
+      setSearchQuery(item.name);
+    }
+    setShowSearchDropdown(false);
+  };
+
+  const handleApplySearch = () => {
+    setAppliedSearchFilter(searchQuery);
+    setSelectedProjectId(null); // Clear project selection when applying text search
+    setShowSearchDropdown(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setAppliedSearchFilter('');
+    setSelectedProjectId(null);
+    setShowSearchDropdown(false);
+  };
+
+  const handleSearchBlur = () => {
+    // Delay hiding dropdown to allow click on options
+    setTimeout(() => setShowSearchDropdown(false), 150);
+  };
+
+  // Get search suggestions
+  const getSearchSuggestions = () => {
+    if (!searchQuery.trim() || searchQuery.length < 1) return [];
+
+    const term = searchQuery.toLowerCase().trim();
+    const suggestions: { type: 'task' | 'project', id: number, name: string }[] = [];
+
+    // Filter tasks for current user first
+    const userTasks = filterTasksForCurrentUser(tasks);
+
+    // Add matching tasks
+    userTasks.forEach(task => {
+      if (task.Titulo.toLowerCase().includes(term)) {
+        suggestions.push({ type: 'task', id: task.ID, name: task.Titulo });
+      }
+    });
+
+    // Add matching projects
+    projects.forEach(project => {
+      if (project.nombre.toLowerCase().includes(term)) {
+        suggestions.push({ type: 'project', id: project.id, name: project.nombre });
+      }
+    });
+
+    // Remove duplicates and limit to 10 suggestions
+    return suggestions
+      .filter((item, index, self) => 
+        index === self.findIndex(s => s.id === item.id && s.type === item.type)
+      )
+      .slice(0, 10);
+  };
 
   // Accordion states
   const [isTodayTasksExpanded, setIsTodayTasksExpanded] = useState<boolean>(true);
@@ -57,6 +147,13 @@ const App: React.FC = () => {
           setIsAuthenticated(true);
           await fetchTasks();
           await fetchProjects();
+          // Get current user
+          try {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+          } catch (error) {
+            console.error('Error getting current user:', error);
+          }
         } else {
           setIsAuthenticated(false);
         }
@@ -257,14 +354,55 @@ const App: React.FC = () => {
 
   const isCompleted = (task: Task) => parseProgress(task.Porcentaje_Avance) >= 100;
 
-  const getTasksForTodayAndNoDate = (allTasks: Task[]) => {
+  // Search matching function
+  const matchesSearch = (task: Task, searchTerm: string, projects: Project[], selectedProjectId: number | null): boolean => {
+    // If a specific project is selected, only show tasks from that project
+    if (selectedProjectId !== null) {
+      return Number(task.Proyecto) === selectedProjectId;
+    }
+    
+    // Otherwise, apply text search
+    if (!searchTerm.trim()) return true;
+    
+    const term = searchTerm.toLowerCase().trim();
+    
+    // Check task title
+    if (task.Titulo.toLowerCase().includes(term)) return true;
+    
+    // Check project name
+    const project = projects.find(p => p.id === Number(task.Proyecto));
+    if (project && project.nombre.toLowerCase().includes(term)) return true;
+    
+    return false;
+  };
+
+  // Filter tasks for current user
+  const filterTasksForCurrentUser = (allTasks: Task[]): Task[] => {
+    if (!currentUser) return allTasks;
+    
+    return allTasks.filter(task => {
+      // User created the task
+      if (task.Usuario_Creador_ID === currentUser.id) return true;
+      
+      // User is assigned to the task
+      const assignees = taskAssigneesRecord[task.ID] || [];
+      if (assignees.some(assignee => assignee.id === currentUser.id)) return true;
+      
+      return false;
+    });
+  };
+
+  const getTasksForTodayAndNoDate = (allTasks: Task[], searchFilter: string = '') => {
+    // First filter by current user
+    const userTasks = filterTasksForCurrentUser(allTasks);
+    
     const today = getCurrentDate();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Get all completed task IDs (100% progress)
     const completedTaskIds = new Set(
-      allTasks
+      userTasks
         .filter(task => isCompleted(task))
         .map(task => task.ID)
     );
@@ -273,8 +411,12 @@ const App: React.FC = () => {
     // 1. Due today, OR
     // 2. Have no due date
     // AND are NOT completed
-    return allTasks.filter(task => {
+    // AND match search filter
+    return userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
+
+      // Apply search filter
+      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
 
       if (!task.Fecha_Vencimiento) {
         // No due date - include
@@ -288,21 +430,28 @@ const App: React.FC = () => {
     });
   };
 
-  const getPendingTasks = (allTasks: Task[]) => {
+  const getPendingTasks = (allTasks: Task[], searchFilter: string = '') => {
+    // First filter by current user
+    const userTasks = filterTasksForCurrentUser(allTasks);
+    
     const today = getCurrentDate();
 
     console.log('=== DEBUG: getPendingTasks ===');
 
     // Get all completed task IDs (100% progress)
     const completedTaskIds = new Set(
-      allTasks
+      userTasks
         .filter(task => isCompleted(task))
         .map(task => task.ID)
     );
 
     // Return tasks that are due in the future (tomorrow or later) and NOT completed
-    return allTasks.filter(task => {
+    return userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
+      
+      // Apply search filter
+      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      
       if (!task.Fecha_Vencimiento) return false;
 
       const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
@@ -311,13 +460,20 @@ const App: React.FC = () => {
     });
   };
 
-  const getOverdueTasks = (allTasks: Task[]) => {
+  const getOverdueTasks = (allTasks: Task[], searchFilter: string = '') => {
+    // First filter by current user
+    const userTasks = filterTasksForCurrentUser(allTasks);
+    
     const today = getCurrentDate();
 
     // Get all overdue tasks that are NOT completed (due date is before today)
-    const overdueTasks = allTasks.filter(task => {
+    const overdueTasks = userTasks.filter(task => {
       if (!task.Fecha_Vencimiento) return false;
       if (isCompleted(task)) return false;
+      
+      // Apply search filter
+      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      
       const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
       dueDate.setHours(0, 0, 0, 0);
       // Only consider overdue if due date is before today
@@ -338,11 +494,21 @@ const App: React.FC = () => {
     }
 
     // Return all tasks in the selected hierarchies
-    return allTasks.filter(task => hierarchyTasks.has(task.ID));
+    return userTasks.filter(task => hierarchyTasks.has(task.ID));
   };
 
-  const getCompletedTasks = (allTasks: Task[]) => {
-    return allTasks.filter(task => isCompleted(task));
+  const getCompletedTasks = (allTasks: Task[], searchFilter: string = '') => {
+    // First filter by current user
+    const userTasks = filterTasksForCurrentUser(allTasks);
+    
+    return userTasks.filter(task => {
+      if (!isCompleted(task)) return false;
+      
+      // Apply search filter
+      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      
+      return true;
+    });
   };
 
   // Get only truly overdue tasks (without parents) for notifications
@@ -358,11 +524,11 @@ const App: React.FC = () => {
     });
   };
 
-  const currentTasks = useMemo(() => getTasksForTodayAndNoDate(tasks), [tasks]);
-  const overdueTasks = useMemo(() => getOverdueTasks(tasks), [tasks]);
-  const completedTasks = useMemo(() => getCompletedTasks(tasks), [tasks]);
+  const currentTasks = useMemo(() => getTasksForTodayAndNoDate(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  const overdueTasks = useMemo(() => getOverdueTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
-  const pendingTasks = useMemo(() => getPendingTasks(tasks), [tasks]);
+  const pendingTasks = useMemo(() => getPendingTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const allTaskIds = useMemo(() => tasks.map(t => t.ID), [tasks]);
 
   // Counter functions for section titles
@@ -383,8 +549,8 @@ const App: React.FC = () => {
     return allTasks.filter(task => !task.Fecha_Vencimiento && !isCompleted(task)).length;
   };
 
-  const todayCount = getTodayTasksCount(tasks);
-  const noDateCount = getNoDateTasksCount(tasks);
+  const todayCount = getTodayTasksCount(filterTasksForCurrentUser(tasks).filter(task => matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)));
+  const noDateCount = getNoDateTasksCount(filterTasksForCurrentUser(tasks).filter(task => matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)));
   const overdueCount = overdueTasks.length;
   const pendingCount = pendingTasks.length;
   const completedCount = completedTasks.length;
@@ -522,6 +688,74 @@ const App: React.FC = () => {
         <section aria-labelledby="create-task-heading" className="mb-12">
            <h2 id="create-task-heading" className="sr-only">Crear nueva tarea</h2>
            <CreateQuickTask onTaskCreated={handleAddTask} />
+        </section>
+
+        {/* Search and Filter Section */}
+        <section className="mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Buscar y Filtrar Tareas</h3>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  onBlur={handleSearchBlur}
+                  placeholder="Buscar por nombre de tarea o proyecto..."
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {showSearchDropdown && getSearchSuggestions().length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    {getSearchSuggestions().map((item, index) => (
+                      <button
+                        key={`${item.type}-${item.id}`}
+                        type="button"
+                        onClick={() => handleSearchSelect(item)}
+                        className="w-full text-left px-4 py-3 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
+                      >
+                        <div className="flex items-center">
+                          <Icon 
+                            name={item.type === 'task' ? 'checkSquare' : 'folder'} 
+                            className="w-4 h-4 mr-3 text-slate-500" 
+                          />
+                          <div>
+                            <div className="font-medium text-slate-900">{item.name}</div>
+                            <div className="text-sm text-slate-500 capitalize">{item.type === 'task' ? 'Tarea' : 'Proyecto'}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleApplySearch}
+                  disabled={!searchQuery.trim()}
+                  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center"
+                >
+                  <Icon name="search" className="w-4 h-4 mr-2" />
+                  Filtrar
+                </button>
+                {appliedSearchFilter && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 flex items-center"
+                  >
+                    <Icon name="close" className="w-4 h-4 mr-2" />
+                    Limpiar
+                  </button>
+                )}
+              </div>
+            </div>
+            {appliedSearchFilter && (
+              <div className="mt-3 flex items-center text-sm text-slate-600">
+                <Icon name="filter" className="w-4 h-4 mr-2" />
+                Filtrando por: <span className="font-medium ml-1">"{appliedSearchFilter}"</span>
+                {selectedProjectId && <span className="ml-1 text-blue-600">(Proyecto)</span>}
+              </div>
+            )}
+          </div>
         </section>
         
         <section aria-labelledby="current-tasks-heading" className="mb-12">
