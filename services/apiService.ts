@@ -78,107 +78,29 @@ export const createSubTask = async (parentTaskId: number, title: string): Promis
 
 // Enhanced audio transcription with task context understanding
 export const transcribeAudio = async (audioFile: File): Promise<{ transcription: string }> => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.");
-    return { transcription: "Error: La clave de API de OpenAI no está configurada." };
-  }
-
   try {
-    // Step 1: Get raw transcription using Whisper
+    // Send audio to PHP backend for transcription
     const formData = new FormData();
-    formData.append('file', audioFile);
-    formData.append('model', 'whisper-1');
+    formData.append('audio', audioFile);
 
-    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    const response = await fetch(`${API_BASE}/transcribeAudio.php`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`
-      },
+      credentials: 'include',
       body: formData
     });
 
-    if (!whisperResponse.ok) {
-      const errorData = await whisperResponse.json();
-      console.error("Error from OpenAI Whisper API:", errorData);
-      throw new Error(`Whisper API Error: ${errorData.error.message}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+      throw new Error(errorData.error || 'Failed to transcribe audio');
     }
 
-    const whisperData = await whisperResponse.json();
-    const rawTranscription = whisperData.text;
-
-    // Step 2: Process transcription with GPT to extract task-relevant information
-    const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an assistant specialized in extracting task information from audio conversations in Ecuadorian Spanish.
-Your task is to analyze the complete transcription and extract ONLY information relevant to creating tasks.
-
-INSTRUCTIONS:
-- Identify specific mentions of tasks, todos, activities or responsibilities
-- Ignore casual conversations, greetings, farewells and irrelevant discussions
-- Pay special attention to Ecuadorian Spanish expressions and conversational flow
-- Look for transition phrases that introduce tasks: "entonces necesito que", "por cierto no te olvides", "okey entonces", "habría que", "o bien", "ya no sería eso si no", "mejor esto de acá"
-- If multiple tasks are mentioned, list them clearly
-- If no clear tasks are mentioned, indicate that no specific tasks were found
-- Keep language natural and concise in Spanish
-- If someone assigns a task to another person, include that information
-- If dates, deadlines or priorities are mentioned, include them
-- ALWAYS respond in Spanish for the extracted tasks
-
-EXAMPLES OF ECUADORIAN SPANISH CONVERSATIONS:
-
-Input: "Hola María, ¿cómo estás? Bien gracias, trabajando. Okey entonces necesito que revises el informe de ventas para mañana. Por cierto no te olvides de comprar los materiales para la reunión."
-Output: "- Revisar el informe de ventas (para mañana)
-- Comprar los materiales para la reunión"
-
-Input: "Juan, habríamos que cambiar eso o bien apliquemos esos cambios. Ya no sería eso si no mejor esto de acá, ¿no crees?"
-Output: "- Cambiar/aplicar los cambios mencionados
-- Revisar la alternativa propuesta"
-
-Input: "Entonces, para el proyecto necesitamos que alguien vaya al banco. Por cierto, no te olvides de llamar al cliente nuevo."
-Output: "- Ir al banco (para el proyecto)
-- Llamar al cliente nuevo"
-
-Input: "¿Qué tal el fin de semana? Fue genial, fuimos al cine. Por cierto, no olvides comprar leche en el super."
-Output: "- Comprar leche en el supermercado"
-
-Input: "Hola, ¿cómo va todo? Bien, trabajando en el proyecto. Hablamos después."
-Output: "No se encontraron tareas específicas mencionadas."
-
-Input: "Okey entonces mañana habría que revisar los documentos. O bien, podemos esperar hasta el viernes para la reunión."
-Output: "- Revisar los documentos (mañana)
-- Preparar reunión (viernes)"`
-          },
-          {
-            role: 'user',
-            content: `Analiza esta transcripción de audio y extrae únicamente las tareas o pendientes mencionados:\n\n"${rawTranscription}"`
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.3
-      })
-    });
-
-    if (!gptResponse.ok) {
-      const errorData = await gptResponse.json();
-      console.error("Error from OpenAI GPT API:", errorData);
-      // Fallback to raw transcription if GPT fails
-      return { transcription: rawTranscription };
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
     }
 
-    const gptData = await gptResponse.json();
-    const processedTranscription = gptData.choices[0]?.message?.content?.trim() || rawTranscription;
-
-    return { transcription: processedTranscription };
+    return { transcription: data.transcription || 'No se pudo transcribir el audio.' };
 
   } catch (error) {
     console.error("Failed to transcribe audio:", error);

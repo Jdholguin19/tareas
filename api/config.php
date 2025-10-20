@@ -23,6 +23,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+// Load .env file if it exists
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        // Parse KEY=VALUE
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            // Set as environment variable if not already set
+            if (!getenv($key)) {
+                putenv("$key=$value");
+            }
+        }
+    }
+}
+
 // Database configuration (keeps current env/defaults)
 $host = getenv('DB_HOST') ?: 'box5500.bluehost.com';
 $user = getenv('DB_USER') ?: 'portalao_jholguin';
