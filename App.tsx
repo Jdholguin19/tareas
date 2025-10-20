@@ -79,7 +79,13 @@ const App: React.FC = () => {
 
   const handleSearchBlur = () => {
     // Delay hiding dropdown to allow click on options
-    setTimeout(() => setShowSearchDropdown(false), 150);
+    setTimeout(() => {
+      setShowSearchDropdown(false);
+      // Auto-apply filter when user leaves the search box
+      if (searchQuery.trim() && searchQuery !== appliedSearchFilter) {
+        handleApplySearch();
+      }
+    }, 150);
   };
 
   // Get search suggestions
@@ -789,14 +795,14 @@ const App: React.FC = () => {
                 )}
               </div>
               <div className="flex gap-2">
-                <button
+                {/*<button
                   onClick={handleApplySearch}
                   disabled={!searchQuery.trim()}
                   className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center"
                 >
                   <Icon name="search" className="w-4 h-4 mr-2" />
                   Filtrar
-                </button>
+                </button>*/}
                 {appliedSearchFilter && (
                   <button
                     onClick={handleClearSearch}
