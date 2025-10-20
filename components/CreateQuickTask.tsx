@@ -97,14 +97,26 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-500">
-      <textarea
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Ingresa tu tarea escribe o usa el micrófono..."
-        aria-label="Descripción de la tarea"
-        className="w-full h-20 sm:h-24 p-3 text-base sm:text-lg border-0 resize-none focus:ring-0 placeholder-slate-400 bg-transparent"
-        disabled={isLoading}
-      />
+      {/* Contenedor relativo para posicionar el micrófono dentro del textarea en móviles */}
+      <div className="relative">
+        <textarea
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Ingresa tu tarea escribe o usa el micrófono..."
+          aria-label="Descripción de la tarea"
+          className="w-full h-20 sm:h-24 p-3 pr-14 sm:pr-3 text-base sm:text-lg border-0 resize-none focus:ring-0 placeholder-slate-400 bg-transparent"
+          disabled={isLoading}
+        />
+        
+        {/* Botón de micrófono dentro del textarea solo en móviles */}
+        <button 
+          onClick={handleMicClick} 
+          className={`absolute right-2 top-2 p-2.5 rounded-full transition-colors sm:hidden ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} 
+          aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}
+        >
+          <Icon name="mic" className="w-7 h-7"/>
+        </button>
+      </div>
       
       {attachments.length > 0 && (
           <div className="px-3 pt-2 border-t border-slate-100">
@@ -122,7 +134,12 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-3 mt-2 border-t border-slate-100 space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-2">
-          <button onClick={handleMicClick} className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}>
+          {/* Botón de micrófono para desktop (oculto en móviles) */}
+          <button 
+            onClick={handleMicClick} 
+            className={`hidden sm:block p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} 
+            aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}
+          >
             <Icon name="mic" className="w-6 h-6"/>
           </button>
           {/*<button onClick={handleAttachmentClick} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors" aria-label="Adjuntar archivo">
