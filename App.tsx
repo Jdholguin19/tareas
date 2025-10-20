@@ -31,7 +31,7 @@ const App: React.FC = () => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [appliedSearchFilter, setAppliedSearchFilter] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [justSelectedFromDropdown, setJustSelectedFromDropdown] = useState(false);
+  const justSelectedFromDropdownRef = useRef(false); // Use ref instead of state for immediate updates
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Search handlers
@@ -50,23 +50,29 @@ const App: React.FC = () => {
   };
 
   const handleSearchSelect = (item: { type: 'task' | 'project', id: number, name: string }) => {
-    setJustSelectedFromDropdown(true);
-    if (item.type === 'task') {
-      // For tasks, set search to task title
-      setAppliedSearchFilter(item.name);
-      setSelectedProjectId(null);
-      setSearchQuery(item.name);
-    } else {
-      // For projects, set project filter only (no additional text search)
-      console.log('Selecting project:', item, 'Available projects:', projects);
-      setSelectedProjectId(parseInt(String(item.id)));
-      setAppliedSearchFilter(''); // Clear text search when selecting a project
-      setSearchQuery(item.name);
-    }
+    console.log('=== handleSearchSelect CALLED ===', { item, type: item.type });
+    justSelectedFromDropdownRef.current = true; // Set ref immediately
     setShowSearchDropdown(false);
     
-    // Reset the flag after a short delay
-    setTimeout(() => setJustSelectedFromDropdown(false), 100);
+    if (item.type === 'task') {
+      // For tasks, set search to task title and apply filter immediately
+      console.log('Task selected, setting appliedSearchFilter to:', item.name);
+      setSearchQuery(item.name);
+      setAppliedSearchFilter(item.name);
+      setSelectedProjectId(null);
+    } else {
+      // For projects, set project filter only (no additional text search)
+      console.log('Project selected, ID:', item.id, 'Name:', item.name, 'Setting appliedSearchFilter to empty string');
+      setSearchQuery(item.name);
+      setSelectedProjectId(parseInt(String(item.id)));
+      setAppliedSearchFilter(''); // Clear text search when selecting a project
+    }
+    
+    // Reset the flag after ensuring state updates complete
+    setTimeout(() => {
+      console.log('Resetting justSelectedFromDropdown flag');
+      justSelectedFromDropdownRef.current = false;
+    }, 300);
   };
 
   const handleApplySearch = () => {
@@ -89,14 +95,29 @@ const App: React.FC = () => {
   };
 
   const handleSearchBlur = () => {
+    console.log('=== handleSearchBlur CALLED ===', { 
+      justSelectedFromDropdown: justSelectedFromDropdownRef.current,
+      searchQuery, 
+      appliedSearchFilter,
+      selectedProjectId 
+    });
     // Delay hiding dropdown to allow click on options
     setTimeout(() => {
       setShowSearchDropdown(false);
-      // Only auto-apply text search if no project is selected and we didn't just select from dropdown
-      if (searchQuery.trim() && searchQuery !== appliedSearchFilter && selectedProjectId === null && !justSelectedFromDropdown) {
+      // Only auto-apply text search if:
+      // 1. We didn't just select from dropdown
+      // 2. Search query is different from applied filter
+      // 3. No project is currently selected
+      if (!justSelectedFromDropdownRef.current && 
+          searchQuery.trim() && 
+          searchQuery !== appliedSearchFilter && 
+          selectedProjectId === null) {
+        console.log('Auto-applying search filter:', searchQuery);
         handleApplySearch();
+      } else {
+        console.log('NOT auto-applying search - conditions not met');
       }
-    }, 150);
+    }, 200);
   };
 
   // Get search suggestions
@@ -514,8 +535,8 @@ const App: React.FC = () => {
     return userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
 
-      // Apply search filter
-      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      // Apply search filter (check if either searchFilter OR selectedProjectId is set)
+      if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
 
       if (!task.Fecha_Vencimiento) {
         // No due date - include
@@ -548,8 +569,8 @@ const App: React.FC = () => {
     return userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
       
-      // Apply search filter
-      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      // Apply search filter (check if either searchFilter OR selectedProjectId is set)
+      if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
       
       if (!task.Fecha_Vencimiento) return false;
 
@@ -570,8 +591,8 @@ const App: React.FC = () => {
       if (!task.Fecha_Vencimiento) return false;
       if (isCompleted(task)) return false;
       
-      // Apply search filter
-      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      // Apply search filter (check if either searchFilter OR selectedProjectId is set)
+      if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
       
       const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
       dueDate.setHours(0, 0, 0, 0);
@@ -603,8 +624,8 @@ const App: React.FC = () => {
     return userTasks.filter(task => {
       if (!isCompleted(task)) return false;
       
-      // Apply search filter
-      if (searchFilter && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+      // Apply search filter (check if either searchFilter OR selectedProjectId is set)
+      if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
       
       return true;
     });
@@ -832,7 +853,14 @@ const App: React.FC = () => {
                       <button
                         key={`${item.type}-${item.id}`}
                         type="button"
-                        onClick={() => handleSearchSelect(item)}
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevents blur from firing on desktop
+                          handleSearchSelect(item);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault(); // Fallback for touch devices
+                          handleSearchSelect(item);
+                        }}
                         className="w-full text-left px-4 py-3 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
                       >
                         <div className="flex items-center">
