@@ -3,7 +3,6 @@ import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { getTaskAssigneesForDisplay } from '../services/apiService';
 
 interface TaskItemProps {
   task: Task;
@@ -61,34 +60,20 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDraggingProgress, setIsDraggingProgress] = useState(false);
-  const [assignedUsers, setAssignedUsers] = useState<{id: number, username: string}[]>([]);
-  const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressFillRef = useRef<HTMLDivElement>(null);
   const dragProgressRef = useRef<number>(task.Porcentaje_Avance);
+
+  // Usar los asignados del prop en lugar de cargarlos individualmente
+  const assignedUsers = taskAssigneesRecord[task.ID] || [];
+  const isLoadingAssignees = false; // Ya no cargamos, usamos el prop
 
   useEffect(() => {
     if (isEditingDate) {
       dateInputRef.current?.focus();
     }
   }, [isEditingDate]);
-
-  useEffect(() => {
-    loadAssignedUsers();
-  }, [task.ID]);
-
-  const loadAssignedUsers = async () => {
-    setIsLoadingAssignees(true);
-    try {
-      const assignees = await getTaskAssigneesForDisplay(task.ID);
-      setAssignedUsers(assignees);
-    } catch (error) {
-      console.error('Error loading assigned users:', error);
-    } finally {
-      setIsLoadingAssignees(false);
-    }
-  };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
