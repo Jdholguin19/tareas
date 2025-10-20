@@ -168,6 +168,23 @@ const App: React.FC = () => {
     init();
   }, [fetchTasks, fetchProjects]);
 
+  // Load task assignees when tasks are loaded and user is authenticated
+  useEffect(() => {
+    const loadTaskAssignees = async () => {
+      if (tasks.length > 0 && currentUser && isAuthenticated && Object.keys(taskAssigneesRecord).length === 0) {
+        try {
+          const taskIds = tasks.map(task => task.ID);
+          const assignees = await getAllTaskAssignees(taskIds);
+          setTaskAssigneesRecord(assignees);
+        } catch (error) {
+          console.error('Error loading task assignees:', error);
+        }
+      }
+    };
+
+    loadTaskAssignees();
+  }, [tasks.length, currentUser, isAuthenticated]); // Solo dependemos de la longitud de tasks, no del array completo
+
   // Close notification menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -696,7 +713,6 @@ const App: React.FC = () => {
         {/* Search and Filter Section */}
         <section className="mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Buscar y Filtrar Tareas</h3>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
                 <input
@@ -800,7 +816,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsOverdueTasksExpanded(!isOverdueTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-2 hover:bg-red-50 transition-colors"
-              aria-expanded={isOverdueTasksExpanded ? 'true' : 'false'}
+              aria-expanded={isOverdueTasksExpanded ? "true" : "false"}
               aria-controls="overdue-tasks-content"
             >
               <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700">
