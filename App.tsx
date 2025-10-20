@@ -54,7 +54,8 @@ const App: React.FC = () => {
       setSearchQuery(item.name);
     } else {
       // For projects, set project filter
-      setSelectedProjectId(item.id);
+      console.log('Selecting project:', item, 'Available projects:', projects);
+      setSelectedProjectId(parseInt(String(item.id)));
       setAppliedSearchFilter(item.name);
       setSearchQuery(item.name);
     }
@@ -133,6 +134,7 @@ const App: React.FC = () => {
   const fetchProjects = useCallback(async () => {
     try {
       const initialProjects = await getProjects();
+      console.log('Loaded projects:', initialProjects);
       setProjects(initialProjects);
     } catch (error) {
       console.error("Failed to fetch projects:", error);
@@ -232,33 +234,33 @@ const App: React.FC = () => {
       await deleteTask(taskId);
       setTasks(currentTasks => {
         const updatedTasks = currentTasks.filter(task => task.ID !== taskId);
-        
-        // Find parent tasks that need progress recalculation
-        const parentsToUpdate = new Set<number>();
-        currentTasks.forEach(task => {
-          if (task.Parent_ID && task.Parent_ID !== 0) {
-            parentsToUpdate.add(task.Parent_ID);
-          }
-        });
-        
-        // Recalculate progress only for parent tasks
-        return updatedTasks.map(task => {
-          if (parentsToUpdate.has(task.ID) && hasSubtasks(task, updatedTasks)) {
-            return {
-              ...task,
-              Porcentaje_Avance: calculateTaskProgress(task, updatedTasks)
-            };
-          }
-          return task;
-        });
+
+        // Find the deleted task to check if it was a subtask
+        const deletedTask = currentTasks.find(task => task.ID === taskId);
+
+        // If the deleted task was a subtask, recalculate parent progress
+        if (deletedTask && deletedTask.Parent_ID && deletedTask.Parent_ID !== 0) {
+          return updatedTasks.map(task => {
+            if (task.ID === deletedTask.Parent_ID && hasSubtasks(task, updatedTasks)) {
+              return {
+                ...task,
+                Porcentaje_Avance: calculateTaskProgress(task, updatedTasks)
+              };
+            }
+            return task;
+          });
+        }
+
+        // If it wasn't a subtask, just return the filtered tasks
+        return updatedTasks;
       });
-      
+
       setTaskAssigneesRecord(prev => {
         const newRecord = { ...prev };
         delete newRecord[taskId];
         return newRecord;
       });
-      
+
       // Close modal if the deleted task was being edited
       if (editingTask?.ID === taskId) {
         setEditingTask(null);
@@ -358,7 +360,8 @@ const App: React.FC = () => {
   const matchesSearch = (task: Task, searchTerm: string, projects: Project[], selectedProjectId: number | null): boolean => {
     // If a specific project is selected, only show tasks from that project
     if (selectedProjectId !== null) {
-      return Number(task.Proyecto) === selectedProjectId;
+      const taskProjectId = task.Proyecto ? Number(task.Proyecto) : null;
+      return taskProjectId === selectedProjectId;
     }
     
     // Otherwise, apply text search
@@ -370,7 +373,7 @@ const App: React.FC = () => {
     if (task.Titulo.toLowerCase().includes(term)) return true;
     
     // Check project name
-    const project = projects.find(p => p.id === Number(task.Proyecto));
+    const project = projects.find(p => p.id === Number(task.Proyecto || 0));
     if (project && project.nombre.toLowerCase().includes(term)) return true;
     
     return false;
@@ -762,7 +765,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-slate-50 transition-colors"
-              aria-expanded={isTodayTasksExpanded}
+              aria-expanded={isTodayTasksExpanded ? "true" : "false"}
               aria-controls="current-tasks-content"
             >
               <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
@@ -832,7 +835,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsPendingTasksExpanded(!isPendingTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-blue-50 transition-colors"
-              aria-expanded={isPendingTasksExpanded}
+              aria-expanded={isPendingTasksExpanded ? "true" : "false"}
               aria-controls="pending-tasks-content"
             >
               <h2 id="pending-tasks-heading" className="text-xl font-semibold text-[var(--color-proximate)]">
@@ -867,7 +870,7 @@ const App: React.FC = () => {
             <button
               onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
               className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
-              aria-expanded={isCompletedTasksExpanded}
+              aria-expanded={isCompletedTasksExpanded ? "true" : "false"}
               aria-controls="completed-tasks-content"
             >
               <h2 id="completed-tasks-heading" className="text-xl font-semibold text-blue-700">
