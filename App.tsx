@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [appliedSearchFilter, setAppliedSearchFilter] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [justSelectedFromDropdown, setJustSelectedFromDropdown] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Search handlers
@@ -49,24 +50,34 @@ const App: React.FC = () => {
   };
 
   const handleSearchSelect = (item: { type: 'task' | 'project', id: number, name: string }) => {
+    setJustSelectedFromDropdown(true);
     if (item.type === 'task') {
       // For tasks, set search to task title
       setAppliedSearchFilter(item.name);
       setSelectedProjectId(null);
       setSearchQuery(item.name);
     } else {
-      // For projects, set project filter
+      // For projects, set project filter only (no additional text search)
       console.log('Selecting project:', item, 'Available projects:', projects);
       setSelectedProjectId(parseInt(String(item.id)));
-      setAppliedSearchFilter(item.name);
+      setAppliedSearchFilter(''); // Clear text search when selecting a project
       setSearchQuery(item.name);
     }
     setShowSearchDropdown(false);
+    
+    // Reset the flag after a short delay
+    setTimeout(() => setJustSelectedFromDropdown(false), 100);
   };
 
   const handleApplySearch = () => {
-    setAppliedSearchFilter(searchQuery);
-    setSelectedProjectId(null); // Clear project selection when applying text search
+    // If we have a project selected and the search query is different from the project name,
+    // apply text search within the selected project
+    if (selectedProjectId !== null && searchQuery.trim() && searchQuery !== appliedSearchFilter) {
+      setAppliedSearchFilter(searchQuery);
+    } else if (selectedProjectId === null) {
+      // Only apply text search if no project is selected
+      setAppliedSearchFilter(searchQuery);
+    }
     setShowSearchDropdown(false);
   };
 
@@ -81,8 +92,8 @@ const App: React.FC = () => {
     // Delay hiding dropdown to allow click on options
     setTimeout(() => {
       setShowSearchDropdown(false);
-      // Auto-apply filter when user leaves the search box
-      if (searchQuery.trim() && searchQuery !== appliedSearchFilter) {
+      // Only auto-apply text search if no project is selected and we didn't just select from dropdown
+      if (searchQuery.trim() && searchQuery !== appliedSearchFilter && selectedProjectId === null && !justSelectedFromDropdown) {
         handleApplySearch();
       }
     }, 150);
@@ -431,25 +442,40 @@ const App: React.FC = () => {
     // If a specific project is selected, only show tasks from that project
     if (selectedProjectId !== null) {
       const taskProjectId = task.Proyecto ? Number(task.Proyecto) : null;
-      return taskProjectId === selectedProjectId;
+      if (taskProjectId !== selectedProjectId) return false;
+
+      // If we also have a search term, apply text search within the selected project
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim();
+
+        // Check task title
+        if (task.Titulo.toLowerCase().includes(term)) return true;
+
+        // Check project name (though it should match the selected project)
+        const project = projects.find(p => p.id === Number(task.Proyecto || 0));
+        if (project && project.nombre.toLowerCase().includes(term)) return true;
+
+        return false;
+      }
+
+      // No search term, just return tasks from selected project
+      return true;
     }
-    
-    // Otherwise, apply text search
+
+    // No project selected, apply text search across all tasks
     if (!searchTerm.trim()) return true;
-    
+
     const term = searchTerm.toLowerCase().trim();
-    
+
     // Check task title
     if (task.Titulo.toLowerCase().includes(term)) return true;
-    
+
     // Check project name
     const project = projects.find(p => p.id === Number(task.Proyecto || 0));
     if (project && project.nombre.toLowerCase().includes(term)) return true;
-    
-    return false;
-  };
 
-  // Filter tasks for current user
+    return false;
+  };  // Filter tasks for current user
   const filterTasksForCurrentUser = (allTasks: Task[]): Task[] => {
     if (!currentUser) return allTasks;
     
@@ -844,10 +870,14 @@ const App: React.FC = () => {
                 )}
               </div>
             </div>
-            {appliedSearchFilter && (
+            {(appliedSearchFilter || selectedProjectId !== null) && (
               <div className="mt-3 flex items-center text-sm text-slate-600">
                 <Icon name="filter" className="w-4 h-4 mr-2" />
-                Filtrando por: <span className="font-medium ml-1">"{appliedSearchFilter}"</span>
+                Filtrando por: <span className="font-medium ml-1">
+                  {selectedProjectId !== null 
+                    ? `"${projects.find(p => p.id === selectedProjectId)?.nombre || 'Proyecto'}"` 
+                    : `"${appliedSearchFilter}"`}
+                </span>
                 {selectedProjectId && <span className="ml-1 text-blue-600">(Proyecto)</span>}
               </div>
             )}
