@@ -17,9 +17,11 @@ const App: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState<boolean>(false);
   const notificationMenuRef = useRef<HTMLDivElement>(null);
+  const createTaskRef = useRef<HTMLDivElement>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showRegister, setShowRegister] = useState(false);
   const [taskAssigneesRecord, setTaskAssigneesRecord] = useState<Record<number, {id: number, username: string}[]>>({});
+  const [isCreateTaskHighlighted, setIsCreateTaskHighlighted] = useState(false);
 
   // Current user state
   const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
@@ -298,6 +300,29 @@ const App: React.FC = () => {
       setIsAuthenticated(false);
       setTasks([]);
     }
+  };
+
+  const handleScrollToCreateTask = () => {
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Highlight create task section
+    setIsCreateTaskHighlighted(true);
+    
+    // Focus on create task input after scroll
+    setTimeout(() => {
+      if (createTaskRef.current) {
+        const input = createTaskRef.current.querySelector('input');
+        if (input) {
+          input.focus();
+        }
+      }
+    }, 500);
+    
+    // Remove highlight after 3 seconds
+    setTimeout(() => {
+      setIsCreateTaskHighlighted(false);
+    }, 3000);
   };
 
   const handleExportCSV = () => {
@@ -705,7 +730,23 @@ const App: React.FC = () => {
   )}
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <section aria-labelledby="create-task-heading" className="mb-12">
+        {/* Backdrop overlay when create task is highlighted */}
+        {isCreateTaskHighlighted && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+            onClick={() => setIsCreateTaskHighlighted(false)}
+          />
+        )}
+        
+        <section 
+          ref={createTaskRef}
+          aria-labelledby="create-task-heading" 
+          className={`mb-12 transition-all duration-500 ${
+            isCreateTaskHighlighted 
+              ? 'relative z-50 scale-105 ring-4 ring-blue-500 ring-opacity-75 rounded-xl shadow-2xl' 
+              : ''
+          }`}
+        >
            <h2 id="create-task-heading" className="sr-only">Crear nueva tarea</h2>
            <CreateQuickTask onTaskCreated={handleAddTask} />
         </section>
@@ -936,12 +977,10 @@ const App: React.FC = () => {
 
       {/* Floating Scroll to Top Button */}
       <button
-        onClick={() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onClick={handleScrollToCreateTask}
         className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 z-50"
-        aria-label="Ir arriba"
-        title="Ir arriba"
+        aria-label="Crear nueva tarea"
+        title="Crear nueva tarea"
       >
         <Icon name="plus" className="w-6 h-6" />
       </button>

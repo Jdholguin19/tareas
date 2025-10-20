@@ -100,7 +100,7 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
       <textarea
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="¿Qué necesitas hacer? Escribe o usa el micrófono..."
+        placeholder="Ingresa tu tarea escribe o usa el micrófono..."
         aria-label="Descripción de la tarea"
         className="w-full h-20 sm:h-24 p-3 text-base sm:text-lg border-0 resize-none focus:ring-0 placeholder-slate-400 bg-transparent"
         disabled={isLoading}
