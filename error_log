@@ -1,137 +1,136 @@
-Local:
-
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:137 Loaded projects: (6) [{…}, {…}, {…}, {…}, {…}, {…}]0: {id: 6, nombre: 'Academics'}1: {id: 4, nombre: 'fulanito'}2: {id: 1, nombre: 'General'}3: {id: 3, nombre: 'proyecto'}4: {id: 2, nombre: 'prueba'}5: {id: 5, nombre: 'prueba22'}length: 6[[Prototype]]: Array(0)
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:57 Selecting project: {type: 'project', id: 3, name: 'proyecto'} Available projects: (6) [{…}, {…}, {…}, {…}, {…}, {…}]
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:460 === DEBUG: getPendingTasks ===
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-App.tsx:368 Project filter debug: {taskId: 83, taskTitle: 'pg2', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 82, taskTitle: 'pg1', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 74, taskTitle: 'PruebaG', taskProyecto: 1, taskProyectoType: 'number', taskProjectId: 1, …}
-App.tsx:368 Project filter debug: {taskId: 53, taskTitle: 'pruebapro\n', taskProyecto: 6, taskProyectoType: 'number', taskProjectId: 6, …}
-
-
-PRODUCCION
-
-
-index-BfTAnzGP.js:107 === DEBUG: getPendingTasks ===
-index-BfTAnzGP.js:107 === DEBUG: getPendingTasks ===
-index-BfTAnzGP.js:106 Loaded projects: (6) [{…}, {…}, {…}, {…}, {…}, {…}]0: {id: '6', nombre: 'Academics'}1: {id: '4', nombre: 'fulanito'}2: {id: '1', nombre: 'General'}3: {id: '3', nombre: 'proyecto'}4: {id: '2', nombre: 'prueba'}5: {id: '5', nombre: 'prueba22'}length: 6[[Prototype]]: Array(0)
-index-BfTAnzGP.js:107 === DEBUG: getPendingTasks ===
-index-BfTAnzGP.js:107 === DEBUG: getPendingTasks ===
-index-BfTAnzGP.js:106 Selecting project: {type: 'project', id: '3', name: 'proyecto'} Available projects: (6) [{…}, {…}, {…}, {…}, {…}, {…}]
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '85', taskTitle: 'pp2', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '83', taskTitle: 'pg2', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '82', taskTitle: 'pg1', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '81', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '80', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '77', taskTitle: 'Prueba Proyecto', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '74', taskTitle: 'PruebaG', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 === DEBUG: getPendingTasks ===
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '85', taskTitle: 'pp2', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '83', taskTitle: 'pg2', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '82', taskTitle: 'pg1', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '81', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '80', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '77', taskTitle: 'Prueba Proyecto', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '74', taskTitle: 'PruebaG', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '85', taskTitle: 'pp2', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '83', taskTitle: 'pg2', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '82', taskTitle: 'pg1', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '81', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '80', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '77', taskTitle: 'Prueba Proyecto', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '74', taskTitle: 'PruebaG', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '85', taskTitle: 'pp2', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '83', taskTitle: 'pg2', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '82', taskTitle: 'pg1', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '81', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '80', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '77', taskTitle: 'Prueba Proyecto', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '74', taskTitle: 'PruebaG', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '85', taskTitle: 'pp2', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '83', taskTitle: 'pg2', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '82', taskTitle: 'pg1', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '81', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '80', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '77', taskTitle: 'Prueba Proyecto', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '74', taskTitle: 'PruebaG', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '85', taskTitle: 'pp2', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '83', taskTitle: 'pg2', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '82', taskTitle: 'pg1', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '81', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '80', taskTitle: 'pp1', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '77', taskTitle: 'Prueba Proyecto', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '74', taskTitle: 'PruebaG', taskProyecto: '1', taskProyectoType: 'string', taskProjectId: 1, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '53', taskTitle: 'pruebapro\n', taskProyecto: '6', taskProyectoType: 'string', taskProjectId: 6, …}
-index-BfTAnzGP.js:107 Project filter debug: {taskId: '50', taskTitle: 'asignados prueba', taskProyecto: '3', taskProyectoType: 'string', taskProjectId: 3, …}
+http://localhost:3000/
+http://localhost:3000/@vite/client
+https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap
+https://cdn.tailwindcss.com/3.4.17
+http://localhost:3000/index.tsx?t=1760970594555
+http://localhost:3000/@react-refresh
+http://localhost:3000/node_modules/vite/dist/client/env.mjs
+http://localhost:3000/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=f283af18
+http://localhost:3000/node_modules/.vite/deps/react.js?v=f283af18
+http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=f283af18
+http://localhost:3000/App.tsx?t=1760970594555
+http://localhost:3000/node_modules/.vite/deps/chunk-H5I4P4DR.js?v=f283af18
+http://localhost:3000/node_modules/.vite/deps/chunk-5SC5K45T.js?v=f283af18
+ws://localhost:3000/?token=z6Mnpkd_Ts7A
+http://localhost:3000/components/CreateQuickTask.tsx?t=1760970594555
+http://localhost:3000/components/TaskList.tsx?t=1760970594555
+http://localhost:3000/components/Icon.tsx
+http://localhost:3000/services/apiService.ts?t=1760970594555
+http://localhost:3000/utils/taskUtils.ts
+http://localhost:3000/components/EditTaskModal.tsx?t=1760970594555
+http://localhost:3000/components/TaskSkeleton.tsx
+http://localhost:3000/components/LoginForm.tsx?t=1760970594555
+http://localhost:3000/components/RegisterForm.tsx?t=1760970594555
+http://localhost:3000/components/TaskItem.tsx?t=1760970594555
+http://localhost:3000/types.ts
+http://localhost:3000/components/DeleteConfirmationModal.tsx
+http://localhost:3000/api/checkAuth.php
+http://localhost:3000/api/checkAuth.php
+http://localhost:3000/api/getTasks.php
+http://localhost:3000/api/getTasks.php
+http://localhost:3000/api/getProjects.php
+http://localhost:3000/api/getTaskAssignees.php?taskId=102
+http://localhost:3000/api/getTaskAssignees.php?taskId=101
+http://localhost:3000/api/getTaskAssignees.php?taskId=99
+http://localhost:3000/api/getTaskAssignees.php?taskId=98
+http://localhost:3000/api/getTaskAssignees.php?taskId=85
+http://localhost:3000/api/getTaskAssignees.php?taskId=54
+http://localhost:3000/api/getTaskAssignees.php?taskId=25
+http://localhost:3000/api/getTaskAssignees.php?taskId=27
+http://localhost:3000/api/getTaskAssignees.php?taskId=62
+http://localhost:3000/api/getTaskAssignees.php?taskId=22
+http://localhost:3000/api/getTaskAssignees.php?taskId=13
+http://localhost:3000/api/getTaskAssignees.php?taskId=53
+http://localhost:3000/api/getTaskAssignees.php?taskId=50
+http://localhost:3000/api/getTaskAssignees.php?taskId=38
+http://localhost:3000/api/getTaskAssignees.php?taskId=12
+http://localhost:3000/api/getTaskAssignees.php?taskId=92
+http://localhost:3000/api/getTaskAssignees.php?taskId=63
+http://localhost:3000/api/getTaskAssignees.php?taskId=61
+http://localhost:3000/api/getTaskAssignees.php?taskId=60
+http://localhost:3000/api/getTaskAssignees.php?taskId=59
+http://localhost:3000/api/getTaskAssignees.php?taskId=52
+http://localhost:3000/api/getTaskAssignees.php?taskId=51
+http://localhost:3000/api/getTaskAssignees.php?taskId=48
+http://localhost:3000/api/getTaskAssignees.php?taskId=47
+http://localhost:3000/api/getTaskAssignees.php?taskId=43
+http://localhost:3000/api/getTaskAssignees.php?taskId=33
+http://localhost:3000/api/getTaskAssignees.php?taskId=32
+http://localhost:3000/api/getTaskAssignees.php?taskId=30
+http://localhost:3000/api/getTaskAssignees.php?taskId=42
+http://localhost:3000/api/getTaskAssignees.php?taskId=29
+http://localhost:3000/api/getTaskAssignees.php?taskId=28
+http://localhost:3000/api/getTaskAssignees.php?taskId=26
+http://localhost:3000/api/getTaskAssignees.php?taskId=24
+http://localhost:3000/api/getTaskAssignees.php?taskId=21
+http://localhost:3000/api/getTaskAssignees.php?taskId=18
+http://localhost:3000/api/getTaskAssignees.php?taskId=20
+http://localhost:3000/api/getTaskAssignees.php?taskId=23
+http://localhost:3000/api/getTaskAssignees.php?taskId=39
+http://localhost:3000/api/getTaskAssignees.php?taskId=17
+http://localhost:3000/api/getTaskAssignees.php?taskId=15
+http://localhost:3000/api/getTaskAssignees.php?taskId=16
+http://localhost:3000/api/getTaskAssignees.php?taskId=19
+http://localhost:3000/api/getTaskAssignees.php?taskId=35
+http://localhost:3000/api/getTaskAssignees.php?taskId=14
+http://localhost:3000/api/getTaskAssignees.php?taskId=102
+http://localhost:3000/api/getTaskAssignees.php?taskId=101
+http://localhost:3000/api/getTaskAssignees.php?taskId=99
+http://localhost:3000/api/getTaskAssignees.php?taskId=98
+http://localhost:3000/api/getTaskAssignees.php?taskId=85
+http://localhost:3000/api/getTaskAssignees.php?taskId=54
+http://localhost:3000/api/getTaskAssignees.php?taskId=25
+http://localhost:3000/api/getTaskAssignees.php?taskId=27
+http://localhost:3000/api/getTaskAssignees.php?taskId=62
+http://localhost:3000/api/getTaskAssignees.php?taskId=22
+http://localhost:3000/api/getTaskAssignees.php?taskId=13
+http://localhost:3000/api/getTaskAssignees.php?taskId=53
+http://localhost:3000/api/getTaskAssignees.php?taskId=50
+http://localhost:3000/api/getTaskAssignees.php?taskId=38
+http://localhost:3000/api/getTaskAssignees.php?taskId=12
+http://localhost:3000/api/getTaskAssignees.php?taskId=92
+http://localhost:3000/api/getTaskAssignees.php?taskId=63
+http://localhost:3000/api/getTaskAssignees.php?taskId=61
+http://localhost:3000/api/getTaskAssignees.php?taskId=60
+http://localhost:3000/api/getTaskAssignees.php?taskId=59
+http://localhost:3000/api/getTaskAssignees.php?taskId=52
+http://localhost:3000/api/getTaskAssignees.php?taskId=51
+http://localhost:3000/api/getTaskAssignees.php?taskId=48
+http://localhost:3000/api/getTaskAssignees.php?taskId=47
+http://localhost:3000/api/getTaskAssignees.php?taskId=43
+http://localhost:3000/api/getTaskAssignees.php?taskId=33
+http://localhost:3000/api/getTaskAssignees.php?taskId=32
+http://localhost:3000/api/getTaskAssignees.php?taskId=30
+http://localhost:3000/api/getTaskAssignees.php?taskId=42
+http://localhost:3000/api/getTaskAssignees.php?taskId=29
+http://localhost:3000/api/getTaskAssignees.php?taskId=28
+http://localhost:3000/api/getTaskAssignees.php?taskId=26
+http://localhost:3000/api/getTaskAssignees.php?taskId=24
+http://localhost:3000/api/getTaskAssignees.php?taskId=21
+http://localhost:3000/api/getTaskAssignees.php?taskId=18
+http://localhost:3000/api/getTaskAssignees.php?taskId=20
+http://localhost:3000/api/getTaskAssignees.php?taskId=23
+http://localhost:3000/api/getTaskAssignees.php?taskId=39
+http://localhost:3000/api/getTaskAssignees.php?taskId=17
+http://localhost:3000/api/getTaskAssignees.php?taskId=15
+http://localhost:3000/api/getTaskAssignees.php?taskId=16
+http://localhost:3000/api/getTaskAssignees.php?taskId=19
+http://localhost:3000/api/getTaskAssignees.php?taskId=35
+http://localhost:3000/api/getTaskAssignees.php?taskId=14
+http://localhost:3000/api/getProjects.php
+http://localhost:3000/api/getCurrentUser.php
+http://localhost:3000/api/getCurrentUser.php
+http://localhost:3000/api/getTaskAssignees.php?taskId=98
+http://localhost:3000/api/getTaskAssignees.php?taskIds[]=102&taskIds[]=101&taskIds[]=99&taskIds[]=98&taskIds[]=92&taskIds[]=85&taskIds[]=63&taskIds[]=62&taskIds[]=61&taskIds[]=60&taskIds[]=59&taskIds[]=54&taskIds[]=53&taskIds[]=52&taskIds[]=51&taskIds[]=50&taskIds[]=48&taskIds[]=47&taskIds[]=43&taskIds[]=42&taskIds[]=39&taskIds[]=38&taskIds[]=35&taskIds[]=33&taskIds[]=32&taskIds[]=30&taskIds[]=29&taskIds[]=28&taskIds[]=27&taskIds[]=26&taskIds[]=25&taskIds[]=24&taskIds[]=23&taskIds[]=22&taskIds[]=21&taskIds[]=20&taskIds[]=19&taskIds[]=18&taskIds[]=17&taskIds[]=16&taskIds[]=15&taskIds[]=14&taskIds[]=13&taskIds[]=12
+http://localhost:3000/api/getTaskAssignees.php?taskId=98
+http://localhost:3000/api/getTaskAssignees.php?taskIds[]=102&taskIds[]=101&taskIds[]=99&taskIds[]=98&taskIds[]=92&taskIds[]=85&taskIds[]=63&taskIds[]=62&taskIds[]=61&taskIds[]=60&taskIds[]=59&taskIds[]=54&taskIds[]=53&taskIds[]=52&taskIds[]=51&taskIds[]=50&taskIds[]=48&taskIds[]=47&taskIds[]=43&taskIds[]=42&taskIds[]=39&taskIds[]=38&taskIds[]=35&taskIds[]=33&taskIds[]=32&taskIds[]=30&taskIds[]=29&taskIds[]=28&taskIds[]=27&taskIds[]=26&taskIds[]=25&taskIds[]=24&taskIds[]=23&taskIds[]=22&taskIds[]=21&taskIds[]=20&taskIds[]=19&taskIds[]=18&taskIds[]=17&taskIds[]=16&taskIds[]=15&taskIds[]=14&taskIds[]=13&taskIds[]=12
+http://localhost:3000/api/getTaskAssignees.php?taskId=99
+http://localhost:3000/api/getTaskAssignees.php?taskId=98
+http://localhost:3000/api/getTaskAssignees.php?taskId=85
+http://localhost:3000/api/getTaskAssignees.php?taskId=53
+http://localhost:3000/api/getTaskAssignees.php?taskId=50
+http://localhost:3000/api/getTaskAssignees.php?taskId=99
+http://localhost:3000/api/getTaskAssignees.php?taskId=98
+http://localhost:3000/api/getTaskAssignees.php?taskId=85
+http://localhost:3000/api/getTaskAssignees.php?taskId=53
+http://localhost:3000/api/getTaskAssignees.php?taskId=50

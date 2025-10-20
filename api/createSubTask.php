@@ -70,6 +70,21 @@ try {
     
     $task['Adjuntos_URL'] = json_decode($task['Adjuntos_URL'] ?? '[]', true);
 
+    // Obtener el creador de la tarea raíz (recorrer hacia arriba en el árbol)
+    $rootCreatorId = null;
+    $currentTaskId = $parentId;
+    
+    while ($currentTaskId) {
+        $stmt = $pdo->prepare("SELECT creado_por, tarea_padre_id FROM tareas WHERE id = ?");
+        $stmt->execute([$currentTaskId]);
+        $taskInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$taskInfo) break;
+        
+        $rootCreatorId = $taskInfo['creado_por'];
+        $currentTaskId = $taskInfo['tarea_padre_id'];
+    }
+
     // Obtener los usuarios asignados de la tarea padre
     $stmt = $pdo->prepare("
         SELECT usuario_id FROM tareas_asignados
@@ -78,9 +93,16 @@ try {
     $stmt->execute([$parentId]);
     $assignedUsers = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    // Asignar los mismos usuarios a la subtarea
-    if (!empty($assignedUsers)) {
-        foreach ($assignedUsers as $assignedUserId) {
+    // Crear un conjunto de usuarios únicos para asignar
+    $usersToAssign = array_unique(array_merge(
+        $assignedUsers,
+        $rootCreatorId ? [$rootCreatorId] : [], // Añadir el creador de la tarea raíz
+        [$userId] // Añadir el creador de esta subtarea
+    ));
+
+    // Asignar usuarios a la subtarea
+    if (!empty($usersToAssign)) {
+        foreach ($usersToAssign as $assignedUserId) {
             $stmt = $pdo->prepare("
                 INSERT IGNORE INTO tareas_asignados (tarea_id, usuario_id)
                 VALUES (?, ?)
