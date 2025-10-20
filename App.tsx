@@ -630,24 +630,33 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen font-sans">
-      {isAuthenticated === false && (
+      {isAuthenticated === null ? (
+        // Loading state while checking authentication
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600">Cargando...</p>
+          </div>
+        </div>
+      ) : isAuthenticated === false ? (
         // show login/register flow
         showRegister ? (
           <RegisterForm onRegistered={() => setShowRegister(false)} onSwitchToLogin={() => setShowRegister(false)} />
         ) : (
           <LoginForm onLogin={() => window.location.reload()} onSwitchToRegister={() => setShowRegister(true)} />
         )
-      )}
-      {isAuthenticated === true && (
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="bg-slate-900 p-2 rounded-lg">
-                <Icon name="check" className="w-6 h-6 text-white"/>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Mis Tareas</h1>
-          </div>
-          <div className="flex items-center space-x-2">
+      ) : (
+        // show main app when authenticated
+        <>
+          <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <div className="bg-slate-900 p-2 rounded-lg">
+                    <Icon name="check" className="w-6 h-6 text-white"/>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Mis Tareas</h1>
+              </div>
+              <div className="flex items-center space-x-2">
             <div className="relative" ref={notificationMenuRef}>
               <button
                 onClick={() => setIsNotificationMenuOpen(!isNotificationMenuOpen)}
@@ -754,9 +763,8 @@ const App: React.FC = () => {
             </button>
           </div>
         </div>
-  </header>
-  )}
-      
+      </header>
+
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Backdrop overlay when create task is highlighted */}
         {isCreateTaskHighlighted && (
@@ -1017,6 +1025,8 @@ const App: React.FC = () => {
       <footer className="text-center py-6 text-sm text-slate-500">
         <p>&copy; {new Date().getFullYear()} Minimalist Task Manager. All rights reserved.</p>
       </footer>
+        </>
+      )}
     </div>
   );
 };
