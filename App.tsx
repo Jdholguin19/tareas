@@ -934,6 +934,18 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* Floating Scroll to Top Button */}
+      <button
+        onClick={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 z-50"
+        aria-label="Ir arriba"
+        title="Ir arriba"
+      >
+        <Icon name="plus" className="w-6 h-6" />
+      </button>
+
       <footer className="text-center py-6 text-sm text-slate-500">
         <p>&copy; {new Date().getFullYear()} Minimalist Task Manager. All rights reserved.</p>
       </footer>
