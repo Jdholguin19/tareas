@@ -51,6 +51,16 @@ try {
     $stmt->execute([$taskId, $assigneeId]);
 
     if ($stmt->rowCount() > 0) {
+        // Si es la primera asignación y la tarea no tiene fecha de inicio, establecerla automáticamente
+        $stmt = $pdo->prepare("SELECT fecha_inicio FROM tareas WHERE id = ?");
+        $stmt->execute([$taskId]);
+        $taskData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$taskData['fecha_inicio']) {
+            $stmt = $pdo->prepare("UPDATE tareas SET fecha_inicio = NOW() WHERE id = ?");
+            $stmt->execute([$taskId]);
+        }
+        
         echo json_encode(['success' => true, 'message' => 'User assigned successfully']);
     } else {
         echo json_encode(['success' => false, 'message' => 'User already assigned']);

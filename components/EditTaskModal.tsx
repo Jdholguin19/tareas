@@ -339,6 +339,10 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const isCreator = currentUser && currentUser.id === task.Usuario_Creador_ID;
   const isAssigned = currentUser && assignedUsers.some(user => user.id === currentUser.id);
   const canEdit = isCreator; // Solo el creador puede editar campos principales
+  const canEditDescription = isCreator || isAssigned; // Creador y asignados pueden editar descripción
+  const canEditStartDate = isCreator; // Solo el creador puede editar fecha de inicio
+  const canEditDeadline = isCreator || isAssigned; // Creador y asignados pueden editar fecha de vencimiento
+  const canEditProgress = isCreator || isAssigned; // Creador y asignados pueden editar progreso
   const canCreateSubtasks = isCreator || isAssigned; // Creadores y asignados pueden crear subtareas
   const canAssign = isCreator || isAssigned;
   const canUnassign = isCreator; // Solo el creador puede quitar asignaciones
@@ -403,7 +407,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               onChange={handleChange}
               rows={3}
               className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-              disabled={!canEdit}
+              disabled={!canEditDescription}
             />
           </div>
           
@@ -563,17 +567,29 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label htmlFor="Fecha_Inicio" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Inicio</label>
-              <input type="date" id="Fecha_Inicio" name="Fecha_Inicio" value={formatDateForInput(formData.Fecha_Inicio)} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit} />
+              <label htmlFor="Fecha_Inicio" className="block text-sm font-medium text-slate-700 mb-1">
+                Fecha de Inicio
+                {!canEditStartDate && assignedUsers.length > 0 && <span className="ml-1 text-xs text-slate-500">(solo creador)</span>}
+              </label>
+              <input 
+                type="date" 
+                id="Fecha_Inicio" 
+                name="Fecha_Inicio" 
+                value={formatDateForInput(formData.Fecha_Inicio)} 
+                onChange={handleChange} 
+                className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" 
+                disabled={!canEditStartDate} 
+                title={!canEditStartDate ? "Solo el creador puede modificar la fecha de inicio" : "La fecha de inicio se establece automáticamente al asignar usuarios"}
+              />
             </div>
             <div>
               <label htmlFor="Fecha_Vencimiento" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Vencimiento</label>
-              <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} min={formData.Fecha_Inicio ? formData.Fecha_Inicio.split('T')[0] : undefined} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit} />
+              <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} min={formData.Fecha_Inicio ? formData.Fecha_Inicio.split('T')[0] : undefined} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEditDeadline} />
             </div>
           </div>
           
           <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
-            <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!canEdit} />
+            <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!canEditProgress} />
             <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">Marcar como completada</label>
           </div>
 
@@ -587,7 +603,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 value={formData.Porcentaje_Avance} 
                 onChange={handleProgressChange} 
                 className="inline-block w-16 ml-2 px-2 py-1 text-sm font-bold text-blue-600 border border-slate-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                disabled={!canEdit}
+                disabled={!canEditProgress}
               />%
             </label>
             <div className="relative">
@@ -601,7 +617,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 value={formData.Porcentaje_Avance} 
                 onChange={handleProgressChange} 
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer range-thumb-blue disabled:opacity-50" 
-                disabled={isCompleted || !canEdit}
+                disabled={isCompleted || !canEditProgress}
               />
             </div>
           </div>
@@ -646,7 +662,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           <button onClick={onClose} className="w-full sm:w-auto px-4 sm:px-5 py-2 bg-white text-slate-700 rounded-lg border border-slate-300 hover:bg-slate-100 font-semibold transition-all text-sm sm:text-base">
             Cancelar
           </button>
-          <button onClick={handleSave} disabled={isSaving || !canEdit} className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-300 flex items-center justify-center shadow-sm hover:shadow-md transition-all text-sm sm:text-base">
+          <button onClick={handleSave} disabled={isSaving || !(canEdit || canEditDescription || canEditStartDate || canEditDeadline || canEditProgress)} className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-300 flex items-center justify-center shadow-sm hover:shadow-md transition-all text-sm sm:text-base">
              {isSaving ? <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <Icon name="save" className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />}
             Guardar Cambios
           </button>
