@@ -338,7 +338,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
   const isCreator = currentUser && currentUser.id === task.Usuario_Creador_ID;
   const isAssigned = currentUser && assignedUsers.some(user => user.id === currentUser.id);
-  const canEdit = isCreator || isAssigned;
+  const canEdit = isCreator; // Solo el creador puede editar campos principales
+  const canCreateSubtasks = isCreator || isAssigned; // Creadores y asignados pueden crear subtareas
   const canAssign = isCreator || isAssigned;
   const canUnassign = isCreator; // Solo el creador puede quitar asignaciones
   const canDelete = isCreator; // Solo el creador puede eliminar la tarea
@@ -628,11 +629,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                       onKeyDown={e => e.key === 'Enter' && handleAddNewSubtask()}
                       placeholder="Añadir nueva sub-tarea..."
                       className="flex-grow p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                      disabled={isAddingSubtask || !canEdit}
+                      disabled={isAddingSubtask || !canCreateSubtasks}
                   />
                   <button
                       onClick={handleAddNewSubtask}
-                      disabled={!newSubtaskTitle.trim() || isAddingSubtask || !canEdit}
+                      disabled={!newSubtaskTitle.trim() || isAddingSubtask || !canCreateSubtasks}
                       className="px-3 sm:px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 disabled:bg-slate-300 flex items-center transition-colors text-sm sm:text-base"
                   >
                       {isAddingSubtask ? <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Icon name="plus" className="w-4 h-4 sm:w-5 sm:h-5"/>}

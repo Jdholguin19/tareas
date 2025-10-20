@@ -19,9 +19,14 @@ if (!$parentId || empty($titulo)) {
 }
 
 try {
-    // Check if parent task exists and belongs to the user
-    $stmt = $pdo->prepare("SELECT * FROM tareas WHERE id = ? AND creado_por = ?");
-    $stmt->execute([$parentId, $userId]);
+    // Check if parent task exists and user has permission (creator or assigned)
+    $stmt = $pdo->prepare("
+        SELECT t.* FROM tareas t
+        WHERE t.id = ? AND (t.creado_por = ? OR EXISTS (
+            SELECT 1 FROM tareas_asignados ta WHERE ta.tarea_id = t.id AND ta.usuario_id = ?
+        ))
+    ");
+    $stmt->execute([$parentId, $userId, $userId]);
     $parent = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$parent) {
