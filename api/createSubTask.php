@@ -34,6 +34,10 @@ try {
         exit;
     }
 
+    // Iniciar transacción para asegurar que tanto la tarea como las asignaciones se creen
+    $pdo->beginTransaction();
+
+    // Crear la subtarea
     $stmt = $pdo->prepare("
         INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_vencimiento, adjuntos_url)
         VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]')
@@ -66,8 +70,34 @@ try {
     
     $task['Adjuntos_URL'] = json_decode($task['Adjuntos_URL'] ?? '[]', true);
 
+    // Obtener los usuarios asignados de la tarea padre
+    $stmt = $pdo->prepare("
+        SELECT usuario_id FROM tareas_asignados
+        WHERE tarea_id = ?
+    ");
+    $stmt->execute([$parentId]);
+    $assignedUsers = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Asignar los mismos usuarios a la subtarea
+    if (!empty($assignedUsers)) {
+        foreach ($assignedUsers as $assignedUserId) {
+            $stmt = $pdo->prepare("
+                INSERT IGNORE INTO tareas_asignados (tarea_id, usuario_id)
+                VALUES (?, ?)
+            ");
+            $stmt->execute([$taskId, $assignedUserId]);
+        }
+    }
+
+    // Confirmar la transacción
+    $pdo->commit();
+
     echo json_encode($task);
 } catch (Exception $e) {
+    // Revertir la transacción en caso de error
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     echo json_encode(['error' => $e->getMessage()]);
 }
 ?>
