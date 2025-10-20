@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { apiRegister } from '../services/apiService';
 
 export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin: () => void }> = ({ onRegistered, onSwitchToLogin }) => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -12,6 +13,12 @@ export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin:
     e.preventDefault();
     setError(null);
     
+    // Basic username validation
+    if (username.trim().length < 3) {
+      setError('El nombre de usuario debe tener al menos 3 caracteres');
+      return;
+    }
+    
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -20,7 +27,7 @@ export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin:
     }
     
     try {
-      await apiRegister(email, password, confirm);
+      await apiRegister(username, email, password, confirm);
       setSuccess('Registrado correctamente. Redirigiendo...');
       setTimeout(() => onRegistered(), 800);
     } catch (err: any) {
@@ -35,6 +42,18 @@ export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin:
         {error && <div className="text-red-600 mb-3">{error}</div>}
         {success && <div className="text-green-600 mb-3">{success}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Nombre de usuario</label>
+            <input 
+              type="text"
+              value={username} 
+              onChange={e => setUsername(e.target.value)} 
+              required 
+              placeholder="usuario123"
+              minLength={3}
+              className="mt-1 block w-full px-3 py-2 border rounded" 
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Correo electrónico</label>
             <input 
