@@ -49,7 +49,7 @@ export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin:
               value={username} 
               onChange={e => setUsername(e.target.value)} 
               required 
-              placeholder="usuario123"
+              placeholder="Ingresa tu usuario"
               minLength={3}
               className="mt-1 block w-full px-3 py-2 border rounded" 
             />
@@ -61,7 +61,7 @@ export const RegisterForm: React.FC<{ onRegistered: () => void; onSwitchToLogin:
               value={email} 
               onChange={e => setEmail(e.target.value)} 
               required 
-              placeholder="tu@email.com"
+              placeholder="Ingresa tu correo"
               className="mt-1 block w-full px-3 py-2 border rounded" 
             />
           </div>
