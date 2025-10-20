@@ -150,31 +150,52 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const abortController = new AbortController();
+    let isMounted = true;
+    
     const init = async () => {
       try {
         const auth = await checkAuth();
-        if (auth && auth.authenticated) {
+        if (abortController.signal.aborted) return;
+        
+        if (auth && auth.authenticated && isMounted) {
           setIsAuthenticated(true);
-          await fetchTasks();
-          await fetchProjects();
-          // Get current user
-          try {
-            const user = await getCurrentUser();
-            setCurrentUser(user);
-          } catch (error) {
-            console.error('Error getting current user:', error);
+          
+          // Ejecutar llamadas en paralelo para mejor rendimiento
+          const [tasksResult, projectsResult, userResult] = await Promise.allSettled([
+            fetchTasks(),
+            fetchProjects(),
+            getCurrentUser()
+          ]);
+          
+          if (abortController.signal.aborted) return;
+          
+          if (userResult.status === 'fulfilled' && isMounted) {
+            setCurrentUser(userResult.value);
+          } else if (userResult.status === 'rejected') {
+            console.error('Error getting current user:', userResult.reason);
           }
-        } else {
+        } else if (isMounted) {
           setIsAuthenticated(false);
         }
       } catch (err) {
+        if (abortController.signal.aborted) return;
         console.error('Auth check failed', err);
-        setIsAuthenticated(false);
+        if (isMounted) {
+          setIsAuthenticated(false);
+        }
       }
     };
 
     init();
-  }, [fetchTasks, fetchProjects]);
+    
+    // Cleanup: cancelar peticiones y marcar como desmontado
+    return () => {
+      abortController.abort();
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar el componente
 
   // Load task assignees when tasks are loaded and user is authenticated
   useEffect(() => {
@@ -191,7 +212,8 @@ const App: React.FC = () => {
     };
 
     loadTaskAssignees();
-  }, [tasks.length, currentUser, isAuthenticated]); // Solo dependemos de la longitud de tasks, no del array completo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks.length, currentUser?.id, isAuthenticated]); // Solo cuando cambian valores específicos
 
   // Close notification menu when clicking outside
   useEffect(() => {
@@ -970,6 +992,7 @@ const App: React.FC = () => {
           task={editingTask} 
           allTasks={tasks}
           projects={projects}
+          currentUser={currentUser}
           onProjectCreated={handleProjectCreated}
           onClose={handleCloseModal}
           onSave={async (task) => {

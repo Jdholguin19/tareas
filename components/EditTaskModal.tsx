@@ -3,12 +3,13 @@ import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, getCurrentUser, createProject } from '../services/apiService';
+import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, createProject } from '../services/apiService';
 
 interface EditTaskModalProps {
   task: Task;
   allTasks: Task[];
   projects: Project[];
+  currentUser: {id: number, username: string, email: string} | null;
   onProjectCreated?: (project: Project) => void;
   onClose: () => void;
   onSave: (updatedTask: Task) => Promise<void>;
@@ -16,7 +17,7 @@ interface EditTaskModalProps {
   onDelete: (taskId: number) => void;
 }
 
-export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, onClose, onSave, onCreateSubtask, onDelete, onProjectCreated }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, currentUser, onClose, onSave, onCreateSubtask, onDelete, onProjectCreated }) => {
   const [formData, setFormData] = useState<Task>({ ...task });
   const [isSaving, setIsSaving] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -29,8 +30,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<{id: number, username: string, email: string, fecha_asignacion: string}[]>([]);
   const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [taskCreator, setTaskCreator] = useState<{id: number, username: string, email: string} | null>(null);
   const [isLoadingCreator, setIsLoadingCreator] = useState(false);
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
@@ -49,11 +48,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
       Fecha_Inicio: task.Fecha_Inicio || task.Fecha_Creacion,
       Proyecto: Number(task.Proyecto) // Ensure Proyecto is always a number
     });
-    // Load assigned users and current user
+    // Load assigned users and task creator
     loadAssignedUsers();
-    loadCurrentUser();
     loadTaskCreator();
-  }, [task]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.ID]); // Solo cuando cambie el ID de la tarea
 
   const loadAssignedUsers = async () => {
     setIsLoadingAssignees(true);
@@ -64,18 +63,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
       console.error('Error loading assigned users:', error);
     } finally {
       setIsLoadingAssignees(false);
-    }
-  };
-
-  const loadCurrentUser = async () => {
-    setIsLoadingUser(true);
-    try {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-    } catch (error) {
-      console.error('Error loading current user:', error);
-    } finally {
-      setIsLoadingUser(false);
     }
   };
 

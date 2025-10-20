@@ -1,136 +1,1399 @@
-http://localhost:3000/
-http://localhost:3000/@vite/client
-https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap
-https://cdn.tailwindcss.com/3.4.17
-http://localhost:3000/index.tsx?t=1760970594555
-http://localhost:3000/@react-refresh
-http://localhost:3000/node_modules/vite/dist/client/env.mjs
-http://localhost:3000/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=f283af18
-http://localhost:3000/node_modules/.vite/deps/react.js?v=f283af18
-http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=f283af18
-http://localhost:3000/App.tsx?t=1760970594555
-http://localhost:3000/node_modules/.vite/deps/chunk-H5I4P4DR.js?v=f283af18
-http://localhost:3000/node_modules/.vite/deps/chunk-5SC5K45T.js?v=f283af18
-ws://localhost:3000/?token=z6Mnpkd_Ts7A
-http://localhost:3000/components/CreateQuickTask.tsx?t=1760970594555
-http://localhost:3000/components/TaskList.tsx?t=1760970594555
-http://localhost:3000/components/Icon.tsx
-http://localhost:3000/services/apiService.ts?t=1760970594555
-http://localhost:3000/utils/taskUtils.ts
-http://localhost:3000/components/EditTaskModal.tsx?t=1760970594555
-http://localhost:3000/components/TaskSkeleton.tsx
-http://localhost:3000/components/LoginForm.tsx?t=1760970594555
-http://localhost:3000/components/RegisterForm.tsx?t=1760970594555
-http://localhost:3000/components/TaskItem.tsx?t=1760970594555
-http://localhost:3000/types.ts
-http://localhost:3000/components/DeleteConfirmationModal.tsx
-http://localhost:3000/api/checkAuth.php
-http://localhost:3000/api/checkAuth.php
-http://localhost:3000/api/getTasks.php
-http://localhost:3000/api/getTasks.php
-http://localhost:3000/api/getProjects.php
-http://localhost:3000/api/getTaskAssignees.php?taskId=102
-http://localhost:3000/api/getTaskAssignees.php?taskId=101
-http://localhost:3000/api/getTaskAssignees.php?taskId=99
-http://localhost:3000/api/getTaskAssignees.php?taskId=98
-http://localhost:3000/api/getTaskAssignees.php?taskId=85
-http://localhost:3000/api/getTaskAssignees.php?taskId=54
-http://localhost:3000/api/getTaskAssignees.php?taskId=25
-http://localhost:3000/api/getTaskAssignees.php?taskId=27
-http://localhost:3000/api/getTaskAssignees.php?taskId=62
-http://localhost:3000/api/getTaskAssignees.php?taskId=22
-http://localhost:3000/api/getTaskAssignees.php?taskId=13
-http://localhost:3000/api/getTaskAssignees.php?taskId=53
-http://localhost:3000/api/getTaskAssignees.php?taskId=50
-http://localhost:3000/api/getTaskAssignees.php?taskId=38
-http://localhost:3000/api/getTaskAssignees.php?taskId=12
-http://localhost:3000/api/getTaskAssignees.php?taskId=92
-http://localhost:3000/api/getTaskAssignees.php?taskId=63
-http://localhost:3000/api/getTaskAssignees.php?taskId=61
-http://localhost:3000/api/getTaskAssignees.php?taskId=60
-http://localhost:3000/api/getTaskAssignees.php?taskId=59
-http://localhost:3000/api/getTaskAssignees.php?taskId=52
-http://localhost:3000/api/getTaskAssignees.php?taskId=51
-http://localhost:3000/api/getTaskAssignees.php?taskId=48
-http://localhost:3000/api/getTaskAssignees.php?taskId=47
-http://localhost:3000/api/getTaskAssignees.php?taskId=43
-http://localhost:3000/api/getTaskAssignees.php?taskId=33
-http://localhost:3000/api/getTaskAssignees.php?taskId=32
-http://localhost:3000/api/getTaskAssignees.php?taskId=30
-http://localhost:3000/api/getTaskAssignees.php?taskId=42
-http://localhost:3000/api/getTaskAssignees.php?taskId=29
-http://localhost:3000/api/getTaskAssignees.php?taskId=28
-http://localhost:3000/api/getTaskAssignees.php?taskId=26
-http://localhost:3000/api/getTaskAssignees.php?taskId=24
-http://localhost:3000/api/getTaskAssignees.php?taskId=21
-http://localhost:3000/api/getTaskAssignees.php?taskId=18
-http://localhost:3000/api/getTaskAssignees.php?taskId=20
-http://localhost:3000/api/getTaskAssignees.php?taskId=23
-http://localhost:3000/api/getTaskAssignees.php?taskId=39
-http://localhost:3000/api/getTaskAssignees.php?taskId=17
-http://localhost:3000/api/getTaskAssignees.php?taskId=15
-http://localhost:3000/api/getTaskAssignees.php?taskId=16
-http://localhost:3000/api/getTaskAssignees.php?taskId=19
-http://localhost:3000/api/getTaskAssignees.php?taskId=35
-http://localhost:3000/api/getTaskAssignees.php?taskId=14
-http://localhost:3000/api/getTaskAssignees.php?taskId=102
-http://localhost:3000/api/getTaskAssignees.php?taskId=101
-http://localhost:3000/api/getTaskAssignees.php?taskId=99
-http://localhost:3000/api/getTaskAssignees.php?taskId=98
-http://localhost:3000/api/getTaskAssignees.php?taskId=85
-http://localhost:3000/api/getTaskAssignees.php?taskId=54
-http://localhost:3000/api/getTaskAssignees.php?taskId=25
-http://localhost:3000/api/getTaskAssignees.php?taskId=27
-http://localhost:3000/api/getTaskAssignees.php?taskId=62
-http://localhost:3000/api/getTaskAssignees.php?taskId=22
-http://localhost:3000/api/getTaskAssignees.php?taskId=13
-http://localhost:3000/api/getTaskAssignees.php?taskId=53
-http://localhost:3000/api/getTaskAssignees.php?taskId=50
-http://localhost:3000/api/getTaskAssignees.php?taskId=38
-http://localhost:3000/api/getTaskAssignees.php?taskId=12
-http://localhost:3000/api/getTaskAssignees.php?taskId=92
-http://localhost:3000/api/getTaskAssignees.php?taskId=63
-http://localhost:3000/api/getTaskAssignees.php?taskId=61
-http://localhost:3000/api/getTaskAssignees.php?taskId=60
-http://localhost:3000/api/getTaskAssignees.php?taskId=59
-http://localhost:3000/api/getTaskAssignees.php?taskId=52
-http://localhost:3000/api/getTaskAssignees.php?taskId=51
-http://localhost:3000/api/getTaskAssignees.php?taskId=48
-http://localhost:3000/api/getTaskAssignees.php?taskId=47
-http://localhost:3000/api/getTaskAssignees.php?taskId=43
-http://localhost:3000/api/getTaskAssignees.php?taskId=33
-http://localhost:3000/api/getTaskAssignees.php?taskId=32
-http://localhost:3000/api/getTaskAssignees.php?taskId=30
-http://localhost:3000/api/getTaskAssignees.php?taskId=42
-http://localhost:3000/api/getTaskAssignees.php?taskId=29
-http://localhost:3000/api/getTaskAssignees.php?taskId=28
-http://localhost:3000/api/getTaskAssignees.php?taskId=26
-http://localhost:3000/api/getTaskAssignees.php?taskId=24
-http://localhost:3000/api/getTaskAssignees.php?taskId=21
-http://localhost:3000/api/getTaskAssignees.php?taskId=18
-http://localhost:3000/api/getTaskAssignees.php?taskId=20
-http://localhost:3000/api/getTaskAssignees.php?taskId=23
-http://localhost:3000/api/getTaskAssignees.php?taskId=39
-http://localhost:3000/api/getTaskAssignees.php?taskId=17
-http://localhost:3000/api/getTaskAssignees.php?taskId=15
-http://localhost:3000/api/getTaskAssignees.php?taskId=16
-http://localhost:3000/api/getTaskAssignees.php?taskId=19
-http://localhost:3000/api/getTaskAssignees.php?taskId=35
-http://localhost:3000/api/getTaskAssignees.php?taskId=14
-http://localhost:3000/api/getProjects.php
-http://localhost:3000/api/getCurrentUser.php
-http://localhost:3000/api/getCurrentUser.php
-http://localhost:3000/api/getTaskAssignees.php?taskId=98
-http://localhost:3000/api/getTaskAssignees.php?taskIds[]=102&taskIds[]=101&taskIds[]=99&taskIds[]=98&taskIds[]=92&taskIds[]=85&taskIds[]=63&taskIds[]=62&taskIds[]=61&taskIds[]=60&taskIds[]=59&taskIds[]=54&taskIds[]=53&taskIds[]=52&taskIds[]=51&taskIds[]=50&taskIds[]=48&taskIds[]=47&taskIds[]=43&taskIds[]=42&taskIds[]=39&taskIds[]=38&taskIds[]=35&taskIds[]=33&taskIds[]=32&taskIds[]=30&taskIds[]=29&taskIds[]=28&taskIds[]=27&taskIds[]=26&taskIds[]=25&taskIds[]=24&taskIds[]=23&taskIds[]=22&taskIds[]=21&taskIds[]=20&taskIds[]=19&taskIds[]=18&taskIds[]=17&taskIds[]=16&taskIds[]=15&taskIds[]=14&taskIds[]=13&taskIds[]=12
-http://localhost:3000/api/getTaskAssignees.php?taskId=98
-http://localhost:3000/api/getTaskAssignees.php?taskIds[]=102&taskIds[]=101&taskIds[]=99&taskIds[]=98&taskIds[]=92&taskIds[]=85&taskIds[]=63&taskIds[]=62&taskIds[]=61&taskIds[]=60&taskIds[]=59&taskIds[]=54&taskIds[]=53&taskIds[]=52&taskIds[]=51&taskIds[]=50&taskIds[]=48&taskIds[]=47&taskIds[]=43&taskIds[]=42&taskIds[]=39&taskIds[]=38&taskIds[]=35&taskIds[]=33&taskIds[]=32&taskIds[]=30&taskIds[]=29&taskIds[]=28&taskIds[]=27&taskIds[]=26&taskIds[]=25&taskIds[]=24&taskIds[]=23&taskIds[]=22&taskIds[]=21&taskIds[]=20&taskIds[]=19&taskIds[]=18&taskIds[]=17&taskIds[]=16&taskIds[]=15&taskIds[]=14&taskIds[]=13&taskIds[]=12
-http://localhost:3000/api/getTaskAssignees.php?taskId=99
-http://localhost:3000/api/getTaskAssignees.php?taskId=98
-http://localhost:3000/api/getTaskAssignees.php?taskId=85
-http://localhost:3000/api/getTaskAssignees.php?taskId=53
-http://localhost:3000/api/getTaskAssignees.php?taskId=50
-http://localhost:3000/api/getTaskAssignees.php?taskId=99
-http://localhost:3000/api/getTaskAssignees.php?taskId=98
-http://localhost:3000/api/getTaskAssignees.php?taskId=85
-http://localhost:3000/api/getTaskAssignees.php?taskId=53
-http://localhost:3000/api/getTaskAssignees.php?taskId=50
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/" `
+-WebSession $session `
+-Headers @{
+"Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Cache-Control"="max-age=0"
+  "If-None-Match"="W/`"6f7-LkOVgJVXkIDoKO/jPVAEK4So1Mo`""
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="document"
+  "Sec-Fetch-Mode"="navigate"
+  "Sec-Fetch-Site"="same-origin"
+  "Sec-Fetch-User"="?1"
+  "Upgrade-Insecure-Requests"="1"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/@vite/client" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"7e60-YJQX3DGPZQ4W/zwnRARbyQOm2Rg`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" `
+-WebSession $session `
+-Headers @{
+"sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "https://cdn.tailwindcss.com/3.4.17" `
+-WebSession $session `
+-Headers @{
+"sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/index.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"4c4-GCgri180BWUMxrYaSIb37gTVD3I`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/@react-refresh" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"5367-h8iO905IyT3hT92qDTgpgcseDiA`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=f283af18" `
+-WebSession $session `
+-Headers @{
+"Origin"="http://localhost:3000"
+  "sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/index.tsx"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/node_modules/.vite/deps/react.js?v=f283af18" `
+-WebSession $session `
+-Headers @{
+"Origin"="http://localhost:3000"
+  "sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/index.tsx"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=f283af18" `
+-WebSession $session `
+-Headers @{
+"Origin"="http://localhost:3000"
+  "sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/index.tsx"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/App.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"e9d2-aPAf7LcHxS31nvJqYmslSYDz9r0`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/index.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/node_modules/.vite/deps/chunk-H5I4P4DR.js?v=f283af18" `
+-WebSession $session `
+-Headers @{
+"Origin"="http://localhost:3000"
+  "sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=f283af18"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/node_modules/.vite/deps/chunk-5SC5K45T.js?v=f283af18" `
+-WebSession $session `
+-Headers @{
+"Origin"="http://localhost:3000"
+  "sec-ch-ua-platform"="`"Windows`""
+  "Referer"="http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=f283af18"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/node_modules/vite/dist/client/env.mjs" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"33e-Fb08bnZv6kyI1YYAyG27xvU10Qk`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/@vite/client"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/CreateQuickTask.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"2e32-gzLjWjBNSv6j8fozGtNtqIq1KTw`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/TaskList.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"e1a-Iyl7K/2vS6qReyhjcMgSd9x7naw`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/Icon.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"3cf1-tdllQ+ckDXNBOUuUhH75y5DtsU4`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/services/apiService.ts" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"1f34-u8CeZY8tHFin7lgT1tl9kzxcQu8`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/utils/taskUtils.ts" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"1ea-wU0GqPOq+hTbq2pXEUmFA6OXy/A`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/EditTaskModal.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"d83e-2MJKegy9ysxGMEhgPGcwnSNQUsI`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/TaskSkeleton.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"f78-poCvCGT6Gvl7Y220Zawurp6/bco`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/LoginForm.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"1add-LpviLJPvstIpkrrN0CzlzppeQUA`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/RegisterForm.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"27ce-+xj5amh0LNNRRXT4ydwh0bm8djI`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/App.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+Invoke-WebRequest -UseBasicParsing -Uri "ws://localhost:3000/?token=w963-WP9ULi9" `
+-WebSession $session `
+-Headers @{
+"Upgrade"="websocket"
+  "Origin"="http://localhost:3000"
+  "Cache-Control"="no-cache"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Pragma"="no-cache"
+  "Sec-WebSocket-Key"="WGIylh2JNLy1sVX0TLkFGQ=="
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Sec-WebSocket-Version"="13"
+  "Sec-WebSocket-Protocol"="vite-hmr"
+  "Sec-WebSocket-Extensions"="permessage-deflate; client_max_window_bits"
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/TaskItem.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"56c7-bN6K/iog384oC1kJAbW4o7YpXOo`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/components/TaskList.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/types.ts" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"e5-4YdrDfKjuafg/nWdFMG1AEpkgoY`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/components/EditTaskModal.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/components/DeleteConfirmationModal.tsx" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "If-None-Match"="W/`"216a-ull7zxLA7mVhF8VGd1Dr+9QlDug`""
+  "Origin"="http://localhost:3000"
+  "Referer"="http://localhost:3000/components/EditTaskModal.tsx"
+  "Sec-Fetch-Dest"="script"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/checkAuth.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/checkAuth.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTasks.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTasks.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getProjects.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=118" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=126" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=95" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=94" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=115" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=97" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=96" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=92" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=91" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=90" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=118" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=126" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=95" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=94" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=115" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=97" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=96" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=92" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=91" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=90" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getProjects.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getCurrentUser.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getCurrentUser.php" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=126" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=118" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=115" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=97" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=96" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=95" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=94" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=92" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=91" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=90" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=118" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=94" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=92" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=91" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=90" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=118" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=94" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=92" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=91" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+};
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+$session.Cookies.Add((New-Object System.Net.Cookie("PHPSESSID", "ecqh8rliv8g8vne4k2u06q7du8", "/", "localhost")))
+Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/getTaskAssignees.php?taskId=90" `
+-WebSession $session `
+-Headers @{
+"Accept"="*/*"
+  "Accept-Encoding"="gzip, deflate, br, zstd"
+  "Accept-Language"="es-ES,es;q=0.9"
+  "Referer"="http://localhost:3000/"
+  "Sec-Fetch-Dest"="empty"
+  "Sec-Fetch-Mode"="cors"
+  "Sec-Fetch-Site"="same-origin"
+  "sec-ch-ua"="`"Google Chrome`";v=`"141`", `"Not?A_Brand`";v=`"8`", `"Chromium`";v=`"141`""
+  "sec-ch-ua-mobile"="?0"
+  "sec-ch-ua-platform"="`"Windows`""
+}
+
+
+Esto de aqui es parte de la consola
+
+[Mon Oct 20 12:38:28 2025] [::1]:64947 Accepted
+[Mon Oct 20 12:38:29 2025] [::1]:64947 [200]: GET /api/checkAuth.php
+[Mon Oct 20 12:38:29 2025] [::1]:64947 Closing
+[Mon Oct 20 12:38:29 2025] [::1]:64949 Accepted
+[Mon Oct 20 12:38:29 2025] [::1]:64949 [200]: GET /api/checkAuth.php
+[Mon Oct 20 12:38:29 2025] [::1]:64949 Closing
+[Mon Oct 20 12:38:29 2025] [::1]:64950 Accepted
+[Mon Oct 20 12:38:30 2025] [::1]:64950 [200]: GET /api/getTasks.php
+[Mon Oct 20 12:38:30 2025] [::1]:64950 Closing
+[Mon Oct 20 12:38:30 2025] [::1]:51618 Accepted
+[Mon Oct 20 12:38:31 2025] [::1]:51618 [200]: GET /api/getTasks.php
+[Mon Oct 20 12:38:31 2025] [::1]:51618 Closing
+[Mon Oct 20 12:38:31 2025] [::1]:51620 Accepted
+[Mon Oct 20 12:38:31 2025] [::1]:63344 Accepted
+[Mon Oct 20 12:38:31 2025] [::1]:51620 [200]: GET /api/getProjects.php
+[Mon Oct 20 12:38:31 2025] [::1]:51620 Closing
+[Mon Oct 20 12:38:31 2025] [::1]:50439 Accepted
+[Mon Oct 20 12:38:32 2025] [::1]:63344 [200]: GET /api/getTaskAssignees.php?taskId=118
+[Mon Oct 20 12:38:32 2025] [::1]:63344 Closing
+[Mon Oct 20 12:38:32 2025] [::1]:50440 Accepted
+[Mon Oct 20 12:38:33 2025] [::1]:50439 [200]: GET /api/getTaskAssignees.php?taskId=126
+[Mon Oct 20 12:38:33 2025] [::1]:50439 Closing
+[Mon Oct 20 12:38:33 2025] [::1]:50441 Accepted
+[Mon Oct 20 12:38:33 2025] [::1]:50440 [200]: GET /api/getTaskAssignees.php?taskId=95
+[Mon Oct 20 12:38:33 2025] [::1]:50440 Closing
+[Mon Oct 20 12:38:33 2025] [::1]:51314 Accepted
+[Mon Oct 20 12:38:34 2025] [::1]:50441 [200]: GET /api/getTaskAssignees.php?taskId=94
+[Mon Oct 20 12:38:34 2025] [::1]:50441 Closing
+[Mon Oct 20 12:38:34 2025] [::1]:54294 Accepted
+[Mon Oct 20 12:38:35 2025] [::1]:51314 [200]: GET /api/getTaskAssignees.php?taskId=115
+[Mon Oct 20 12:38:35 2025] [::1]:51314 Closing
+[Mon Oct 20 12:38:35 2025] [::1]:54149 Accepted
+[Mon Oct 20 12:38:36 2025] [::1]:54294 [200]: GET /api/getTaskAssignees.php?taskId=97
+[Mon Oct 20 12:38:36 2025] [::1]:54294 Closing
+[Mon Oct 20 12:38:36 2025] [::1]:56126 Accepted
+[Mon Oct 20 12:38:36 2025] [::1]:54149 [200]: GET /api/getTaskAssignees.php?taskId=96
+[Mon Oct 20 12:38:36 2025] [::1]:54149 Closing
+[Mon Oct 20 12:38:36 2025] [::1]:59308 Accepted
+[Mon Oct 20 12:38:37 2025] [::1]:56126 [200]: GET /api/getTaskAssignees.php?taskId=92
+[Mon Oct 20 12:38:37 2025] [::1]:56126 Closing
+[Mon Oct 20 12:38:37 2025] [::1]:60284 Accepted
+[Mon Oct 20 12:38:38 2025] [::1]:59308 [200]: GET /api/getTaskAssignees.php?taskId=91
+[Mon Oct 20 12:38:38 2025] [::1]:59308 Closing
+[Mon Oct 20 12:38:38 2025] [::1]:53175 Accepted
+[Mon Oct 20 12:38:39 2025] [::1]:60284 [200]: GET /api/getTaskAssignees.php?taskId=90
+[Mon Oct 20 12:38:39 2025] [::1]:60284 Closing
+[Mon Oct 20 12:38:39 2025] [::1]:58739 Accepted
+[Mon Oct 20 12:38:39 2025] [::1]:53175 [200]: GET /api/getProjects.php
+[Mon Oct 20 12:38:39 2025] [::1]:53175 Closing
+[Mon Oct 20 12:38:39 2025] [::1]:54418 Accepted
+[Mon Oct 20 12:38:40 2025] [::1]:58739 [200]: GET /api/getCurrentUser.php
+[Mon Oct 20 12:38:40 2025] [::1]:58739 Closing
+[Mon Oct 20 12:38:40 2025] [::1]:53611 Accepted
+[Mon Oct 20 12:38:41 2025] [::1]:54418 [200]: GET /api/getTaskAssignees.php?taskId=118
+[Mon Oct 20 12:38:41 2025] [::1]:54418 Closing
+[Mon Oct 20 12:38:41 2025] [::1]:62611 Accepted
+[Mon Oct 20 12:38:41 2025] [::1]:53611 [200]: GET /api/getTaskAssignees.php?taskId=126
+[Mon Oct 20 12:38:41 2025] [::1]:53611 Closing
+[Mon Oct 20 12:38:41 2025] [::1]:54501 Accepted
+[Mon Oct 20 12:38:42 2025] [::1]:62611 [200]: GET /api/getTaskAssignees.php?taskId=95
+[Mon Oct 20 12:38:42 2025] [::1]:62611 Closing
+[Mon Oct 20 12:38:42 2025] [::1]:65133 Accepted
+[Mon Oct 20 12:38:43 2025] [::1]:54501 [200]: GET /api/getTaskAssignees.php?taskId=94
+[Mon Oct 20 12:38:43 2025] [::1]:54501 Closing
+[Mon Oct 20 12:38:43 2025] [::1]:56916 Accepted
+[Mon Oct 20 12:38:44 2025] [::1]:65133 [200]: GET /api/getTaskAssignees.php?taskId=115
+[Mon Oct 20 12:38:44 2025] [::1]:65133 Closing
+[Mon Oct 20 12:38:44 2025] [::1]:53811 Accepted
+[Mon Oct 20 12:38:44 2025] [::1]:56916 [200]: GET /api/getTaskAssignees.php?taskId=97
+[Mon Oct 20 12:38:44 2025] [::1]:56916 Closing
+[Mon Oct 20 12:38:44 2025] [::1]:55449 Accepted
+[Mon Oct 20 12:38:45 2025] [::1]:53811 [200]: GET /api/getTaskAssignees.php?taskId=96
+[Mon Oct 20 12:38:45 2025] [::1]:53811 Closing
+[Mon Oct 20 12:38:45 2025] [::1]:64529 Accepted
+[Mon Oct 20 12:38:46 2025] [::1]:55449 [200]: GET /api/getTaskAssignees.php?taskId=92
+[Mon Oct 20 12:38:46 2025] [::1]:55449 Closing
+[Mon Oct 20 12:38:46 2025] [::1]:64383 Accepted
+[Mon Oct 20 12:38:47 2025] [::1]:64529 [200]: GET /api/getTaskAssignees.php?taskId=91
+[Mon Oct 20 12:38:47 2025] [::1]:64529 Closing
+[Mon Oct 20 12:38:47 2025] [::1]:54296 Accepted
+[Mon Oct 20 12:38:47 2025] [::1]:64383 [200]: GET /api/getTaskAssignees.php?taskId=90
+[Mon Oct 20 12:38:47 2025] [::1]:64383 Closing
+[Mon Oct 20 12:38:47 2025] [::1]:60371 Accepted
+[Mon Oct 20 12:38:48 2025] [::1]:54296 [200]: GET /api/getCurrentUser.php
+[Mon Oct 20 12:38:48 2025] [::1]:54296 Closing
+[Mon Oct 20 12:38:49 2025] [::1]:60371 [200]: GET /api/getTaskAssignees.php?taskId=126
+[Mon Oct 20 12:38:49 2025] [::1]:60371 Closing
+[Mon Oct 20 12:38:49 2025] [::1]:60001 Accepted
+[Mon Oct 20 12:38:50 2025] [::1]:60001 [200]: GET /api/getTaskAssignees.php?taskId=118
+[Mon Oct 20 12:38:50 2025] [::1]:60001 Closing
+[Mon Oct 20 12:38:50 2025] [::1]:64281 Accepted
+[Mon Oct 20 12:38:51 2025] [::1]:64281 [200]: GET /api/getTaskAssignees.php?taskId=115
+[Mon Oct 20 12:38:51 2025] [::1]:64281 Closing
+[Mon Oct 20 12:38:51 2025] [::1]:59369 Accepted
+[Mon Oct 20 12:38:52 2025] [::1]:59369 [200]: GET /api/getTaskAssignees.php?taskId=97
+[Mon Oct 20 12:38:52 2025] [::1]:59369 Closing
+[Mon Oct 20 12:38:52 2025] [::1]:63293 Accepted
+[Mon Oct 20 12:38:52 2025] [::1]:63293 [200]: GET /api/getTaskAssignees.php?taskId=96
+[Mon Oct 20 12:38:52 2025] [::1]:63293 Closing
+[Mon Oct 20 12:38:53 2025] [::1]:64572 Accepted
+[Mon Oct 20 12:38:54 2025] [::1]:64572 [200]: GET /api/getTaskAssignees.php?taskId=95
+[Mon Oct 20 12:38:54 2025] [::1]:64572 Closing
+[Mon Oct 20 12:38:54 2025] [::1]:62862 Accepted
+[Mon Oct 20 12:38:54 2025] [::1]:62862 [200]: GET /api/getTaskAssignees.php?taskId=94
+[Mon Oct 20 12:38:54 2025] [::1]:62862 Closing
+[Mon Oct 20 12:38:55 2025] [::1]:59591 Accepted
+[Mon Oct 20 12:38:55 2025] [::1]:59591 [200]: GET /api/getTaskAssignees.php?taskId=92
+[Mon Oct 20 12:38:56 2025] [::1]:59591 Closing
+[Mon Oct 20 12:38:56 2025] [::1]:53619 Accepted
+[Mon Oct 20 12:38:56 2025] [::1]:53619 [200]: GET /api/getTaskAssignees.php?taskId=91
+[Mon Oct 20 12:38:56 2025] [::1]:53619 Closing
+[Mon Oct 20 12:38:57 2025] [::1]:63400 Accepted
+[Mon Oct 20 12:38:57 2025] [::1]:63400 [200]: GET /api/getTaskAssignees.php?taskId=90
+[Mon Oct 20 12:38:57 2025] [::1]:63400 Closing
+[Mon Oct 20 12:38:57 2025] [::1]:56954 Accepted
+[Mon Oct 20 12:38:58 2025] [::1]:56954 [200]: GET /api/getTaskAssignees.php?taskId=118
+[Mon Oct 20 12:38:58 2025] [::1]:56954 Closing
+[Mon Oct 20 12:38:58 2025] [::1]:51981 Accepted
+[Mon Oct 20 12:38:58 2025] [::1]:51982 Accepted
+[Mon Oct 20 12:38:59 2025] [::1]:51981 [200]: GET /api/getTaskAssignees.php?taskId=94
+[Mon Oct 20 12:38:59 2025] [::1]:51981 Closing
+[Mon Oct 20 12:38:59 2025] [::1]:51983 Accepted
+[Mon Oct 20 12:39:00 2025] [::1]:51982 [200]: GET /api/getTaskAssignees.php?taskId=91
+[Mon Oct 20 12:39:00 2025] [::1]:51982 Closing
+[Mon Oct 20 12:39:00 2025] [::1]:51984 Accepted
+[Mon Oct 20 12:39:01 2025] [::1]:51983 [200]: GET /api/getTaskAssignees.php?taskId=90
+[Mon Oct 20 12:39:01 2025] [::1]:51983 Closing
+[Mon Oct 20 12:39:01 2025] [::1]:54245 Accepted
+[Mon Oct 20 12:39:01 2025] [::1]:51984 [200]: GET /api/getTaskAssignees.php?taskId=92
+[Mon Oct 20 12:39:01 2025] [::1]:51984 Closing
+[Mon Oct 20 12:39:01 2025] [::1]:50557 Accepted
+[Mon Oct 20 12:39:02 2025] [::1]:54245 [200]: GET /api/getTaskAssignees.php?taskId=118
+[Mon Oct 20 12:39:02 2025] [::1]:54245 Closing
+[Mon Oct 20 12:39:02 2025] [::1]:54948 Accepted
+[Mon Oct 20 12:39:03 2025] [::1]:50557 [200]: GET /api/getTaskAssignees.php?taskId=94
+[Mon Oct 20 12:39:03 2025] [::1]:50557 Closing
+[Mon Oct 20 12:39:03 2025] [::1]:64529 Accepted
+[Mon Oct 20 12:39:04 2025] [::1]:54948 [200]: GET /api/getTaskAssignees.php?taskId=91
+[Mon Oct 20 12:39:04 2025] [::1]:54948 Closing
+[Mon Oct 20 12:39:04 2025] [::1]:57713 Accepted
+[Mon Oct 20 12:39:04 2025] [::1]:64529 [200]: GET /api/getTaskAssignees.php?taskId=90
+[Mon Oct 20 12:39:04 2025] [::1]:64529 Closing
+[Mon Oct 20 12:39:05 2025] [::1]:57713 [200]: GET /api/getTaskAssignees.php?taskId=92
+[Mon Oct 20 12:39:05 2025] [::1]:57713 Closing
