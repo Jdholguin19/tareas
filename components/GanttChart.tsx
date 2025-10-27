@@ -325,6 +325,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
         startX: number;
         originalStartDate: Date;
         originalEndDate: Date;
+        currentStartDate?: Date;
+        currentEndDate?: Date;
     } | null>(null);
 
     // Estados para crear dependencias
@@ -432,6 +434,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 ...prev,
                 currentMousePos: { x: e.clientX, y: e.clientY }
             } : null);
+            return; // No procesar drag de tareas si estamos creando dependencias
         }
 
         // Lógica de drag existente
@@ -474,16 +477,53 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 break;
         }
 
-        // Actualizar visualmente (esto se podría optimizar con un estado temporal)
-        if (onTaskUpdate) {
-            onTaskUpdate(draggedTask, {
-                Fecha_Inicio: newStartDate.toISOString().split('T')[0],
-                Fecha_Vencimiento: newEndDate.toISOString().split('T')[0]
-            });
-        }
+        // Actualizar el estado de drag con las nuevas fechas (solo visual, no API)
+        setDragState(prev => prev ? {
+            ...prev,
+            currentStartDate: newStartDate,
+            currentEndDate: newEndDate
+        } : null);
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: React.MouseEvent) => {
+        // Si estamos creando dependencias, verificar si hay una tarea bajo el cursor
+        if (dependencyCreationState && dependencyCreationState.isActive) {
+            // Buscar si hay una tarea bajo el cursor
+            const element = document.elementFromPoint(e.clientX, e.clientY);
+            const taskElement = element?.closest('[data-task-id]');
+            
+            if (taskElement) {
+                const targetTaskId = parseInt(taskElement.getAttribute('data-task-id') || '0');
+                if (targetTaskId && targetTaskId !== dependencyCreationState.sourceTaskId) {
+                    // Crear dependencia
+                    if (onDependencyCreate) {
+                        onDependencyCreate(dependencyCreationState.sourceTaskId, targetTaskId, 'FS');
+                    }
+                }
+            }
+            
+            // Finalizar creación de dependencia
+            setDependencyCreationState(null);
+            return;
+        }
+
+        // Si estamos arrastrando una tarea, enviar la actualización final
+        if (dragState && draggedTask) {
+            const finalStartDate = dragState.currentStartDate || dragState.originalStartDate;
+            const finalEndDate = dragState.currentEndDate || dragState.originalEndDate;
+            
+            // Solo enviar actualización si las fechas cambiaron
+            if (finalStartDate.getTime() !== dragState.originalStartDate.getTime() || 
+                finalEndDate.getTime() !== dragState.originalEndDate.getTime()) {
+                if (onTaskUpdate) {
+                    onTaskUpdate(draggedTask, {
+                        Fecha_Inicio: finalStartDate.toISOString().split('T')[0],
+                        Fecha_Vencimiento: finalEndDate.toISOString().split('T')[0]
+                    });
+                }
+            }
+        }
+
         setDraggedTask(null);
         setDragState(null);
     };
@@ -714,6 +754,34 @@ const GanttChart: React.FC<GanttChartProps> = ({
                             const isSourceTask = dependencyCreationState?.sourceTaskId === task.ID;
                             const isPotentialTarget = dependencyCreationState?.isActive && dependencyCreationState.sourceTaskId !== task.ID;
                             
+                            // Calcular posición visual durante el drag
+                            let taskX = task.x;
+                            let taskWidth = task.width;
+                            
+                            if (isDragging && dragState) {
+                                const deltaX = dragState.startX ? 0 : 0; // Se calculará en tiempo real
+                                const currentStartDate = dragState.currentStartDate || dragState.originalStartDate;
+                                const currentEndDate = dragState.currentEndDate || dragState.originalEndDate;
+                                
+                                if (timelineScale.unit === 'day') {
+                                    const daysDiff = Math.floor((currentStartDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000));
+                                    const duration = Math.ceil((currentEndDate.getTime() - currentStartDate.getTime()) / (24 * 60 * 60 * 1000));
+                                    taskX = daysDiff * DAY_WIDTH;
+                                    taskWidth = Math.max(duration * DAY_WIDTH, DAY_WIDTH);
+                                } else if (timelineScale.unit === 'week') {
+                                    const weeksDiff = Math.floor((currentStartDate.getTime() - viewStartDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                                    const durationWeeks = Math.ceil((currentEndDate.getTime() - currentStartDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                                    taskX = weeksDiff * DAY_WIDTH * 7;
+                                    taskWidth = Math.max(durationWeeks * DAY_WIDTH * 7, DAY_WIDTH * 7);
+                                } else if (timelineScale.unit === 'month') {
+                                    const monthsDiff = (currentStartDate.getFullYear() - viewStartDate.getFullYear()) * 12 + (currentStartDate.getMonth() - viewStartDate.getMonth());
+                                    const endMonthsDiff = (currentEndDate.getFullYear() - viewStartDate.getFullYear()) * 12 + (currentEndDate.getMonth() - viewStartDate.getMonth());
+                                    const durationMonths = Math.max(endMonthsDiff - monthsDiff + 1, 1);
+                                    taskX = monthsDiff * DAY_WIDTH * 30;
+                                    taskWidth = durationMonths * DAY_WIDTH * 30;
+                                }
+                            }
+                            
                             let cursorClass = isDragging ? 'cursor-grabbing' : 'cursor-grab hover:cursor-grab';
                             if (dependencyCreationState?.isActive) {
                                 cursorClass = isSourceTask ? 'cursor-crosshair' : 'cursor-pointer';
@@ -722,6 +790,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                             return (
                                 <div
                                     key={task.ID}
+                                    data-task-id={task.ID}
                                     className={`absolute rounded shadow-sm hover:shadow-md transition-all ${getTaskColor(task.Estado, task.Porcentaje_Avance)} ${cursorClass} ${
                                         isDragging ? 'opacity-80 z-10' : ''
                                     } ${
@@ -730,9 +799,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         isPotentialTarget ? 'ring-2 ring-green-400 ring-opacity-50 hover:ring-green-500' : ''
                                     }`}
                                     style={{
-                                        left: task.x,
+                                        left: Math.max(taskX, 0),
                                         top: task.y + TASK_MARGIN / 2,
-                                        width: task.width,
+                                        width: Math.max(taskWidth, DAY_WIDTH),
                                         height: TASK_HEIGHT
                                     }}
                                     onMouseDown={(e) => handleTaskMouseDown(task.ID, e)}
