@@ -624,7 +624,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         width: '100%', 
                         maxWidth: SIDEBAR_WIDTH,
                         minWidth: '320px',
-                        height: Math.max(ganttTasks.length * ROW_HEIGHT, 200)
+                        height: TIMELINE_HEIGHT + Math.max(ganttTasks.length * ROW_HEIGHT, 200)
                     }}
                     onScroll={(e) => {
                         const target = chartAreaRef.current;
