@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $input = json_decode(file_get_contents('php://input'), true);
 $nombre = trim($input['nombre'] ?? '');
+$userId = (int)$_SESSION['user_id'];
 
 if ($nombre === '') {
     echo json_encode(['error' => 'Nombre de proyecto requerido']);
@@ -17,17 +18,22 @@ if ($nombre === '') {
 
 try {
     // Evitar duplicados (por nombre)
-    $stmtCheck = $pdo->prepare("SELECT id FROM proyectos WHERE nombre = ?");
+    $stmtCheck = $pdo->prepare("SELECT id, manager_id FROM proyectos WHERE nombre = ?");
     $stmtCheck->execute([$nombre]);
     $existing = $stmtCheck->fetch(PDO::FETCH_ASSOC);
     if ($existing) {
-        // Return existing project
-        echo json_encode(['id' => (int)$existing['id'], 'nombre' => $nombre]);
+        // Si el proyecto existente pertenece al mismo manager, devolverlo; de lo contrario, error
+        if ((int)$existing['manager_id'] === $userId) {
+            echo json_encode(['id' => (int)$existing['id'], 'nombre' => $nombre]);
+        } else {
+            echo json_encode(['error' => 'El nombre del proyecto ya está en uso por otro usuario']);
+        }
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO proyectos (nombre) VALUES (?)");
-    $stmt->execute([$nombre]);
+    // Crear proyecto con manager_id = usuario actual
+    $stmt = $pdo->prepare("INSERT INTO proyectos (nombre, manager_id) VALUES (?, ?)");
+    $stmt->execute([$nombre, $userId]);
     $id = $pdo->lastInsertId();
 
     echo json_encode(['id' => (int)$id, 'nombre' => $nombre]);
