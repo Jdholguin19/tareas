@@ -197,9 +197,29 @@ const GanttChart: React.FC<GanttChartProps> = ({
             const startDate = task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : new Date();
             const endDate = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
             
+            // Calcular posición y ancho basado en la escala de tiempo
+            let x = 0;
+            let width = 0;
+            
+            if (timelineScale.unit === 'day') {
+                const daysDiff = Math.floor((startDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000));
+                const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+                x = daysDiff * DAY_WIDTH;
+                width = Math.max(duration * DAY_WIDTH, 20);
+            } else if (timelineScale.unit === 'week') {
+                const weeksDiff = Math.floor((startDate.getTime() - viewStartDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                const durationWeeks = Math.ceil((endDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                x = weeksDiff * DAY_WIDTH * 7;
+                width = Math.max(durationWeeks * DAY_WIDTH * 7, DAY_WIDTH * 7);
+            } else if (timelineScale.unit === 'month') {
+                const monthsDiff = (startDate.getFullYear() - viewStartDate.getFullYear()) * 12 + (startDate.getMonth() - viewStartDate.getMonth());
+                const endMonthsDiff = (endDate.getFullYear() - viewStartDate.getFullYear()) * 12 + (endDate.getMonth() - viewStartDate.getMonth());
+                const durationMonths = Math.max(endMonthsDiff - monthsDiff + 1, 1);
+                x = monthsDiff * DAY_WIDTH * 30;
+                width = durationMonths * DAY_WIDTH * 30;
+            }
+            
             const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-            const x = Math.floor((startDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000)) * DAY_WIDTH;
-            const width = Math.max(duration * DAY_WIDTH, 20); // Mínimo 20px de ancho
             
             const taskDependencies = dependencies.filter(
                 dep => dep.tarea_predecesora_id === task.ID || dep.tarea_sucesora_id === task.ID
@@ -211,31 +231,78 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 endDate,
                 duration,
                 dependencies: taskDependencies,
-                x,
+                x: Math.max(x, 0),
                 y: index * ROW_HEIGHT,
                 width,
                 level: (task as any).level || 0 // Preservar el nivel de jerarquía
             };
         });
-    }, [getVisibleHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT]);
+    }, [getVisibleHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT, timelineScale.unit]);
 
-    // Generar timeline
+    // Generar timeline basado en la escala seleccionada
     const timelineDays = useMemo(() => {
         const days = [];
         const totalDays = Math.ceil((viewEndDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000));
         
-        for (let i = 0; i < totalDays; i++) {
-            const date = new Date(viewStartDate);
-            date.setDate(date.getDate() + i);
-            days.push({
-                date,
-                x: i * DAY_WIDTH,
-                isWeekend: date.getDay() === 0 || date.getDay() === 6
-            });
+        if (timelineScale.unit === 'day') {
+            // Vista por días (actual)
+            for (let i = 0; i < totalDays; i++) {
+                const date = new Date(viewStartDate);
+                date.setDate(date.getDate() + i);
+                days.push({
+                    date,
+                    day: date.getDate().toString(),
+                    month: date.toLocaleDateString('es-ES', { month: 'short' }),
+                    x: i * DAY_WIDTH,
+                    isWeekend: date.getDay() === 0 || date.getDay() === 6
+                });
+            }
+        } else if (timelineScale.unit === 'week') {
+            // Vista por semanas
+            const startOfWeek = new Date(viewStartDate);
+            startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Ir al domingo
+            
+            const totalWeeks = Math.ceil(totalDays / 7);
+            for (let i = 0; i < totalWeeks; i++) {
+                const weekStart = new Date(startOfWeek);
+                weekStart.setDate(weekStart.getDate() + (i * 7));
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                days.push({
+                    date: weekStart,
+                    day: `S${i + 1}`,
+                    month: weekStart.toLocaleDateString('es-ES', { month: 'short' }),
+                    x: i * DAY_WIDTH * 7, // Cada semana ocupa 7 días de ancho
+                    isWeekend: false,
+                    weekEnd: weekEnd
+                });
+            }
+        } else if (timelineScale.unit === 'month') {
+            // Vista por meses
+            const currentDate = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth(), 1);
+            const endDate = new Date(viewEndDate.getFullYear(), viewEndDate.getMonth() + 1, 0);
+            
+            let monthIndex = 0;
+            while (currentDate <= endDate) {
+                const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                
+                days.push({
+                    date: new Date(currentDate),
+                    day: currentDate.toLocaleDateString('es-ES', { month: 'short' }),
+                    month: currentDate.getFullYear().toString(),
+                    x: monthIndex * DAY_WIDTH * 30, // Aproximadamente 30 días por mes
+                    isWeekend: false,
+                    daysInMonth: daysInMonth
+                });
+                
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                monthIndex++;
+            }
         }
         
         return days;
-    }, [viewStartDate, viewEndDate, DAY_WIDTH]);
+    }, [viewStartDate, viewEndDate, DAY_WIDTH, timelineScale.unit]);
 
     // Obtener color por estado de tarea
     const getTaskColor = (estado: TaskState, progreso: number) => {
@@ -604,8 +671,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         day.isWeekend ? 'bg-gray-200' : 'bg-gray-100'
                                     }`}
                                     style={{
-                                        left: day.x,
-                                        width: DAY_WIDTH,
+                                        left: index * (timelineScale.unit === 'week' ? DAY_WIDTH * 7 : timelineScale.unit === 'month' ? DAY_WIDTH * 30 : DAY_WIDTH),
+                                        width: timelineScale.unit === 'week' ? DAY_WIDTH * 7 : timelineScale.unit === 'month' ? DAY_WIDTH * 30 : DAY_WIDTH,
                                         height: TIMELINE_HEIGHT
                                     }}
                                 >
@@ -634,7 +701,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 className={`absolute top-0 bottom-0 border-r ${
                                     day.isWeekend ? 'bg-gray-50' : ''
                                 }`}
-                                style={{ left: day.x, width: DAY_WIDTH }}
+                                style={{
+                                    left: index * (timelineScale.unit === 'week' ? DAY_WIDTH * 7 : timelineScale.unit === 'month' ? DAY_WIDTH * 30 : DAY_WIDTH),
+                                    width: timelineScale.unit === 'week' ? DAY_WIDTH * 7 : timelineScale.unit === 'month' ? DAY_WIDTH * 30 : DAY_WIDTH
+                                }}
                             />
                         ))}
 
