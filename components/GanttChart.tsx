@@ -35,7 +35,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const TASK_MARGIN = 8;
     const ROW_HEIGHT = TASK_HEIGHT + TASK_MARGIN;
     const TIMELINE_HEIGHT = 60;
-    const SIDEBAR_WIDTH = 250;
+    const SIDEBAR_WIDTH = 400; // Aumentado para acomodar las fechas
     const DAY_WIDTH = 30;
 
     // Filtrar tareas por proyecto seleccionado
@@ -45,6 +45,48 @@ const GanttChart: React.FC<GanttChartProps> = ({
         }
         return tasks.filter(task => task.Proyecto === selectedProjectId);
     }, [tasks, selectedProjectId]);
+
+    // Función para ordenar tareas por jerarquía padre-hijo
+    const getHierarchicalTasks = useMemo(() => {
+        const taskMap = new Map(filteredTasks.map(task => [task.ID, task]));
+        const result: Task[] = [];
+        const processed = new Set<number>();
+
+        // Función recursiva para agregar tarea y sus hijos
+        const addTaskWithChildren = (task: Task, level: number = 0) => {
+            if (processed.has(task.ID)) return;
+            
+            processed.add(task.ID);
+            result.push({ ...task, level } as Task & { level: number });
+
+            // Encontrar y agregar hijos ordenados por fecha de creación
+            const children = filteredTasks
+                .filter(t => t.Parent_ID === task.ID)
+                .sort((a, b) => new Date(a.Fecha_Creacion).getTime() - new Date(b.Fecha_Creacion).getTime());
+
+            children.forEach(child => addTaskWithChildren(child, level + 1));
+        };
+
+        // Primero agregar tareas padre (sin Parent_ID o Parent_ID = 0)
+        const parentTasks = filteredTasks
+            .filter(task => !task.Parent_ID || task.Parent_ID === 0)
+            .sort((a, b) => new Date(a.Fecha_Creacion).getTime() - new Date(b.Fecha_Creacion).getTime());
+
+        parentTasks.forEach(task => addTaskWithChildren(task));
+
+        // Agregar tareas huérfanas (cuyo padre no está en filteredTasks)
+        const taskIds = new Set(filteredTasks.map(t => t.ID));
+        const orphanTasks = filteredTasks.filter(task => 
+            task.Parent_ID && 
+            task.Parent_ID !== 0 && 
+            !taskIds.has(task.Parent_ID) && 
+            !processed.has(task.ID)
+        );
+
+        orphanTasks.forEach(task => addTaskWithChildren(task));
+
+        return result;
+    }, [filteredTasks]);
 
     // Calcular fechas del proyecto basado en tareas filtradas
     const projectDates = useMemo(() => {
@@ -88,9 +130,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
         setViewEndDate(projectDates.end);
     }, [projectDates]);
 
-    // Convertir tareas a formato Gantt
+    // Convertir tareas a formato Gantt usando el orden jerárquico
     const ganttTasks = useMemo((): GanttTask[] => {
-        return filteredTasks.map((task, index) => {
+        return getHierarchicalTasks.map((task, index) => {
             const startDate = task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : new Date();
             const endDate = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
             
@@ -110,10 +152,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 dependencies: taskDependencies,
                 x,
                 y: index * ROW_HEIGHT,
-                width
+                width,
+                level: (task as any).level || 0 // Preservar el nivel de jerarquía
             };
         });
-    }, [filteredTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT]);
+    }, [getHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT]);
 
     // Generar timeline
     const timelineDays = useMemo(() => {
@@ -351,34 +394,71 @@ const GanttChart: React.FC<GanttChartProps> = ({
             <div className="gantt-content flex">
                 {/* Sidebar con lista de tareas */}
                 <div className="gantt-sidebar bg-gray-50 border-r" style={{ width: SIDEBAR_WIDTH }}>
-                    {/* Timeline header placeholder */}
-                    <div className="h-15 border-b bg-gray-100 flex items-center px-4">
-                        <span className="text-sm font-medium text-gray-700">Tareas</span>
+                    {/* Timeline header con columnas */}
+                    <div className="h-15 border-b bg-gray-100 flex items-center">
+                        <div className="flex-1 px-4">
+                            <span className="text-sm font-medium text-gray-700">Tareas</span>
+                        </div>
+                        <div className="w-20 px-2 border-l text-center">
+                            <span className="text-xs font-medium text-gray-600">Inicio</span>
+                        </div>
+                        <div className="w-20 px-2 border-l text-center">
+                            <span className="text-xs font-medium text-gray-600">Fin</span>
+                        </div>
                     </div>
                     
-                    {/* Task list */}
+                    {/* Task list con jerarquía y fechas */}
                     <div className="gantt-task-list">
-                        {ganttTasks.map((task) => (
-                            <div 
-                                key={task.ID}
-                                className="gantt-task-row border-b hover:bg-gray-100 px-4 py-2"
-                                style={{ height: ROW_HEIGHT }}
-                            >
-                                <div className="flex items-center h-full">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium text-gray-900 truncate">
-                                            {task.Titulo}
+                        {ganttTasks.map((task) => {
+                            const level = (task as any).level || 0;
+                            const indentWidth = level * 16; // 16px por nivel de indentación
+                            
+                            return (
+                                <div 
+                                    key={task.ID}
+                                    className="gantt-task-row border-b hover:bg-gray-100 flex items-center"
+                                    style={{ height: ROW_HEIGHT }}
+                                >
+                                    {/* Columna de tarea con indentación */}
+                                    <div className="flex-1 flex items-center h-full px-4" style={{ paddingLeft: `${16 + indentWidth}px` }}>
+                                        {/* Indicador de jerarquía */}
+                                        {level > 0 && (
+                                            <div className="flex items-center mr-2">
+                                                <div className="w-3 h-px bg-gray-300"></div>
+                                                <div className="w-2 h-2 border-l border-b border-gray-300 rounded-bl-sm"></div>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="flex-1 min-w-0">
+                                            <div className={`text-sm truncate ${level === 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                                {task.Titulo}
+                                            </div>
+                                            <div className="text-xs text-gray-500 truncate">
+                                                {task.proyecto_nombre || 'Sin proyecto'}
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-gray-500 truncate">
-                                            {task.proyecto_nombre || 'Sin proyecto'}
+                                        
+                                        <div className="ml-2 flex-shrink-0">
+                                            <span className={`inline-block w-3 h-3 rounded-full ${getTaskColor(task.Estado, task.Porcentaje_Avance)}`}></span>
                                         </div>
                                     </div>
-                                    <div className="ml-2 flex-shrink-0">
-                                        <span className={`inline-block w-3 h-3 rounded-full ${getTaskColor(task.Estado, task.Porcentaje_Avance)}`}></span>
+                                    
+                                    {/* Columna fecha inicio */}
+                                    <div className="w-20 px-2 border-l text-center">
+                                        <span className="text-xs text-gray-600">
+                                            {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio)) : '-'}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Columna fecha fin */}
+                                    <div className="w-20 px-2 border-l text-center">
+                                        <span className="text-xs text-gray-600">
+                                            {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento)) : '-'}
+                                        </span>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -565,20 +645,20 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         />
                                         
                                         {/* Línea invisible más gruesa para mejor hover */}
-                                        <path
-                                            d={pathD}
-                                            stroke="#666"
-                                            strokeWidth="2"
-                                            fill="none"
-                                            className="cursor-pointer"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                onDependencyDelete && onDependencyDelete(dep.id);
-                                            }}
-                                        >
-                                            <title>{`${dep.tipo_dependencia}: ${sourceTask.Titulo} → ${targetTask.Titulo}${dep.descripcion ? ` (${dep.descripcion})` : ''}`}</title>
-                                        </path>
+                                         <path
+                                             d={pathData}
+                                             stroke="transparent"
+                                             strokeWidth="8"
+                                             fill="none"
+                                             className="cursor-pointer"
+                                             onClick={(e) => {
+                                                 e.preventDefault();
+                                                 e.stopPropagation();
+                                                 onDependencyDelete && onDependencyDelete(dep.id);
+                                             }}
+                                         >
+                                             <title>{`${dep.tipo_dependencia}: ${sourceTask.Titulo} → ${targetTask.Titulo}${dep.descripcion ? ` (${dep.descripcion})` : ''}`}</title>
+                                         </path>
 
                                         {/* Etiqueta del tipo de dependencia */}
                                         <text
