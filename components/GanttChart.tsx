@@ -46,8 +46,20 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const TASK_MARGIN = 8;
     const ROW_HEIGHT = TASK_HEIGHT + TASK_MARGIN;
     const TIMELINE_HEIGHT = 60;
-    const SIDEBAR_WIDTH = 400; // Aumentado para acomodar las fechas
-    const DAY_WIDTH = 30;
+    const SIDEBAR_WIDTH = window.innerWidth < 1024 ? 320 : 480; // Responsive sidebar width
+    const DAY_WIDTH = window.innerWidth < 640 ? 20 : 30; // Smaller day width on mobile
+
+    // Función para calcular duración en días
+    const calculateDuration = (startDate: string | null, endDate: string | null): string => {
+        if (!startDate || !endDate) return '-';
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return `${diffDays}d`;
+    };
 
     // Filtrar tareas por proyecto seleccionado
     const filteredTasks = useMemo(() => {
@@ -420,15 +432,15 @@ const GanttChart: React.FC<GanttChartProps> = ({
     return (
         <div className="gantt-chart bg-white border rounded-lg shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="gantt-header bg-gray-50 border-b p-4">
-                <div className="flex items-center justify-between">
+            <div className="gantt-header bg-gray-50 border-b p-2 sm:p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-lg font-semibold text-gray-800">Vista Gantt</h3>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4">
                         {/* Project Selector */}
                         <select 
                             value={selectedProjectId || ''}
                             onChange={(e) => setSelectedProjectId(e.target.value ? Number(e.target.value) : null)}
-                            className="px-3 py-1 border rounded text-sm"
+                            className="px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm w-full sm:w-auto"
                         >
                             <option value="">Todos los proyectos</option>
                             {projects.map(project => (
@@ -445,17 +457,17 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 ...prev, 
                                 unit: e.target.value as 'day' | 'week' | 'month' 
                             }))}
-                            className="px-3 py-1 border rounded text-sm"
+                            className="px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm w-full sm:w-auto"
                         >
                             <option value="day">Días</option>
                             <option value="week">Semanas</option>
                             <option value="month">Meses</option>
                         </select>
                         
-                        <span className="text-sm text-gray-600">
+                        <span className="text-xs sm:text-sm text-gray-600">
                             {filteredTasks.length} tareas
                             {selectedProjectId && (
-                                <span className="ml-1">
+                                <span className="ml-1 hidden sm:inline">
                                     ({projects.find(p => p.id === selectedProjectId)?.nombre})
                                 </span>
                             )}
@@ -465,19 +477,27 @@ const GanttChart: React.FC<GanttChartProps> = ({
             </div>
 
             {/* Main Content */}
-            <div className="gantt-content flex">
+            <div className="gantt-content flex flex-col lg:flex-row min-h-0 flex-1">
                 {/* Sidebar con lista de tareas */}
-                <div className="gantt-sidebar bg-gray-50 border-r" style={{ width: SIDEBAR_WIDTH }}>
+                <div className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b overflow-y-auto" 
+                     style={{ 
+                         width: '100%', 
+                         maxWidth: SIDEBAR_WIDTH,
+                         minWidth: '320px'
+                     }}>
                     {/* Timeline header con columnas */}
-                    <div className="h-15 border-b bg-gray-100 flex items-center">
-                        <div className="flex-1 px-4">
-                            <span className="text-sm font-medium text-gray-700">Tareas</span>
+                    <div className="h-[60px] border-b bg-gray-100 flex items-center sticky top-0 z-10">
+                        <div className="flex-1 px-2 sm:px-4">
+                            <span className="text-xs sm:text-sm font-medium text-gray-700">Tareas</span>
                         </div>
-                        <div className="w-20 px-2 border-l text-center">
+                        <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
                             <span className="text-xs font-medium text-gray-600">Inicio</span>
                         </div>
-                        <div className="w-20 px-2 border-l text-center">
+                        <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
                             <span className="text-xs font-medium text-gray-600">Fin</span>
+                        </div>
+                        <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                            <span className="text-xs font-medium text-gray-600">Duración</span>
                         </div>
                     </div>
                     
@@ -485,9 +505,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     <div className="gantt-task-list">
                         {ganttTasks.map((task) => {
                             const level = (task as any).level || 0;
-                            const indentWidth = level * 16; // 16px por nivel de indentación
+                            const indentWidth = level * 12; // Reducido para móviles
                             const taskHasChildren = hasChildren(task.ID);
                             const isCollapsed = collapsedTasks.has(task.ID);
+                            
+                            // Ancho dinámico basado en el nivel de jerarquía
+                            const taskNameMaxWidth = level > 0 ? '120px' : '160px'; // Subtareas más limitadas
                             
                             return (
                                 <div 
@@ -497,7 +520,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
                                 >
                                     {/* Columna de tarea con indentación y acordeón */}
-                                    <div className="flex-1 flex items-center h-full px-2" style={{ paddingLeft: `${8 + indentWidth}px` }}>
+                                    <div className="flex-1 flex items-center h-full px-1 sm:px-2" style={{ paddingLeft: `${4 + indentWidth}px` }}>
                                         {/* Botón de acordeón para tareas padre */}
                                         {taskHasChildren && (
                                             <button
@@ -505,7 +528,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                                     e.stopPropagation();
                                                     toggleTaskCollapse(task.ID);
                                                 }}
-                                                className="mr-1 p-1 hover:bg-gray-200 rounded transition-colors"
+                                                className="mr-1 p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
                                                 title={isCollapsed ? "Expandir subtareas" : "Colapsar subtareas"}
                                             >
                                                 <svg 
@@ -519,41 +542,48 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         )}
                                         
                                         {/* Espaciador si no tiene hijos */}
-                                        {!taskHasChildren && <div className="w-5"></div>}
+                                        {!taskHasChildren && <div className="w-4 sm:w-5 flex-shrink-0"></div>}
                                         
                                         {/* Indicador de jerarquía */}
                                         {level > 0 && (
-                                            <div className="flex items-center mr-2">
-                                                <div className="w-3 h-px bg-gray-300"></div>
-                                                <div className="w-2 h-2 border-l border-b border-gray-300 rounded-bl-sm"></div>
+                                            <div className="flex items-center mr-1 sm:mr-2 flex-shrink-0">
+                                                <div className="w-2 sm:w-3 h-px bg-gray-300"></div>
+                                                <div className="w-1 sm:w-2 h-1 sm:h-2 border-l border-b border-gray-300 rounded-bl-sm"></div>
                                             </div>
                                         )}
                                         
-                                        <div className="flex-1 min-w-0 mr-2" style={{ maxWidth: '180px' }}>
-                                            <div className={`text-sm truncate ${level === 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`} title={task.Titulo}>
+                                        <div className="flex-1 min-w-0 mr-1 sm:mr-2" style={{ maxWidth: taskNameMaxWidth }}>
+                                            <div className={`text-xs sm:text-sm truncate ${level === 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`} title={task.Titulo}>
                                                 {task.Titulo}
                                             </div>
-                                            <div className="text-xs text-gray-500 truncate" title={task.proyecto_nombre || 'Sin proyecto'}>
+                                            <div className="text-xs text-gray-500 truncate hidden sm:block" title={task.proyecto_nombre || 'Sin proyecto'}>
                                                 {task.proyecto_nombre || 'Sin proyecto'}
                                             </div>
                                         </div>
                                         
                                         <div className="flex-shrink-0">
-                                            <span className={`inline-block w-3 h-3 rounded-full ${getTaskColor(task.Estado, task.Porcentaje_Avance)}`}></span>
+                                            <span className={`inline-block w-2 sm:w-3 h-2 sm:h-3 rounded-full ${getTaskColor(task.Estado, task.Porcentaje_Avance)}`}></span>
                                         </div>
                                     </div>
                                     
-                                    {/* Columna fecha inicio */}
-                                    <div className="w-20 px-2 border-l text-center flex-shrink-0">
+                                    {/* Columna fecha inicio - FIJA */}
+                                    <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio)) : '-'}
                                         </span>
                                     </div>
                                     
-                                    {/* Columna fecha fin */}
-                                    <div className="w-20 px-2 border-l text-center flex-shrink-0">
+                                    {/* Columna fecha fin - FIJA */}
+                                    <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento)) : '-'}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Columna duración - NUEVA */}
+                                    <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                                        <span className="text-xs text-gray-600 font-medium">
+                                            {calculateDuration(task.Fecha_Inicio, task.Fecha_Vencimiento)}
                                         </span>
                                     </div>
                                 </div>
@@ -563,10 +593,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 </div>
 
                 {/* Timeline y Chart */}
-                <div className="gantt-timeline-container flex-1 overflow-x-auto">
+                <div className="gantt-timeline-container flex-1 overflow-x-auto min-h-0">
                     {/* Timeline Header */}
-                    <div className="gantt-timeline-header bg-gray-100 border-b" style={{ height: TIMELINE_HEIGHT }}>
-                        <div className="relative" style={{ width: timelineDays.length * DAY_WIDTH }}>
+                    <div className="gantt-timeline-header bg-gray-100 border-b overflow-x-auto sticky top-0 z-10" style={{ height: TIMELINE_HEIGHT }}>
+                        <div className="relative" style={{ width: Math.max(timelineDays.length * DAY_WIDTH, 320) }}>
                             {timelineDays.map((day, index) => (
                                 <div
                                     key={index}
@@ -588,10 +618,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
                     {/* Chart Area */}
                     <div 
-                        className="gantt-chart-area relative bg-white"
+                        className="gantt-chart-area relative bg-white overflow-x-auto"
                         style={{ 
-                            width: timelineDays.length * DAY_WIDTH,
-                            height: ganttTasks.length * ROW_HEIGHT
+                            width: Math.max(timelineDays.length * DAY_WIDTH, 320),
+                            height: Math.max(ganttTasks.length * ROW_HEIGHT, 200),
+                            minHeight: '200px'
                         }}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
