@@ -67,16 +67,17 @@ try {
     // Verificar que no exista ya esta dependencia
     $stmtExists = $pdo->prepare("
         SELECT COUNT(*) as count FROM dependencias_tareas 
-        WHERE tarea_predecesora_id = :predecesora AND tarea_sucesora_id = :sucesora
+        WHERE tarea_predecesora_id = :predecesora AND tarea_sucesora_id = :sucesora AND tipo_dependencia = :tipo
     ");
     
     $stmtExists->bindParam(':predecesora', $tareaPredecesora, PDO::PARAM_INT);
     $stmtExists->bindParam(':sucesora', $tareaSucesora, PDO::PARAM_INT);
+    $stmtExists->bindParam(':tipo', $tipoDependencia, PDO::PARAM_STR);
     $stmtExists->execute();
     
     $exists = $stmtExists->fetch(PDO::FETCH_ASSOC);
     if ($exists['count'] > 0) {
-        echo json_encode(['error' => 'Ya existe una dependencia entre estas tareas']);
+        echo json_encode(['error' => 'Ya existe una dependencia de este tipo entre estas tareas']);
         exit;
     }
     

@@ -1021,17 +1021,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                              <title>{`${dep.tipo_dependencia}: ${sourceTask.Titulo} → ${targetTask.Titulo}${dep.descripcion ? ` (${dep.descripcion})` : ''}`}</title>
                                          </path>
 
-                                        {/* Etiqueta del tipo de dependencia */}
-                                        <text
-                                            x={clearX}
-                                            y={Math.min(exitY, entryY) - 5}
-                                            textAnchor="middle"
-                                            fontSize="10"
-                                            fill={color}
-                                            className="font-medium"
-                                        >
-                                            {tipo}
-                                        </text>
+                                        {/* Oculto etiqueta del tipo de dependencia (FS/SS/FF/SF) */}
                                     </g>
                                 );
                             })}
