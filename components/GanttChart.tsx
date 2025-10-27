@@ -329,27 +329,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
         currentEndDate?: Date;
     } | null>(null);
 
-    // Estados para crear dependencias
-    const [dependencyCreationState, setDependencyCreationState] = useState<{
-        sourceTaskId: number;
-        isActive: boolean;
-        currentMousePos: { x: number; y: number };
-    } | null>(null);
-
-    // Manejar drag de tareas y creación de dependencias
     const handleTaskMouseDown = (taskId: number, e: React.MouseEvent) => {
         e.preventDefault();
         
-        // Si se mantiene presionada la tecla Ctrl/Cmd, iniciar creación de dependencia
-        if (e.ctrlKey || e.metaKey) {
-            setDependencyCreationState({
-                sourceTaskId: taskId,
-                isActive: true,
-                currentMousePos: { x: e.clientX, y: e.clientY }
-            });
-            return;
-        }
-
         const rect = e.currentTarget.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const taskWidth = rect.width;
@@ -377,11 +359,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
         setDraggedTask(taskId);
     };
 
-    // Manejar hover sobre tareas durante creación de dependencias
+    // Manejar hover sobre tareas
     const handleTaskMouseEnter = (taskId: number) => {
-        if (dependencyCreationState && dependencyCreationState.isActive) {
-            // Resaltar tarea como posible destino
-        }
+        // Funcionalidad futura si es necesaria
     };
 
     // Manejar doble clic para editar tarea
@@ -409,34 +389,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
     // Obtener la tarea que se está editando
     const taskToEdit = editingTask ? tasks.find(t => t.ID === editingTask) : null;
 
-    // Manejar click en tarea durante creación de dependencias
-    const handleTaskClick = (taskId: number, e: React.MouseEvent) => {
-        if (dependencyCreationState && dependencyCreationState.isActive) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (taskId !== dependencyCreationState.sourceTaskId) {
-                // Crear dependencia
-                if (onDependencyCreate) {
-                    onDependencyCreate(dependencyCreationState.sourceTaskId, taskId, 'FS');
-                }
-            }
-            
-            // Finalizar creación de dependencia
-            setDependencyCreationState(null);
-        }
-    };
-
     const handleMouseMove = (e: React.MouseEvent) => {
-        // Actualizar posición del mouse para creación de dependencias
-        if (dependencyCreationState && dependencyCreationState.isActive) {
-            setDependencyCreationState(prev => prev ? {
-                ...prev,
-                currentMousePos: { x: e.clientX, y: e.clientY }
-            } : null);
-            return; // No procesar drag de tareas si estamos creando dependencias
-        }
-
         // Lógica de drag existente
         if (!dragState || !draggedTask) return;
 
@@ -486,27 +439,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
     };
 
     const handleMouseUp = (e: React.MouseEvent) => {
-        // Si estamos creando dependencias, verificar si hay una tarea bajo el cursor
-        if (dependencyCreationState && dependencyCreationState.isActive) {
-            // Buscar si hay una tarea bajo el cursor
-            const element = document.elementFromPoint(e.clientX, e.clientY);
-            const taskElement = element?.closest('[data-task-id]');
-            
-            if (taskElement) {
-                const targetTaskId = parseInt(taskElement.getAttribute('data-task-id') || '0');
-                if (targetTaskId && targetTaskId !== dependencyCreationState.sourceTaskId) {
-                    // Crear dependencia
-                    if (onDependencyCreate) {
-                        onDependencyCreate(dependencyCreationState.sourceTaskId, targetTaskId, 'FS');
-                    }
-                }
-            }
-            
-            // Finalizar creación de dependencia
-            setDependencyCreationState(null);
-            return;
-        }
-
         // Si estamos arrastrando una tarea, enviar la actualización final
         if (dragState && draggedTask) {
             const finalStartDate = dragState.currentStartDate || dragState.originalStartDate;
@@ -538,6 +470,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
     return (
         <div className="gantt-chart bg-white border rounded-lg shadow-sm overflow-hidden">
+
             {/* Header */}
             <div className="gantt-header bg-gray-50 border-b p-2 sm:p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -751,8 +684,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         {/* Task bars */}
                         {ganttTasks.map((task) => {
                             const isDragging = draggedTask === task.ID;
-                            const isSourceTask = dependencyCreationState?.sourceTaskId === task.ID;
-                            const isPotentialTarget = dependencyCreationState?.isActive && dependencyCreationState.sourceTaskId !== task.ID;
                             
                             // Calcular posición visual durante el drag
                             let taskX = task.x;
@@ -783,21 +714,18 @@ const GanttChart: React.FC<GanttChartProps> = ({
                             }
                             
                             let cursorClass = isDragging ? 'cursor-grabbing' : 'cursor-grab hover:cursor-grab';
-                            if (dependencyCreationState?.isActive) {
-                                cursorClass = isSourceTask ? 'cursor-crosshair' : 'cursor-pointer';
+                            
+                            // Clases adicionales para mejor feedback visual
+                            let additionalClasses = '';
+                            if (isDragging) {
+                                additionalClasses = 'opacity-80 z-10 shadow-xl';
                             }
                             
                             return (
                                 <div
                                     key={task.ID}
                                     data-task-id={task.ID}
-                                    className={`absolute rounded shadow-sm hover:shadow-md transition-all ${getTaskColor(task.Estado, task.Porcentaje_Avance)} ${cursorClass} ${
-                                        isDragging ? 'opacity-80 z-10' : ''
-                                    } ${
-                                        isSourceTask ? 'ring-2 ring-blue-400 ring-opacity-75' : ''
-                                    } ${
-                                        isPotentialTarget ? 'ring-2 ring-green-400 ring-opacity-50 hover:ring-green-500' : ''
-                                    }`}
+                                    className={`absolute rounded shadow-sm hover:shadow-md transition-all ${getTaskColor(task.Estado, task.Porcentaje_Avance)} ${cursorClass} ${additionalClasses}`}
                                     style={{
                                         left: Math.max(taskX, 0),
                                         top: task.y + TASK_MARGIN / 2,
@@ -806,17 +734,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     }}
                                     onMouseDown={(e) => handleTaskMouseDown(task.ID, e)}
                                     onMouseEnter={() => handleTaskMouseEnter(task.ID)}
-                                    onClick={(e) => handleTaskClick(task.ID, e)}
                                     onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
-                                    title={`${task.Titulo} (${task.duration} días)${dependencyCreationState?.isActive ? '\nCtrl+Click para crear dependencia' : '\nDoble clic para editar'}`}
+                                    title={`${task.Titulo} (${task.duration} días)\nDoble clic para editar`}
                                 >
-                                    {/* Resize handles - solo mostrar si no estamos creando dependencias */}
-                                    {!dependencyCreationState?.isActive && (
-                                        <>
-                                            <div className="absolute left-0 top-0 w-2 h-full cursor-w-resize hover:bg-black hover:bg-opacity-20 rounded-l" />
-                                            <div className="absolute right-0 top-0 w-2 h-full cursor-e-resize hover:bg-black hover:bg-opacity-20 rounded-r" />
-                                        </>
-                                    )}
+                                    {/* Resize handles */}
+                                    <div className="absolute left-0 top-0 w-2 h-full cursor-w-resize hover:bg-black hover:bg-opacity-20 rounded-l" />
+                                    <div className="absolute right-0 top-0 w-2 h-full cursor-e-resize hover:bg-black hover:bg-opacity-20 rounded-r" />
                                     
                                     {/* Progress bar */}
                                     <div 
@@ -830,11 +753,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             {task.Titulo}
                                         </span>
                                     </div>
-
-                                    {/* Indicador de conexión para tarea fuente */}
-                                    {isSourceTask && (
-                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white animate-pulse" />
-                                    )}
                                 </div>
                             );
                         })}
@@ -946,42 +864,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 );
                             })}
 
-                            {/* Línea temporal para creación de dependencias */}
-                            {dependencyCreationState && dependencyCreationState.isActive && (() => {
-                                const sourceTask = ganttTasks.find(t => t.ID === dependencyCreationState.sourceTaskId);
-                                if (!sourceTask) return null;
-
-                                const chartRect = document.querySelector('.gantt-chart-area')?.getBoundingClientRect();
-                                if (!chartRect) return null;
-
-                                const x1 = sourceTask.x + sourceTask.width;
-                                const y1 = sourceTask.y + TASK_HEIGHT / 2;
-                                const x2 = dependencyCreationState.currentMousePos.x - chartRect.left;
-                                const y2 = dependencyCreationState.currentMousePos.y - chartRect.top;
-
-                                return (
-                                    <g key="temp-dependency">
-                                        <line
-                                            x1={x1}
-                                            y1={y1}
-                                            x2={x2}
-                                            y2={y2}
-                                            stroke="#3B82F6"
-                                            strokeWidth="2"
-                                            strokeDasharray="5,5"
-                                            opacity="0.7"
-                                        />
-                                        <circle
-                                            cx={x2}
-                                            cy={y2}
-                                            r="4"
-                                            fill="#3B82F6"
-                                            opacity="0.7"
-                                        />
-                                    </g>
-                                );
-                            })()}
-                            
                             {/* Arrow marker definitions para cada tipo */}
                             <defs>
                                 {['FS', 'SS', 'FF', 'SF'].map(tipo => {
