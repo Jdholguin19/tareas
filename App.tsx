@@ -1163,7 +1163,9 @@ const App: React.FC = () => {
                   tasks={filteredTasks} 
                   dependencies={[]}
                   projects={projects}
+                  currentUser={currentUser}
                   onTaskUpdate={handleGanttTaskUpdate}
+                  onProjectCreated={handleProjectCreated}
                 />
               )}
             </div>

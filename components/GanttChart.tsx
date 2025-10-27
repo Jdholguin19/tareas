@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Task, TaskDependency, GanttTask, GanttTimelineScale, TaskState, Project } from '../types';
+import { EditTaskModal } from './EditTaskModal';
+import { createSubTask, deleteTask } from '../services/apiService';
 
 interface GanttChartProps {
     tasks: Task[];
@@ -8,6 +10,8 @@ interface GanttChartProps {
     onTaskUpdate?: (taskId: number, updates: Partial<Task>) => void;
     onDependencyCreate?: (predecesora: number, sucesora: number, tipo: string) => void;
     onDependencyDelete?: (dependencyId: number) => void;
+    currentUser?: {id: number, username: string, email: string} | null;
+    onProjectCreated?: (project: Project) => void;
 }
 
 const GanttChart: React.FC<GanttChartProps> = ({
@@ -16,7 +20,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
     projects = [],
     onTaskUpdate,
     onDependencyCreate,
-    onDependencyDelete
+    onDependencyDelete,
+    currentUser,
+    onProjectCreated
 }) => {
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [timelineScale, setTimelineScale] = useState<GanttTimelineScale>({
@@ -29,6 +35,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const [draggedTask, setDraggedTask] = useState<number | null>(null);
     const [isCreatingDependency, setIsCreatingDependency] = useState(false);
     const [dependencySource, setDependencySource] = useState<number | null>(null);
+    
+    // Estados adicionales para acordeón y edición
+    const [collapsedTasks, setCollapsedTasks] = useState<Set<number>>(new Set());
+    const [editingTask, setEditingTask] = useState<number | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     // Constantes para el layout
     const TASK_HEIGHT = 32;
@@ -45,6 +56,39 @@ const GanttChart: React.FC<GanttChartProps> = ({
         }
         return tasks.filter(task => task.Proyecto === selectedProjectId);
     }, [tasks, selectedProjectId]);
+
+    // Función para alternar colapso de tareas padre
+    const toggleTaskCollapse = (taskId: number) => {
+        setCollapsedTasks(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(taskId)) {
+                newSet.delete(taskId);
+            } else {
+                newSet.add(taskId);
+            }
+            return newSet;
+        });
+    };
+
+    // Función para verificar si una tarea debe estar visible (no colapsada por su padre)
+    const isTaskVisible = (task: Task): boolean => {
+        let currentTask = task;
+        while (currentTask.Parent_ID && currentTask.Parent_ID !== 0) {
+            const parentTask = filteredTasks.find(t => t.ID === currentTask.Parent_ID);
+            if (!parentTask) break;
+            
+            if (collapsedTasks.has(parentTask.ID)) {
+                return false;
+            }
+            currentTask = parentTask;
+        }
+        return true;
+    };
+
+    // Función para verificar si una tarea tiene hijos
+    const hasChildren = (taskId: number): boolean => {
+        return filteredTasks.some(task => task.Parent_ID === taskId);
+    };
 
     // Función para ordenar tareas por jerarquía padre-hijo
     const getHierarchicalTasks = useMemo(() => {
@@ -88,6 +132,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
         return result;
     }, [filteredTasks]);
 
+    // Función para obtener tareas visibles (considerando acordeón)
+    const getVisibleHierarchicalTasks = useMemo(() => {
+        return getHierarchicalTasks.filter(task => isTaskVisible(task));
+    }, [getHierarchicalTasks, collapsedTasks]);
+
     // Calcular fechas del proyecto basado en tareas filtradas
     const projectDates = useMemo(() => {
         if (filteredTasks.length === 0) {
@@ -130,9 +179,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
         setViewEndDate(projectDates.end);
     }, [projectDates]);
 
-    // Convertir tareas a formato Gantt usando el orden jerárquico
+    // Convertir tareas a formato Gantt usando el orden jerárquico y visibilidad
     const ganttTasks = useMemo((): GanttTask[] => {
-        return getHierarchicalTasks.map((task, index) => {
+        return getVisibleHierarchicalTasks.map((task, index) => {
             const startDate = task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : new Date();
             const endDate = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
             
@@ -156,7 +205,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 level: (task as any).level || 0 // Preservar el nivel de jerarquía
             };
         });
-    }, [getHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT]);
+    }, [getVisibleHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT]);
 
     // Generar timeline
     const timelineDays = useMemo(() => {
@@ -253,6 +302,31 @@ const GanttChart: React.FC<GanttChartProps> = ({
             // Resaltar tarea como posible destino
         }
     };
+
+    // Manejar doble clic para editar tarea
+    const handleTaskDoubleClick = (taskId: number, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingTask(taskId);
+        setShowEditModal(true);
+    };
+
+    // Manejar cierre del modal de edición
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setEditingTask(null);
+    };
+
+    // Manejar actualización de tarea desde el modal
+    const handleTaskUpdateFromModal = async (taskId: number, updates: Partial<Task>) => {
+        if (onTaskUpdate) {
+            await onTaskUpdate(taskId, updates);
+        }
+        handleCloseEditModal();
+    };
+
+    // Obtener la tarea que se está editando
+    const taskToEdit = editingTask ? tasks.find(t => t.ID === editingTask) : null;
 
     // Manejar click en tarea durante creación de dependencias
     const handleTaskClick = (taskId: number, e: React.MouseEvent) => {
@@ -407,20 +481,46 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         </div>
                     </div>
                     
-                    {/* Task list con jerarquía y fechas */}
+                    {/* Task list con jerarquía, fechas y acordeón */}
                     <div className="gantt-task-list">
                         {ganttTasks.map((task) => {
                             const level = (task as any).level || 0;
                             const indentWidth = level * 16; // 16px por nivel de indentación
+                            const taskHasChildren = hasChildren(task.ID);
+                            const isCollapsed = collapsedTasks.has(task.ID);
                             
                             return (
                                 <div 
                                     key={task.ID}
                                     className="gantt-task-row border-b hover:bg-gray-100 flex items-center"
                                     style={{ height: ROW_HEIGHT }}
+                                    onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
                                 >
-                                    {/* Columna de tarea con indentación */}
-                                    <div className="flex-1 flex items-center h-full px-4" style={{ paddingLeft: `${16 + indentWidth}px` }}>
+                                    {/* Columna de tarea con indentación y acordeón */}
+                                    <div className="flex-1 flex items-center h-full px-2" style={{ paddingLeft: `${8 + indentWidth}px` }}>
+                                        {/* Botón de acordeón para tareas padre */}
+                                        {taskHasChildren && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleTaskCollapse(task.ID);
+                                                }}
+                                                className="mr-1 p-1 hover:bg-gray-200 rounded transition-colors"
+                                                title={isCollapsed ? "Expandir subtareas" : "Colapsar subtareas"}
+                                            >
+                                                <svg 
+                                                    className={`w-3 h-3 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                                                    fill="currentColor" 
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                        
+                                        {/* Espaciador si no tiene hijos */}
+                                        {!taskHasChildren && <div className="w-5"></div>}
+                                        
                                         {/* Indicador de jerarquía */}
                                         {level > 0 && (
                                             <div className="flex items-center mr-2">
@@ -429,29 +529,29 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             </div>
                                         )}
                                         
-                                        <div className="flex-1 min-w-0">
-                                            <div className={`text-sm truncate ${level === 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                        <div className="flex-1 min-w-0 mr-2" style={{ maxWidth: '180px' }}>
+                                            <div className={`text-sm truncate ${level === 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`} title={task.Titulo}>
                                                 {task.Titulo}
                                             </div>
-                                            <div className="text-xs text-gray-500 truncate">
+                                            <div className="text-xs text-gray-500 truncate" title={task.proyecto_nombre || 'Sin proyecto'}>
                                                 {task.proyecto_nombre || 'Sin proyecto'}
                                             </div>
                                         </div>
                                         
-                                        <div className="ml-2 flex-shrink-0">
+                                        <div className="flex-shrink-0">
                                             <span className={`inline-block w-3 h-3 rounded-full ${getTaskColor(task.Estado, task.Porcentaje_Avance)}`}></span>
                                         </div>
                                     </div>
                                     
                                     {/* Columna fecha inicio */}
-                                    <div className="w-20 px-2 border-l text-center">
+                                    <div className="w-20 px-2 border-l text-center flex-shrink-0">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio)) : '-'}
                                         </span>
                                     </div>
                                     
                                     {/* Columna fecha fin */}
-                                    <div className="w-20 px-2 border-l text-center">
+                                    <div className="w-20 px-2 border-l text-center flex-shrink-0">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento)) : '-'}
                                         </span>
@@ -537,7 +637,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     onMouseDown={(e) => handleTaskMouseDown(task.ID, e)}
                                     onMouseEnter={() => handleTaskMouseEnter(task.ID)}
                                     onClick={(e) => handleTaskClick(task.ID, e)}
-                                    title={`${task.Titulo} (${task.duration} días)${dependencyCreationState?.isActive ? '\nCtrl+Click para crear dependencia' : ''}`}
+                                    onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
+                                    title={`${task.Titulo} (${task.duration} días)${dependencyCreationState?.isActive ? '\nCtrl+Click para crear dependencia' : '\nDoble clic para editar'}`}
                                 >
                                     {/* Resize handles - solo mostrar si no estamos creando dependencias */}
                                     {!dependencyCreationState?.isActive && (
@@ -749,6 +850,33 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Modal de edición de tarea */}
+             {showEditModal && taskToEdit && (
+                 <EditTaskModal
+                     task={taskToEdit}
+                     allTasks={tasks}
+                     projects={projects}
+                     currentUser={currentUser}
+                     onSave={async (updatedTask) => {
+                         if (onTaskUpdate) {
+                             await onTaskUpdate(updatedTask.ID, updatedTask);
+                         }
+                         handleCloseEditModal();
+                     }}
+                     onClose={handleCloseEditModal}
+                     onCreateSubtask={async (parentTaskId: number, title: string) => {
+                         await createSubTask(parentTaskId, title);
+                         // Refresh tasks would be handled by parent component
+                     }}
+                     onDelete={async (taskId: number) => {
+                         await deleteTask(taskId);
+                         handleCloseEditModal();
+                         // Refresh tasks would be handled by parent component
+                     }}
+                     onProjectCreated={onProjectCreated}
+                 />
+             )}
         </div>
     );
 };
