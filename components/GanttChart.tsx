@@ -1,0 +1,677 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Task, TaskDependency, GanttTask, GanttTimelineScale, TaskState, Project } from '../types';
+
+interface GanttChartProps {
+    tasks: Task[];
+    dependencies: TaskDependency[];
+    projects: Project[];
+    onTaskUpdate?: (taskId: number, updates: Partial<Task>) => void;
+    onDependencyCreate?: (predecesora: number, sucesora: number, tipo: string) => void;
+    onDependencyDelete?: (dependencyId: number) => void;
+}
+
+const GanttChart: React.FC<GanttChartProps> = ({
+    tasks = [],
+    dependencies = [],
+    projects = [],
+    onTaskUpdate,
+    onDependencyCreate,
+    onDependencyDelete
+}) => {
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+    const [timelineScale, setTimelineScale] = useState<GanttTimelineScale>({
+        unit: 'day',
+        format: 'DD/MM',
+        step: 1
+    });
+    const [viewStartDate, setViewStartDate] = useState<Date>(new Date());
+    const [viewEndDate, setViewEndDate] = useState<Date>(new Date());
+    const [draggedTask, setDraggedTask] = useState<number | null>(null);
+    const [isCreatingDependency, setIsCreatingDependency] = useState(false);
+    const [dependencySource, setDependencySource] = useState<number | null>(null);
+
+    // Constantes para el layout
+    const TASK_HEIGHT = 32;
+    const TASK_MARGIN = 8;
+    const ROW_HEIGHT = TASK_HEIGHT + TASK_MARGIN;
+    const TIMELINE_HEIGHT = 60;
+    const SIDEBAR_WIDTH = 250;
+    const DAY_WIDTH = 30;
+
+    // Filtrar tareas por proyecto seleccionado
+    const filteredTasks = useMemo(() => {
+        if (selectedProjectId === null) {
+            return tasks;
+        }
+        return tasks.filter(task => task.Proyecto === selectedProjectId);
+    }, [tasks, selectedProjectId]);
+
+    // Calcular fechas del proyecto basado en tareas filtradas
+    const projectDates = useMemo(() => {
+        if (filteredTasks.length === 0) {
+            const today = new Date();
+            return {
+                start: today,
+                end: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 días
+            };
+        }
+
+        const dates = filteredTasks
+            .filter(task => task.Fecha_Inicio || task.Fecha_Vencimiento)
+            .flatMap(task => [
+                task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : null,
+                task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : null
+            ])
+            .filter(date => date !== null) as Date[];
+
+        if (dates.length === 0) {
+            const today = new Date();
+            return {
+                start: today,
+                end: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+            };
+        }
+
+        const start = new Date(Math.min(...dates.map(d => d.getTime())));
+        const end = new Date(Math.max(...dates.map(d => d.getTime())));
+        
+        // Agregar margen de 7 días antes y después
+        start.setDate(start.getDate() - 7);
+        end.setDate(end.getDate() + 7);
+
+        return { start, end };
+    }, [filteredTasks]);
+
+    // Actualizar vista cuando cambien las fechas del proyecto
+    useEffect(() => {
+        setViewStartDate(projectDates.start);
+        setViewEndDate(projectDates.end);
+    }, [projectDates]);
+
+    // Convertir tareas a formato Gantt
+    const ganttTasks = useMemo((): GanttTask[] => {
+        return filteredTasks.map((task, index) => {
+            const startDate = task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : new Date();
+            const endDate = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+            
+            const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+            const x = Math.floor((startDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000)) * DAY_WIDTH;
+            const width = Math.max(duration * DAY_WIDTH, 20); // Mínimo 20px de ancho
+            
+            const taskDependencies = dependencies.filter(
+                dep => dep.tarea_predecesora_id === task.ID || dep.tarea_sucesora_id === task.ID
+            );
+
+            return {
+                ...task,
+                startDate,
+                endDate,
+                duration,
+                dependencies: taskDependencies,
+                x,
+                y: index * ROW_HEIGHT,
+                width
+            };
+        });
+    }, [filteredTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT]);
+
+    // Generar timeline
+    const timelineDays = useMemo(() => {
+        const days = [];
+        const totalDays = Math.ceil((viewEndDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000));
+        
+        for (let i = 0; i < totalDays; i++) {
+            const date = new Date(viewStartDate);
+            date.setDate(date.getDate() + i);
+            days.push({
+                date,
+                x: i * DAY_WIDTH,
+                isWeekend: date.getDay() === 0 || date.getDay() === 6
+            });
+        }
+        
+        return days;
+    }, [viewStartDate, viewEndDate, DAY_WIDTH]);
+
+    // Obtener color por estado de tarea
+    const getTaskColor = (estado: TaskState, progreso: number) => {
+        switch (estado) {
+            case TaskState.COMPLETADA:
+                return 'bg-green-500';
+            case TaskState.EN_PROGRESO:
+                return 'bg-blue-500';
+            case TaskState.PENDIENTE:
+                return 'bg-gray-400';
+            default:
+                return 'bg-gray-400';
+        }
+    };
+
+    // Estados para drag y resize
+    const [dragState, setDragState] = useState<{
+        taskId: number;
+        mode: 'move' | 'resize-start' | 'resize-end';
+        startX: number;
+        originalStartDate: Date;
+        originalEndDate: Date;
+    } | null>(null);
+
+    // Estados para crear dependencias
+    const [dependencyCreationState, setDependencyCreationState] = useState<{
+        sourceTaskId: number;
+        isActive: boolean;
+        currentMousePos: { x: number; y: number };
+    } | null>(null);
+
+    // Manejar drag de tareas y creación de dependencias
+    const handleTaskMouseDown = (taskId: number, e: React.MouseEvent) => {
+        e.preventDefault();
+        
+        // Si se mantiene presionada la tecla Ctrl/Cmd, iniciar creación de dependencia
+        if (e.ctrlKey || e.metaKey) {
+            setDependencyCreationState({
+                sourceTaskId: taskId,
+                isActive: true,
+                currentMousePos: { x: e.clientX, y: e.clientY }
+            });
+            return;
+        }
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const taskWidth = rect.width;
+        
+        const task = ganttTasks.find(t => t.ID === taskId);
+        if (!task) return;
+
+        let mode: 'move' | 'resize-start' | 'resize-end' = 'move';
+        
+        // Determinar si es resize o move basado en la posición del click
+        if (clickX < 10) {
+            mode = 'resize-start';
+        } else if (clickX > taskWidth - 10) {
+            mode = 'resize-end';
+        }
+
+        setDragState({
+            taskId,
+            mode,
+            startX: e.clientX,
+            originalStartDate: task.startDate,
+            originalEndDate: task.endDate
+        });
+
+        setDraggedTask(taskId);
+    };
+
+    // Manejar hover sobre tareas durante creación de dependencias
+    const handleTaskMouseEnter = (taskId: number) => {
+        if (dependencyCreationState && dependencyCreationState.isActive) {
+            // Resaltar tarea como posible destino
+        }
+    };
+
+    // Manejar click en tarea durante creación de dependencias
+    const handleTaskClick = (taskId: number, e: React.MouseEvent) => {
+        if (dependencyCreationState && dependencyCreationState.isActive) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (taskId !== dependencyCreationState.sourceTaskId) {
+                // Crear dependencia
+                if (onDependencyCreate) {
+                    onDependencyCreate(dependencyCreationState.sourceTaskId, taskId, 'FS');
+                }
+            }
+            
+            // Finalizar creación de dependencia
+            setDependencyCreationState(null);
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        // Actualizar posición del mouse para creación de dependencias
+        if (dependencyCreationState && dependencyCreationState.isActive) {
+            setDependencyCreationState(prev => prev ? {
+                ...prev,
+                currentMousePos: { x: e.clientX, y: e.clientY }
+            } : null);
+        }
+
+        // Lógica de drag existente
+        if (!dragState || !draggedTask) return;
+
+        const deltaX = e.clientX - dragState.startX;
+        const daysDelta = Math.round(deltaX / DAY_WIDTH);
+        
+        if (daysDelta === 0) return;
+
+        const task = ganttTasks.find(t => t.ID === draggedTask);
+        if (!task) return;
+
+        let newStartDate = new Date(dragState.originalStartDate);
+        let newEndDate = new Date(dragState.originalEndDate);
+
+        switch (dragState.mode) {
+            case 'move':
+                // Mover toda la tarea
+                newStartDate.setDate(newStartDate.getDate() + daysDelta);
+                newEndDate.setDate(newEndDate.getDate() + daysDelta);
+                break;
+            case 'resize-start':
+                // Cambiar fecha de inicio
+                newStartDate.setDate(newStartDate.getDate() + daysDelta);
+                // Asegurar que la fecha de inicio no sea posterior a la de fin
+                if (newStartDate >= newEndDate) {
+                    newStartDate = new Date(newEndDate);
+                    newStartDate.setDate(newStartDate.getDate() - 1);
+                }
+                break;
+            case 'resize-end':
+                // Cambiar fecha de fin
+                newEndDate.setDate(newEndDate.getDate() + daysDelta);
+                // Asegurar que la fecha de fin no sea anterior a la de inicio
+                if (newEndDate <= newStartDate) {
+                    newEndDate = new Date(newStartDate);
+                    newEndDate.setDate(newEndDate.getDate() + 1);
+                }
+                break;
+        }
+
+        // Actualizar visualmente (esto se podría optimizar con un estado temporal)
+        if (onTaskUpdate) {
+            onTaskUpdate(draggedTask, {
+                Fecha_Inicio: newStartDate.toISOString().split('T')[0],
+                Fecha_Vencimiento: newEndDate.toISOString().split('T')[0]
+            });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setDraggedTask(null);
+        setDragState(null);
+    };
+
+    // Formatear fecha para mostrar
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString('es-ES', { 
+            day: '2-digit', 
+            month: '2-digit' 
+        });
+    };
+
+    return (
+        <div className="gantt-chart bg-white border rounded-lg shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="gantt-header bg-gray-50 border-b p-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-800">Vista Gantt</h3>
+                    <div className="flex items-center space-x-4">
+                        {/* Project Selector */}
+                        <select 
+                            value={selectedProjectId || ''}
+                            onChange={(e) => setSelectedProjectId(e.target.value ? Number(e.target.value) : null)}
+                            className="px-3 py-1 border rounded text-sm"
+                        >
+                            <option value="">Todos los proyectos</option>
+                            {projects.map(project => (
+                                <option key={project.id} value={project.id}>
+                                    {project.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        
+                        {/* Timeline Scale Selector */}
+                        <select 
+                            value={timelineScale.unit}
+                            onChange={(e) => setTimelineScale(prev => ({ 
+                                ...prev, 
+                                unit: e.target.value as 'day' | 'week' | 'month' 
+                            }))}
+                            className="px-3 py-1 border rounded text-sm"
+                        >
+                            <option value="day">Días</option>
+                            <option value="week">Semanas</option>
+                            <option value="month">Meses</option>
+                        </select>
+                        
+                        <span className="text-sm text-gray-600">
+                            {filteredTasks.length} tareas
+                            {selectedProjectId && (
+                                <span className="ml-1">
+                                    ({projects.find(p => p.id === selectedProjectId)?.nombre})
+                                </span>
+                            )}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="gantt-content flex">
+                {/* Sidebar con lista de tareas */}
+                <div className="gantt-sidebar bg-gray-50 border-r" style={{ width: SIDEBAR_WIDTH }}>
+                    {/* Timeline header placeholder */}
+                    <div className="h-15 border-b bg-gray-100 flex items-center px-4">
+                        <span className="text-sm font-medium text-gray-700">Tareas</span>
+                    </div>
+                    
+                    {/* Task list */}
+                    <div className="gantt-task-list">
+                        {ganttTasks.map((task) => (
+                            <div 
+                                key={task.ID}
+                                className="gantt-task-row border-b hover:bg-gray-100 px-4 py-2"
+                                style={{ height: ROW_HEIGHT }}
+                            >
+                                <div className="flex items-center h-full">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium text-gray-900 truncate">
+                                            {task.Titulo}
+                                        </div>
+                                        <div className="text-xs text-gray-500 truncate">
+                                            {task.proyecto_nombre || 'Sin proyecto'}
+                                        </div>
+                                    </div>
+                                    <div className="ml-2 flex-shrink-0">
+                                        <span className={`inline-block w-3 h-3 rounded-full ${getTaskColor(task.Estado, task.Porcentaje_Avance)}`}></span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Timeline y Chart */}
+                <div className="gantt-timeline-container flex-1 overflow-x-auto">
+                    {/* Timeline Header */}
+                    <div className="gantt-timeline-header bg-gray-100 border-b" style={{ height: TIMELINE_HEIGHT }}>
+                        <div className="relative" style={{ width: timelineDays.length * DAY_WIDTH }}>
+                            {timelineDays.map((day, index) => (
+                                <div
+                                    key={index}
+                                    className={`absolute top-0 border-r text-xs text-center py-2 ${
+                                        day.isWeekend ? 'bg-gray-200' : 'bg-gray-100'
+                                    }`}
+                                    style={{
+                                        left: day.x,
+                                        width: DAY_WIDTH,
+                                        height: TIMELINE_HEIGHT
+                                    }}
+                                >
+                                    <div className="font-medium">{formatDate(day.date)}</div>
+                                    <div className="text-gray-500">{day.date.toLocaleDateString('es-ES', { weekday: 'short' })}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Chart Area */}
+                    <div 
+                        className="gantt-chart-area relative bg-white"
+                        style={{ 
+                            width: timelineDays.length * DAY_WIDTH,
+                            height: ganttTasks.length * ROW_HEIGHT
+                        }}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                    >
+                        {/* Grid lines */}
+                        {timelineDays.map((day, index) => (
+                            <div
+                                key={`grid-${index}`}
+                                className={`absolute top-0 bottom-0 border-r ${
+                                    day.isWeekend ? 'bg-gray-50' : ''
+                                }`}
+                                style={{ left: day.x, width: DAY_WIDTH }}
+                            />
+                        ))}
+
+                        {/* Task bars */}
+                        {ganttTasks.map((task) => {
+                            const isDragging = draggedTask === task.ID;
+                            const isSourceTask = dependencyCreationState?.sourceTaskId === task.ID;
+                            const isPotentialTarget = dependencyCreationState?.isActive && dependencyCreationState.sourceTaskId !== task.ID;
+                            
+                            let cursorClass = isDragging ? 'cursor-grabbing' : 'cursor-grab hover:cursor-grab';
+                            if (dependencyCreationState?.isActive) {
+                                cursorClass = isSourceTask ? 'cursor-crosshair' : 'cursor-pointer';
+                            }
+                            
+                            return (
+                                <div
+                                    key={task.ID}
+                                    className={`absolute rounded shadow-sm hover:shadow-md transition-all ${getTaskColor(task.Estado, task.Porcentaje_Avance)} ${cursorClass} ${
+                                        isDragging ? 'opacity-80 z-10' : ''
+                                    } ${
+                                        isSourceTask ? 'ring-2 ring-blue-400 ring-opacity-75' : ''
+                                    } ${
+                                        isPotentialTarget ? 'ring-2 ring-green-400 ring-opacity-50 hover:ring-green-500' : ''
+                                    }`}
+                                    style={{
+                                        left: task.x,
+                                        top: task.y + TASK_MARGIN / 2,
+                                        width: task.width,
+                                        height: TASK_HEIGHT
+                                    }}
+                                    onMouseDown={(e) => handleTaskMouseDown(task.ID, e)}
+                                    onMouseEnter={() => handleTaskMouseEnter(task.ID)}
+                                    onClick={(e) => handleTaskClick(task.ID, e)}
+                                    title={`${task.Titulo} (${task.duration} días)${dependencyCreationState?.isActive ? '\nCtrl+Click para crear dependencia' : ''}`}
+                                >
+                                    {/* Resize handles - solo mostrar si no estamos creando dependencias */}
+                                    {!dependencyCreationState?.isActive && (
+                                        <>
+                                            <div className="absolute left-0 top-0 w-2 h-full cursor-w-resize hover:bg-black hover:bg-opacity-20 rounded-l" />
+                                            <div className="absolute right-0 top-0 w-2 h-full cursor-e-resize hover:bg-black hover:bg-opacity-20 rounded-r" />
+                                        </>
+                                    )}
+                                    
+                                    {/* Progress bar */}
+                                    <div 
+                                        className="h-full bg-black bg-opacity-20 rounded"
+                                        style={{ width: `${task.Porcentaje_Avance}%` }}
+                                    />
+                                    
+                                    {/* Task label */}
+                                    <div className="absolute inset-0 flex items-center px-2">
+                                        <span className="text-white text-xs font-medium truncate">
+                                            {task.Titulo}
+                                        </span>
+                                    </div>
+
+                                    {/* Indicador de conexión para tarea fuente */}
+                                    {isSourceTask && (
+                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white animate-pulse" />
+                                    )}
+                                </div>
+                            );
+                        })}
+
+                        {/* Dependency lines */}
+                        <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+                            {dependencies.map((dep) => {
+                                const sourceTask = ganttTasks.find(t => t.ID === dep.tarea_predecesora_id);
+                                const targetTask = ganttTasks.find(t => t.ID === dep.tarea_sucesora_id);
+                                
+                                if (!sourceTask || !targetTask) return null;
+
+                                // Calcular puntos de conexión basados en el tipo de dependencia
+                                let x1, y1, x2, y2;
+                                const sourceY = sourceTask.y + TASK_HEIGHT / 2;
+                                const targetY = targetTask.y + TASK_HEIGHT / 2;
+
+                                switch (dep.tipo_dependencia) {
+                                    case 'FS': // Finish to Start (por defecto)
+                                        x1 = sourceTask.x + sourceTask.width;
+                                        y1 = sourceY;
+                                        x2 = targetTask.x;
+                                        y2 = targetY;
+                                        break;
+                                    case 'SS': // Start to Start
+                                        x1 = sourceTask.x;
+                                        y1 = sourceY;
+                                        x2 = targetTask.x;
+                                        y2 = targetY;
+                                        break;
+                                    case 'FF': // Finish to Finish
+                                        x1 = sourceTask.x + sourceTask.width;
+                                        y1 = sourceY;
+                                        x2 = targetTask.x + targetTask.width;
+                                        y2 = targetY;
+                                        break;
+                                    case 'SF': // Start to Finish
+                                        x1 = sourceTask.x;
+                                        y1 = sourceY;
+                                        x2 = targetTask.x + targetTask.width;
+                                        y2 = targetY;
+                                        break;
+                                    default:
+                                        x1 = sourceTask.x + sourceTask.width;
+                                        y1 = sourceY;
+                                        x2 = targetTask.x;
+                                        y2 = targetY;
+                                }
+
+                                // Crear path con curvas para mejor visualización
+                                const midX = (x1 + x2) / 2;
+                                const controlOffset = Math.abs(x2 - x1) * 0.3;
+                                
+                                const pathData = `M ${x1} ${y1} C ${x1 + controlOffset} ${y1}, ${x2 - controlOffset} ${y2}, ${x2} ${y2}`;
+
+                                // Color basado en el tipo de dependencia
+                                const getDepColor = (tipo: string) => {
+                                    switch (tipo) {
+                                        case 'FS': return '#3B82F6'; // Azul
+                                        case 'SS': return '#10B981'; // Verde
+                                        case 'FF': return '#F59E0B'; // Amarillo
+                                        case 'SF': return '#EF4444'; // Rojo
+                                        default: return '#3B82F6';
+                                    }
+                                };
+
+                                const color = getDepColor(dep.tipo_dependencia);
+
+                                return (
+                                    <g key={dep.id}>
+                                        {/* Línea principal */}
+                                        <path
+                                            d={pathData}
+                                            stroke={color}
+                                            strokeWidth="2"
+                                            fill="none"
+                                            markerEnd={`url(#arrowhead-${dep.tipo_dependencia})`}
+                                            className="hover:stroke-4 transition-all"
+                                        />
+                                        
+                                        {/* Línea invisible más gruesa para mejor hover */}
+                                        <path
+                                            d={pathD}
+                                            stroke="#666"
+                                            strokeWidth="2"
+                                            fill="none"
+                                            className="cursor-pointer"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                onDependencyDelete && onDependencyDelete(dep.id);
+                                            }}
+                                        >
+                                            <title>{`${dep.tipo_dependencia}: ${sourceTask.Titulo} → ${targetTask.Titulo}${dep.descripcion ? ` (${dep.descripcion})` : ''}`}</title>
+                                        </path>
+
+                                        {/* Etiqueta del tipo de dependencia */}
+                                        <text
+                                            x={midX}
+                                            y={Math.min(y1, y2) - 5}
+                                            textAnchor="middle"
+                                            fontSize="10"
+                                            fill={color}
+                                            className="font-medium"
+                                        >
+                                            {dep.tipo_dependencia}
+                                        </text>
+                                    </g>
+                                );
+                            })}
+
+                            {/* Línea temporal para creación de dependencias */}
+                            {dependencyCreationState && dependencyCreationState.isActive && (() => {
+                                const sourceTask = ganttTasks.find(t => t.ID === dependencyCreationState.sourceTaskId);
+                                if (!sourceTask) return null;
+
+                                const chartRect = document.querySelector('.gantt-chart-area')?.getBoundingClientRect();
+                                if (!chartRect) return null;
+
+                                const x1 = sourceTask.x + sourceTask.width;
+                                const y1 = sourceTask.y + TASK_HEIGHT / 2;
+                                const x2 = dependencyCreationState.currentMousePos.x - chartRect.left;
+                                const y2 = dependencyCreationState.currentMousePos.y - chartRect.top;
+
+                                return (
+                                    <g key="temp-dependency">
+                                        <line
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke="#3B82F6"
+                                            strokeWidth="2"
+                                            strokeDasharray="5,5"
+                                            opacity="0.7"
+                                        />
+                                        <circle
+                                            cx={x2}
+                                            cy={y2}
+                                            r="4"
+                                            fill="#3B82F6"
+                                            opacity="0.7"
+                                        />
+                                    </g>
+                                );
+                            })()}
+                            
+                            {/* Arrow marker definitions para cada tipo */}
+                            <defs>
+                                {['FS', 'SS', 'FF', 'SF'].map(tipo => {
+                                    const color = tipo === 'FS' ? '#3B82F6' : 
+                                                 tipo === 'SS' ? '#10B981' : 
+                                                 tipo === 'FF' ? '#F59E0B' : '#EF4444';
+                                    return (
+                                        <marker
+                                            key={tipo}
+                                            id={`arrowhead-${tipo}`}
+                                            markerWidth="10"
+                                            markerHeight="7"
+                                            refX="9"
+                                            refY="3.5"
+                                            orient="auto"
+                                        >
+                                            <polygon
+                                                points="0 0, 10 3.5, 0 7"
+                                                fill={color}
+                                            />
+                                        </marker>
+                                    );
+                                })}
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            {/* Empty state */}
+            {tasks.length === 0 && (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                    <div className="text-center">
+                        <div className="text-lg font-medium mb-2">No hay tareas para mostrar</div>
+                        <div className="text-sm">Crea algunas tareas con fechas para ver el diagrama Gantt</div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default GanttChart;
+export { GanttChart };

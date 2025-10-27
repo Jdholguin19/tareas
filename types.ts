@@ -34,3 +34,51 @@ export interface Project {
     id: number;
     nombre: string;
 }
+
+// Tipos para dependencias de tareas (Gantt)
+export enum DependencyType {
+    FS = 'FS', // Finish-to-Start
+    SS = 'SS', // Start-to-Start  
+    FF = 'FF', // Finish-to-Finish
+    SF = 'SF'  // Start-to-Finish
+}
+
+export interface TaskDependency {
+    id: number;
+    tarea_predecesora_id: number;
+    tarea_sucesora_id: number;
+    tipo_dependencia: DependencyType;
+    retraso_dias: number;
+    descripcion?: string;
+    fecha_creacion: string;
+    tarea_predecesora: {
+        titulo: string;
+        estado: TaskState;
+        fecha_inicio: string | null;
+        fecha_fin: string | null;
+    };
+    tarea_sucesora: {
+        titulo: string;
+        estado: TaskState;
+        fecha_inicio: string | null;
+        fecha_fin: string | null;
+    };
+    proyecto_nombre?: string;
+}
+
+// Tipos específicos para el componente Gantt
+export interface GanttTask extends Task {
+    startDate: Date;
+    endDate: Date;
+    duration: number; // días
+    dependencies: TaskDependency[];
+    x: number; // posición X en el timeline
+    y: number; // posición Y en el chart
+    width: number; // ancho de la barra
+}
+
+export interface GanttTimelineScale {
+    unit: 'day' | 'week' | 'month';
+    format: string;
+    step: number;
+}

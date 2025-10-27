@@ -1,5 +1,5 @@
 import { CURRENT_USER_ID } from '../constants';
-import type { Task, Project } from '../types';
+import type { Task, Project, TaskDependency } from '../types';
 import { TaskState } from '../types';
 
 const API_BASE = '/api';
@@ -240,14 +240,58 @@ export const getTaskDetails = async (id: number): Promise<Task> => {
 };
 
 export const getAllTaskAssignees = async (taskIds: number[]): Promise<Record<number, {id: number, username: string}[]>> => {
-  const result: Record<number, {id: number, username: string}[]> = {};
-  for (const taskId of taskIds) {
-    try {
-      result[taskId] = await getTaskAssigneesForDisplay(taskId);
-    } catch (error) {
-      console.error(`Failed to load assignees for task ${taskId}:`, error);
-      result[taskId] = [];
-    }
-  }
-  return result;
+  const promises = taskIds.map(id => getTaskAssigneesForDisplay(id));
+  const results = await Promise.all(promises);
+  const assigneesMap: Record<number, {id: number, username: string}[]> = {};
+  taskIds.forEach((id, index) => {
+    assigneesMap[id] = results[index];
+  });
+  return assigneesMap;
+};
+
+// --- Dependency API Functions ---
+
+export const getDependencies = async (): Promise<TaskDependency[]> => {
+  const response = await fetch(`${API_BASE}/getDependencies.php`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to fetch dependencies');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
+
+export const createDependency = async (
+  predecessorId: number, 
+  successorId: number, 
+  type: string = 'FS', 
+  delayDays: number = 0,
+  description?: string
+): Promise<TaskDependency> => {
+  const response = await fetch(`${API_BASE}/createDependency.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      tarea_predecesora_id: predecessorId,
+      tarea_sucesora_id: successorId,
+      tipo_dependencia: type,
+      retraso_dias: delayDays,
+      descripcion: description
+    })
+  });
+  if (!response.ok) throw new Error('Failed to create dependency');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+};
+
+export const deleteDependency = async (dependencyId: number): Promise<void> => {
+  const response = await fetch(`${API_BASE}/deleteDependency.php`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ id: dependencyId })
+  });
+  if (!response.ok) throw new Error('Failed to delete dependency');
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
 };

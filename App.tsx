@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
+import { GanttChart } from './components/GanttChart';
 import { Icon } from './components/Icon';
 import type { Task, Project } from './types';
 import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser } from './services/apiService';
@@ -300,6 +301,18 @@ const App: React.FC = () => {
       console.error("Failed to update task:", error);
       // You could show an error toast here
     }
+  };
+
+  // Wrapper function for Gantt chart updates
+  const handleGanttTaskUpdate = async (taskId: number, updates: Partial<Task>) => {
+    const taskToUpdate = tasks.find(t => t.ID === taskId);
+    if (!taskToUpdate) {
+      console.error("Task not found:", taskId);
+      return;
+    }
+    
+    const updatedTask = { ...taskToUpdate, ...updates };
+    await handleUpdateTask(updatedTask);
   };
 
   const handleCreateSubTask = async (parentTaskId: number, title: string) => {
@@ -652,6 +665,19 @@ const App: React.FC = () => {
   const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
   const pendingTasks = useMemo(() => getPendingTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  
+  // Filtered tasks for Gantt view - includes all user tasks with search/project filtering
+  const filteredTasks = useMemo(() => {
+    const userTasks = filterTasksForCurrentUser(tasks);
+    
+    if (!appliedSearchFilter && selectedProjectId === null) {
+      return userTasks;
+    }
+    
+    return userTasks.filter(task => 
+      matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)
+    );
+  }, [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const allTaskIds = useMemo(() => tasks.map(t => t.ID), [tasks]);
 
   // Counter functions for section titles
@@ -959,145 +985,191 @@ const App: React.FC = () => {
           </div>
         </section>
         
-        <section aria-labelledby="current-tasks-heading" className="mb-12">
-            <button
-              onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
-              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-slate-50 transition-colors"
-              aria-expanded={isTodayTasksExpanded ? "true" : "false"}
-              aria-controls="current-tasks-content"
-            >
-              <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
-                Tareas: Hoy: {todayCount} y sin fecha: {noDateCount}
-              </h2>
-              <Icon
-                name={isTodayTasksExpanded ? "chevronUp" : "chevronDown"}
-                className="w-5 h-5 text-slate-600 transition-transform duration-200"
-              />
-            </button>
-            <div
-              id="current-tasks-content"
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isTodayTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
-              }`}
-            >
-                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
-                {isLoading ? (
-                    <TaskSkeleton />
-                ) : currentTasks.length > 0 ? (
-                  <TaskList tasks={currentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                ) : (
-                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                    <p className="text-slate-500">¡Todo al día! No hay tareas pendientes para hoy.</p>
+        {/* Main Content Area - Conditional Rendering Based on Active View */}
+        {activeView === 'list' && (
+          <>
+            <section aria-labelledby="current-tasks-heading" className="mb-12">
+                <button
+                  onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-slate-50 transition-colors"
+                  aria-expanded={isTodayTasksExpanded ? "true" : "false"}
+                  aria-controls="current-tasks-content"
+                >
+                  <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
+                    Tareas: Hoy: {todayCount} y sin fecha: {noDateCount}
+                  </h2>
+                  <Icon
+                    name={isTodayTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 text-slate-600 transition-transform duration-200"
+                  />
+                </button>
+                <div
+                  id="current-tasks-content"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isTodayTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                    <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
+                    {isLoading ? (
+                        <TaskSkeleton />
+                    ) : currentTasks.length > 0 ? (
+                      <TaskList tasks={currentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                        <p className="text-slate-500">¡Todo al día! No hay tareas pendientes para hoy.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-        </section>
+                </div>
+            </section>
 
-        <section aria-labelledby="overdue-tasks-heading" data-section="overdue">
-            <button
-              onClick={() => setIsOverdueTasksExpanded(!isOverdueTasksExpanded)}
-              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-2 hover:bg-red-50 transition-colors"
-              aria-expanded={isOverdueTasksExpanded ? "true" : "false"}
-              aria-controls="overdue-tasks-content"
-            >
-              <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700">
-                Tareas atrasadas: {overdueCount}
-              </h2>
-              <Icon
-                name={isOverdueTasksExpanded ? "chevronUp" : "chevronDown"}
-                className="w-5 h-5 text-red-600 transition-transform duration-200"
-              />
-            </button>
-            <div
-              id="overdue-tasks-content"
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isOverdueTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
-              }`}
-            >
-                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
-                {isLoading ? (
-                    <TaskSkeleton />
-                ) : overdueTasks.length > 0 ? (
-                  <TaskList tasks={overdueTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                ) : (
-                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                    <p className="text-slate-500">¡Excelente! No hay tareas vencidas.</p>
+            <section aria-labelledby="overdue-tasks-heading" data-section="overdue">
+                <button
+                  onClick={() => setIsOverdueTasksExpanded(!isOverdueTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-2 hover:bg-red-50 transition-colors"
+                  aria-expanded={isOverdueTasksExpanded ? "true" : "false"}
+                  aria-controls="overdue-tasks-content"
+                >
+                  <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700">
+                    Tareas atrasadas: {overdueCount}
+                  </h2>
+                  <Icon
+                    name={isOverdueTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 text-red-600 transition-transform duration-200"
+                  />
+                </button>
+                <div
+                  id="overdue-tasks-content"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isOverdueTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                    <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
+                    {isLoading ? (
+                        <TaskSkeleton />
+                    ) : overdueTasks.length > 0 ? (
+                      <TaskList tasks={overdueTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                        <p className="text-slate-500">¡Excelente! No hay tareas vencidas.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-        </section>
+                </div>
+            </section>
 
-        <section aria-labelledby="pending-tasks-heading" className="mt-12">
-            <button
-              onClick={() => setIsPendingTasksExpanded(!isPendingTasksExpanded)}
-              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-blue-50 transition-colors"
-              aria-expanded={isPendingTasksExpanded ? "true" : "false"}
-              aria-controls="pending-tasks-content"
-            >
-              <h2 id="pending-tasks-heading" className="text-xl font-semibold text-[var(--color-proximate)]">
-                Tareas proximas: {pendingCount}
-              </h2>
-              <Icon
-                name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}
-                className="w-5 h-5 text-[var(--color-proximate)] transition-transform duration-200"
-              />
-            </button>
-            <div
-              id="pending-tasks-content"
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isPendingTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
-              }`}
-            >
-                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
-                {isLoading ? (
-                    <TaskSkeleton />
-                ) : pendingTasks.length > 0 ? (
-                  <TaskList tasks={pendingTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                ) : (
-                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                    <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
+            <section aria-labelledby="pending-tasks-heading" className="mt-12">
+                <button
+                  onClick={() => setIsPendingTasksExpanded(!isPendingTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-blue-50 transition-colors"
+                  aria-expanded={isPendingTasksExpanded ? "true" : "false"}
+                  aria-controls="pending-tasks-content"
+                >
+                  <h2 id="pending-tasks-heading" className="text-xl font-semibold text-[var(--color-proximate)]">
+                    Tareas proximas: {pendingCount}
+                  </h2>
+                  <Icon
+                    name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 text-[var(--color-proximate)] transition-transform duration-200"
+                  />
+                </button>
+                <div
+                  id="pending-tasks-content"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isPendingTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                    <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
+                    {isLoading ? (
+                        <TaskSkeleton />
+                    ) : pendingTasks.length > 0 ? (
+                      <TaskList tasks={pendingTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                        <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-        </section>
+                </div>
+            </section>
 
-        <section aria-labelledby="completed-tasks-heading" className="mt-12">
-            <button
-              onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
-              className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
-              aria-expanded={isCompletedTasksExpanded ? "true" : "false"}
-              aria-controls="completed-tasks-content"
-            >
-              <h2 id="completed-tasks-heading" className="text-xl font-semibold text-blue-700">
-                Tareas completadas: {completedCount}
-              </h2>
-              <Icon
-                name={isCompletedTasksExpanded ? "chevronUp" : "chevronDown"}
-                className="w-5 h-5 text-blue-600 transition-transform duration-200"
-              />
-            </button>
-            <div
-              id="completed-tasks-content"
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isCompletedTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
-              }`}
-            >
-                <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
-                {isLoading ? (
-                    <TaskSkeleton />
-                ) : completedTasks.length > 0 ? (
-                  <TaskList tasks={completedTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                ) : (
-                  <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                    <p className="text-slate-500">Aún no has completado ninguna tarea.</p>
+            <section aria-labelledby="completed-tasks-heading" className="mt-12">
+                <button
+                  onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
+                  aria-expanded={isCompletedTasksExpanded ? "true" : "false"}
+                  aria-controls="completed-tasks-content"
+                >
+                  <h2 id="completed-tasks-heading" className="text-xl font-semibold text-blue-700">
+                    Tareas completadas: {completedCount}
+                  </h2>
+                  <Icon
+                    name={isCompletedTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 text-blue-600 transition-transform duration-200"
+                  />
+                </button>
+                <div
+                  id="completed-tasks-content"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isCompletedTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                    <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
+                    {isLoading ? (
+                        <TaskSkeleton />
+                    ) : completedTasks.length > 0 ? (
+                      <TaskList tasks={completedTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                        <p className="text-slate-500">Aún no has completado ninguna tarea.</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+            </section>
+          </>
+        )}
+
+        {/* Kanban View */}
+        {activeView === 'kanban' && (
+          <section className="mb-12">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+              <div className="text-center">
+                <Icon name="kanban" className="w-16 h-16 mx-auto text-slate-400 mb-4" />
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">Vista Kanban</h3>
+                <p className="text-slate-500">La vista Kanban estará disponible próximamente.</p>
               </div>
             </div>
-        </section>
+          </section>
+        )}
+
+        {/* Gantt View */}
+        {activeView === 'gantt' && (
+          <section className="mb-12">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+              <div className="p-4 border-b border-slate-200">
+                <h3 className="text-xl font-semibold text-slate-800 flex items-center">
+                  <Icon name="gantt" className="w-6 h-6 mr-2" />
+                  Vista Gantt
+                </h3>
+                <p className="text-slate-600 mt-1">Visualización temporal de tareas y dependencias</p>
+              </div>
+              {isLoading ? (
+                <div className="p-8">
+                  <TaskSkeleton />
+                </div>
+              ) : (
+                <GanttChart 
+                  tasks={filteredTasks} 
+                  dependencies={[]}
+                  projects={projects}
+                  onTaskUpdate={handleGanttTaskUpdate}
+                />
+              )}
+            </div>
+          </section>
+        )}
+        
       </main>
 
       {editingTask && (
