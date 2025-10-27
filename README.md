@@ -164,6 +164,9 @@ php -S localhost:8000  # Servidor de desarrollo PHP
 - **Autenticación**: Siempre usar sesiones PHP, nunca JWT
 - **Consistencia de tipos**: Normalizar IDs con `parseInt(String(value))`
 - **Documentación**: JSDoc en funciones complejas
+- **useRef para flags**: Usar `useRef` en lugar de `useState` cuando se necesitan valores inmediatos
+- **Eventos de mouse**: Preferir `onMouseDown` sobre `onClick` para prevenir conflictos con blur
+- **Validación de filtros**: Siempre verificar tanto texto como ID de proyecto: `(searchFilter || selectedProjectId !== null)`
 
 ### Estados de Tareas
 - `completed`: Tarea finalizada (100% progreso)
@@ -190,11 +193,31 @@ php -S localhost:8000  # Servidor de desarrollo PHP
 - ✅ Subtareas con progreso automático
 - ✅ Asignación de usuarios
 - ✅ Gestión de proyectos
-- ✅ Búsqueda inteligente (tareas y proyectos)
-- ✅ Filtros por usuario y proyecto
+- ✅ **Búsqueda inteligente con dropdown** (tareas y proyectos)
+- ✅ **Filtros avanzados** por texto, usuario y proyecto
+- ✅ **Auto-sugerencias en tiempo real** al escribir en buscador
 - ✅ Estados visuales diferenciados
 - ✅ Transcripción de audio (OpenAI)
 - ✅ Subida de archivos
+- ✅ Notificaciones de tareas vencidas
+- ✅ Exportación a CSV
+- ✅ **Micrófono responsive** (móvil/desktop)
+
+### Sistema de Búsqueda y Filtrado
+El sistema de búsqueda incluye:
+- **Dropdown con sugerencias**: Muestra tareas y proyectos que coinciden mientras escribes
+- **Filtrado por texto**: Busca en títulos de tareas y nombres de proyectos
+- **Filtrado por proyecto**: Selecciona un proyecto para ver solo sus tareas
+- **Filtrado combinado**: Busca texto dentro de un proyecto específico
+- **Prevención de conflictos**: Usa `useRef` para evitar race conditions entre blur y selección
+- **eventos `onMouseDown`**: Previene que el blur interfiera con la selección del dropdown
+
+### Optimizaciones Implementadas
+- ✅ **Eliminación de llamadas API duplicadas**: AbortController y control de dependencias
+- ✅ **useRef para flags temporales**: Evita retrasos en actualizaciones de estado
+- ✅ **Promise.allSettled**: Carga paralela de datos (tareas, proyectos, usuario)
+- ✅ **useMemo**: Caching de listas filtradas y cálculos costosos
+- ✅ **Prop drilling optimizado**: taskAssigneesRecord como prop en lugar de llamadas individuales
 
 ## 🐛 Problemas Conocidos y Soluciones
 
@@ -207,6 +230,35 @@ php -S localhost:8000  # Servidor de desarrollo PHP
 
 ### 3. Sesiones PHP en hosting compartido
 **Solución**: Usar configuración estándar de sesiones
+
+### 4. Conflictos en búsqueda con dropdown
+**Problema**: El evento `onBlur` del input se dispara antes del `onClick` del dropdown
+**Solución**: 
+- Usar `onMouseDown` con `preventDefault()` en lugar de `onClick`
+- Implementar flag con `useRef` en lugar de `useState` para evitar delays
+- Verificar `(searchFilter || selectedProjectId !== null)` para aplicar filtros
+
+### 5. Filtrado por proyecto no funcionaba
+**Problema**: La condición `if (searchFilter && ...)` evaluaba a false cuando `searchFilter` estaba vacío
+**Solución**: Cambiar a `if ((searchFilter || selectedProjectId !== null) && ...)`
+
+## 🔍 Decisiones Técnicas Importantes
+
+### Búsqueda y Filtrado
+- **Separación de concerns**: `appliedSearchFilter` para texto, `selectedProjectId` para proyectos
+- **Estado inmediato con useRef**: Flag `justSelectedFromDropdownRef` para prevenir race conditions
+- **onMouseDown vs onClick**: onMouseDown se dispara antes del blur, previniendo conflictos
+- **Validación doble**: Verificar tanto texto como ID de proyecto en filtros
+
+### Permisos de Subtareas
+- **Usuario creador**: Puede ver subtareas aunque otro usuario las asigne
+- **Usuario asignado**: Puede ver subtareas que le asignen
+- **Verificación en backend**: `createSubTask.php` valida permisos antes de crear
+
+### Autenticación
+- **Sesiones PHP**: Tradicionales con cookies, no JWT
+- **Verificación por endpoint**: `checkAuth.php` llamado al cargar la app
+- **Estado tristate**: `null` (cargando), `false` (no autenticado), `true` (autenticado)
 
 ## 🤝 Contribución
 
@@ -227,3 +279,16 @@ Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para más deta
 ---
 
 *Última actualización: Octubre 2025*
+
+## 📊 Changelog Reciente
+
+### Versión 1.5.0 (Octubre 2025)
+- ✨ **Sistema de búsqueda mejorado** con dropdown de sugerencias
+- 🔍 **Filtrado avanzado** por texto y proyectos con validación doble
+- 🐛 **Fix**: Conflictos entre blur y selección de dropdown (onMouseDown + useRef)
+- 🐛 **Fix**: Filtrado por proyecto ahora funciona correctamente
+- ⚡ **Optimización**: Eliminadas llamadas API duplicadas
+- ⚡ **Optimización**: Prop drilling para taskAssigneesRecord
+- 📱 **UX**: Micrófono responsive (móvil/desktop)
+- 🔐 **Permisos**: Usuario creador puede ver subtareas asignadas por otros
+- 📤 **Export**: Funcionalidad de exportación a CSV

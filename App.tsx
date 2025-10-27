@@ -26,6 +26,9 @@ const App: React.FC = () => {
   // Current user state
   const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
 
+  // View state
+  const [activeView, setActiveView] = useState<'list' | 'kanban' | 'gantt'>('list');
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -832,6 +835,50 @@ const App: React.FC = () => {
         >
            <h2 id="create-task-heading" className="sr-only">Crear nueva tarea</h2>
            <CreateQuickTask onTaskCreated={handleAddTask} />
+        </section>
+
+        {/* View Toggle Section */}
+        <section className="mb-6">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => setActiveView('list')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  activeView === 'list'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title="Vista de Lista"
+              >
+                <Icon name="list" className="w-5 h-5" />
+                <span className="hidden sm:inline">Lista</span>
+              </button>
+              <button
+                onClick={() => setActiveView('kanban')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  activeView === 'kanban'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title="Vista Kanban"
+              >
+                <Icon name="kanban" className="w-5 h-5" />
+                <span className="hidden sm:inline">Kanban</span>
+              </button>
+              <button
+                onClick={() => setActiveView('gantt')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  activeView === 'gantt'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title="Vista Gantt"
+              >
+                <Icon name="gantt" className="w-5 h-5" />
+                <span className="hidden sm:inline">Gantt</span>
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* Search and Filter Section */}
