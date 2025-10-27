@@ -77,6 +77,34 @@ CREATE TABLE `departamentos` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `dependencias_tareas`
+--
+
+DROP TABLE IF EXISTS `dependencias_tareas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `dependencias_tareas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tarea_predecesora_id` int(11) NOT NULL COMMENT 'Tarea que debe completarse primero',
+  `tarea_sucesora_id` int(11) NOT NULL COMMENT 'Tarea que depende de la anterior',
+  `tipo_dependencia` enum('FS','SS','FF','SF') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'FS' COMMENT 'FS=Finish-Start, SS=Start-Start, FF=Finish-Finish, SF=Start-Finish',
+  `retraso_dias` int(11) DEFAULT '0' COMMENT 'Días de retraso opcional entre tareas',
+  `descripcion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Descripción opcional de la dependencia',
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_dependencia` (`tarea_predecesora_id`,`tarea_sucesora_id`),
+  KEY `idx_tarea_predecesora` (`tarea_predecesora_id`),
+  KEY `idx_tarea_sucesora` (`tarea_sucesora_id`),
+  KEY `idx_tipo_dependencia` (`tipo_dependencia`),
+  KEY `idx_dependencias_compuesto` (`tarea_predecesora_id`,`tipo_dependencia`),
+  KEY `idx_fecha_creacion` (`fecha_creacion`),
+  CONSTRAINT `dependencias_tareas_ibfk_1` FOREIGN KEY (`tarea_predecesora_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `dependencias_tareas_ibfk_2` FOREIGN KEY (`tarea_sucesora_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla para manejar dependencias entre tareas en vista Gantt';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `etiquetas`
 --
 
@@ -152,7 +180,7 @@ CREATE TABLE `tareas` (
   CONSTRAINT `tareas_ibfk_3` FOREIGN KEY (`asignado_a`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
   CONSTRAINT `tareas_ibfk_4` FOREIGN KEY (`creado_por`) REFERENCES `usuarios` (`id`),
   CONSTRAINT `tareas_ibfk_5` FOREIGN KEY (`tarea_padre_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=232 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=237 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -173,7 +201,7 @@ CREATE TABLE `tareas_asignados` (
   KEY `usuario_id` (`usuario_id`),
   CONSTRAINT `tareas_asignados_ibfk_1` FOREIGN KEY (`tarea_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `tareas_asignados_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=122 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=127 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -237,4 +265,4 @@ CREATE TABLE `usuarios` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-27  9:19:19
+-- Dump completed on 2025-10-27 13:11:48

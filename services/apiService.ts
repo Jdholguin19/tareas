@@ -256,7 +256,17 @@ export const getDependencies = async (): Promise<TaskDependency[]> => {
   if (!response.ok) throw new Error('Failed to fetch dependencies');
   const data = await response.json();
   if (data.error) throw new Error(data.error);
-  return data;
+  // PHP returns { success, dependencies, total }
+  return Array.isArray(data?.dependencies)
+    ? data.dependencies.map((d: any) => ({
+        ...d,
+        id: d?.id != null ? Number(d.id) : d?.id,
+        tarea_predecesora_id: d?.tarea_predecesora_id != null ? Number(d.tarea_predecesora_id) : d?.tarea_predecesora_id,
+        tarea_sucesora_id: d?.tarea_sucesora_id != null ? Number(d.tarea_sucesora_id) : d?.tarea_sucesora_id,
+        retraso_dias: d?.retraso_dias != null ? Number(d.retraso_dias) : 0,
+        tipo_dependencia: (d?.tipo_dependencia || 'FS').toUpperCase().trim()
+      }))
+    : [];
 };
 
 export const createDependency = async (
@@ -281,15 +291,27 @@ export const createDependency = async (
   if (!response.ok) throw new Error('Failed to create dependency');
   const data = await response.json();
   if (data.error) throw new Error(data.error);
-  return data;
+  // PHP returns wrapper with new dep in data
+  const dep = data?.data;
+  // Fallback shape to match TaskDependency minimally used by Gantt
+  return {
+    id: dep?.id != null ? Number(dep.id) : dep?.id,
+    tarea_predecesora_id: dep?.tarea_predecesora_id != null ? Number(dep.tarea_predecesora_id) : dep?.tarea_predecesora_id,
+    tarea_sucesora_id: dep?.tarea_sucesora_id != null ? Number(dep.tarea_sucesora_id) : dep?.tarea_sucesora_id,
+    tipo_dependencia: (dep?.tipo_dependencia || type).toUpperCase().trim(),
+    retraso_dias: dep?.retraso_dias != null ? Number(dep.retraso_dias) : delayDays,
+    descripcion: dep?.descripcion,
+    fecha_creacion: new Date().toISOString(),
+    tarea_predecesora: { titulo: '', estado: TaskState.PENDIENTE, fecha_inicio: null, fecha_fin: null },
+    tarea_sucesora: { titulo: '', estado: TaskState.PENDIENTE, fecha_inicio: null, fecha_fin: null },
+    proyecto_nombre: undefined
+  } as TaskDependency;
 };
 
 export const deleteDependency = async (dependencyId: number): Promise<void> => {
-  const response = await fetch(`${API_BASE}/deleteDependency.php`, {
+  const response = await fetch(`${API_BASE}/deleteDependency.php?id=${dependencyId}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ id: dependencyId })
+    credentials: 'include'
   });
   if (!response.ok) throw new Error('Failed to delete dependency');
   const data = await response.json();

@@ -222,7 +222,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
             
             const taskDependencies = dependencies.filter(
-                dep => dep.tarea_predecesora_id === task.ID || dep.tarea_sucesora_id === task.ID
+                dep => Number(dep.tarea_predecesora_id) === task.ID || Number(dep.tarea_sucesora_id) === task.ID
             );
 
             return {
@@ -329,6 +329,15 @@ const GanttChart: React.FC<GanttChartProps> = ({
         currentEndDate?: Date;
     } | null>(null);
 
+    // Estado para creación de dependencia mediante arrastre
+    const [linkDragState, setLinkDragState] = useState<{
+        isActive: boolean;
+        sourceTaskId: number;
+        sourceAnchor: 'start' | 'end';
+        startPoint: { x: number; y: number };
+        currentMousePos?: { x: number; y: number };
+    } | null>(null);
+
     const handleTaskMouseDown = (taskId: number, e: React.MouseEvent) => {
         e.preventDefault();
         
@@ -357,6 +366,27 @@ const GanttChart: React.FC<GanttChartProps> = ({
         });
 
         setDraggedTask(taskId);
+    };
+
+    // Iniciar arrastre de enlace desde el conector de una tarea
+    const handleLinkDragStart = (taskId: number, anchor: 'start' | 'end', e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const container = document.querySelector('.gantt-chart-area') as HTMLElement | null;
+        if (!container) return;
+
+        const rect = container.getBoundingClientRect();
+        const startX = e.clientX - rect.left;
+        const startY = e.clientY - rect.top;
+
+        setLinkDragState({
+            isActive: true,
+            sourceTaskId: taskId,
+            sourceAnchor: anchor,
+            startPoint: { x: startX, y: startY },
+            currentMousePos: { x: startX, y: startY }
+        });
     };
 
     // Manejar hover sobre tareas
@@ -390,61 +420,112 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const taskToEdit = editingTask ? tasks.find(t => t.ID === editingTask) : null;
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        // Lógica de drag existente
-        if (!dragState || !draggedTask) return;
+        // Actualizar posición de arrastre de tareas
+        if (dragState && draggedTask) {
+            const deltaX = e.clientX - dragState.startX;
+            const daysDelta = Math.round(deltaX / DAY_WIDTH);
+            
+            if (daysDelta !== 0) {
+                const task = ganttTasks.find(t => t.ID === draggedTask);
+                if (task) {
+                    let newStartDate = new Date(dragState.originalStartDate);
+                    let newEndDate = new Date(dragState.originalEndDate);
 
-        const deltaX = e.clientX - dragState.startX;
-        const daysDelta = Math.round(deltaX / DAY_WIDTH);
-        
-        if (daysDelta === 0) return;
+                    switch (dragState.mode) {
+                        case 'move':
+                            newStartDate.setDate(newStartDate.getDate() + daysDelta);
+                            newEndDate.setDate(newEndDate.getDate() + daysDelta);
+                            break;
+                        case 'resize-start':
+                            newStartDate.setDate(newStartDate.getDate() + daysDelta);
+                            if (newStartDate >= newEndDate) {
+                                newStartDate = new Date(newEndDate);
+                                newStartDate.setDate(newStartDate.getDate() - 1);
+                            }
+                            break;
+                        case 'resize-end':
+                            newEndDate.setDate(newEndDate.getDate() + daysDelta);
+                            if (newEndDate <= newStartDate) {
+                                newEndDate = new Date(newStartDate);
+                                newEndDate.setDate(newEndDate.getDate() + 1);
+                            }
+                            break;
+                    }
 
-        const task = ganttTasks.find(t => t.ID === draggedTask);
-        if (!task) return;
-
-        let newStartDate = new Date(dragState.originalStartDate);
-        let newEndDate = new Date(dragState.originalEndDate);
-
-        switch (dragState.mode) {
-            case 'move':
-                // Mover toda la tarea
-                newStartDate.setDate(newStartDate.getDate() + daysDelta);
-                newEndDate.setDate(newEndDate.getDate() + daysDelta);
-                break;
-            case 'resize-start':
-                // Cambiar fecha de inicio
-                newStartDate.setDate(newStartDate.getDate() + daysDelta);
-                // Asegurar que la fecha de inicio no sea posterior a la de fin
-                if (newStartDate >= newEndDate) {
-                    newStartDate = new Date(newEndDate);
-                    newStartDate.setDate(newStartDate.getDate() - 1);
+                    setDragState(prev => prev ? {
+                        ...prev,
+                        currentStartDate: newStartDate,
+                        currentEndDate: newEndDate
+                    } : null);
                 }
-                break;
-            case 'resize-end':
-                // Cambiar fecha de fin
-                newEndDate.setDate(newEndDate.getDate() + daysDelta);
-                // Asegurar que la fecha de fin no sea anterior a la de inicio
-                if (newEndDate <= newStartDate) {
-                    newEndDate = new Date(newStartDate);
-                    newEndDate.setDate(newEndDate.getDate() + 1);
-                }
-                break;
+            }
         }
 
-        // Actualizar el estado de drag con las nuevas fechas (solo visual, no API)
-        setDragState(prev => prev ? {
-            ...prev,
-            currentStartDate: newStartDate,
-            currentEndDate: newEndDate
-        } : null);
+        // Actualizar línea temporal de dependencia
+        if (linkDragState?.isActive) {
+            const container = document.querySelector('.gantt-chart-area') as HTMLElement | null;
+            if (container) {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                setLinkDragState(prev => prev ? { ...prev, currentMousePos: { x, y } } : null);
+            }
+        }
     };
 
     const handleMouseUp = (e: React.MouseEvent) => {
+        // Finalizar creación de dependencia si estaba activa
+        if (linkDragState?.isActive) {
+            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            const targetEl = elements.find(el => (el as HTMLElement).dataset && (el as HTMLElement).dataset.taskId);
+            let targetTaskId: number | null = null;
+            let targetAnchor: 'start' | 'end' = 'start';
+            if (targetEl) {
+                let el = targetEl as HTMLElement;
+                const idStr = el.dataset.taskId;
+                if (idStr) {
+                    targetTaskId = parseInt(idStr, 10);
+                } else {
+                    // Buscar en ancestros por data-task-id
+                    const parentWithData = el.closest('[data-task-id]') as HTMLElement | null;
+                    if (parentWithData?.dataset.taskId) {
+                        targetTaskId = parseInt(parentWithData.dataset.taskId, 10);
+                        el = parentWithData;
+                    }
+                }
+
+                // Detectar ancla de destino según posición relativa dentro de la barra
+                const rect = el.getBoundingClientRect();
+                const relX = e.clientX - rect.left;
+                const threshold = 10; // px desde cada borde
+                if (relX <= threshold) {
+                    targetAnchor = 'start';
+                } else if (relX >= rect.width - threshold) {
+                    targetAnchor = 'end';
+                } else {
+                    targetAnchor = 'start';
+                }
+            }
+
+            if (targetTaskId && targetTaskId !== linkDragState.sourceTaskId) {
+                // Mapear anclas a tipo de dependencia
+                let tipo: 'FS' | 'SS' | 'FF' | 'SF' = 'FS';
+                if (linkDragState.sourceAnchor === 'end' && targetAnchor === 'start') tipo = 'FS';
+                else if (linkDragState.sourceAnchor === 'start' && targetAnchor === 'start') tipo = 'SS';
+                else if (linkDragState.sourceAnchor === 'end' && targetAnchor === 'end') tipo = 'FF';
+                else if (linkDragState.sourceAnchor === 'start' && targetAnchor === 'end') tipo = 'SF';
+
+                onDependencyCreate && onDependencyCreate(linkDragState.sourceTaskId, targetTaskId, tipo);
+            }
+
+            setLinkDragState(null);
+        }
+
         // Si estamos arrastrando una tarea, enviar la actualización final
         if (dragState && draggedTask) {
             const finalStartDate = dragState.currentStartDate || dragState.originalStartDate;
             const finalEndDate = dragState.currentEndDate || dragState.originalEndDate;
             
-            // Solo enviar actualización si las fechas cambiaron
             if (finalStartDate.getTime() !== dragState.originalStartDate.getTime() || 
                 finalEndDate.getTime() !== dragState.originalEndDate.getTime()) {
                 if (onTaskUpdate) {
@@ -753,24 +834,68 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             {task.Titulo}
                                         </span>
                                     </div>
+
+                                    {/* Conector derecho (fin) para crear dependencia */}
+                                    <div
+                                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-blue-500 hover:bg-blue-100 cursor-crosshair"
+                                        style={{ right: -6 }}
+                                        onMouseDown={(e) => handleLinkDragStart(task.ID, 'end', e)}
+                                        title="Crear dependencia desde fin"
+                                    />
+                                    {/* Conector izquierdo (inicio) para crear dependencia */}
+                                    <div
+                                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-red-500 hover:bg-red-100 cursor-crosshair"
+                                        style={{ left: -6 }}
+                                        onMouseDown={(e) => handleLinkDragStart(task.ID, 'start', e)}
+                                        title="Crear dependencia desde inicio"
+                                    />
                                 </div>
                             );
                         })}
 
                         {/* Dependency lines */}
-                        <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+                        <svg
+                            className="absolute inset-0"
+                            style={{ zIndex: 20 }}
+                            width={Math.max(timelineDays.length * DAY_WIDTH, 320)}
+                            height={Math.max(ganttTasks.length * ROW_HEIGHT, 200)}
+                        >
+                            {/* Línea temporal durante arrastre de dependencia */}
+                            {linkDragState?.isActive && linkDragState.currentMousePos && (
+                                (() => {
+                                    const { x: x1, y: y1 } = linkDragState.startPoint;
+                                    const { x: x2, y: y2 } = linkDragState.currentMousePos;
+                                    const controlOffset = Math.abs(x2 - x1) * 0.3;
+                                    const pathData = `M ${x1} ${y1} C ${x1 + controlOffset} ${y1}, ${x2 - controlOffset} ${y2}, ${x2} ${y2}`;
+                                    return (
+                                        <g>
+                                            <path
+                                                d={pathData}
+                                                stroke="#6B7280" /* slate-500 */
+                                                strokeWidth="2"
+                                                strokeDasharray="4 4"
+                                                fill="none"
+                                                markerEnd="url(#arrowhead-FS)"
+                                            />
+                                            {/* Punto en el cursor */}
+                                            <circle cx={x2} cy={y2} r="3" fill="#6B7280" />
+                                        </g>
+                                    );
+                                })()
+                            )}
                             {dependencies.map((dep) => {
-                                const sourceTask = ganttTasks.find(t => t.ID === dep.tarea_predecesora_id);
-                                const targetTask = ganttTasks.find(t => t.ID === dep.tarea_sucesora_id);
+                                const sourceTask = ganttTasks.find(t => t.ID === Number(dep.tarea_predecesora_id));
+                                const targetTask = ganttTasks.find(t => t.ID === Number(dep.tarea_sucesora_id));
                                 
                                 if (!sourceTask || !targetTask) return null;
 
                                 // Calcular puntos de conexión basados en el tipo de dependencia
                                 let x1, y1, x2, y2;
-                                const sourceY = sourceTask.y + TASK_HEIGHT / 2;
-                                const targetY = targetTask.y + TASK_HEIGHT / 2;
+                                const sourceY = sourceTask.y + TASK_MARGIN / 2 + TASK_HEIGHT / 2;
+                                const targetY = targetTask.y + TASK_MARGIN / 2 + TASK_HEIGHT / 2;
 
-                                switch (dep.tipo_dependencia) {
+                                const tipo = (dep.tipo_dependencia || 'FS').toUpperCase() as 'FS' | 'SS' | 'FF' | 'SF';
+                                switch (tipo) {
                                     case 'FS': // Finish to Start (por defecto)
                                         x1 = sourceTask.x + sourceTask.width;
                                         y1 = sourceY;
@@ -802,11 +927,46 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         y2 = targetY;
                                 }
 
-                                // Crear path con curvas para mejor visualización
-                                const midX = (x1 + x2) / 2;
-                                const controlOffset = Math.abs(x2 - x1) * 0.3;
-                                
-                                const pathData = `M ${x1} ${y1} C ${x1 + controlOffset} ${y1}, ${x2 - controlOffset} ${y2}, ${x2} ${y2}`;
+                                // Ruta ortogonal (líneas rectas con codos) alineada a rejilla y evitando barras
+                                const midXRaw = (x1 + x2) / 2;
+                                const verticalYMin = Math.min(y1, y2);
+                                const verticalYMax = Math.max(y1, y2);
+
+                                // candidatos de columna para el tramo vertical
+                                const candidates = [
+                                    Math.round(midXRaw / DAY_WIDTH) * DAY_WIDTH,
+                                    Math.round((midXRaw + DAY_WIDTH) / DAY_WIDTH) * DAY_WIDTH,
+                                    Math.round((midXRaw - DAY_WIDTH) / DAY_WIDTH) * DAY_WIDTH,
+                                    sourceTask.x + sourceTask.width + 12,
+                                    targetTask.x - 12
+                                ];
+
+                                // helper para comprobar si el x candidato intersecta alguna barra entre y1 y y2
+                                const intersectsBarAtX = (x: number) => {
+                                    for (const t of ganttTasks) {
+                                        const barTop = t.y + TASK_MARGIN / 2;
+                                        const barBottom = barTop + TASK_HEIGHT;
+                                        const xStart = t.x;
+                                        const xEnd = t.x + t.width;
+                                        const verticalOverlapsRows = !(verticalYMax < barTop || verticalYMin > barBottom);
+                                        if (verticalOverlapsRows && x >= xStart && x <= xEnd) {
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                };
+
+                                // elegir primera columna limpia
+                                let clearX = candidates.find((cx) => !intersectsBarAtX(cx));
+                                if (clearX == null) clearX = midXRaw;
+
+                                // limitar para no quedarnos demasiado cerca de los extremos
+                                const minX = Math.min(x1, x2) + 8;
+                                const maxX = Math.max(x1, x2) - 8;
+                                clearX = Math.max(minX, Math.min(maxX, clearX));
+
+                                // path con segmentos rectos
+                                const pathData = `M ${x1} ${y1} L ${clearX} ${y1} L ${clearX} ${y2} L ${x2} ${y2}`;
 
                                 // Color basado en el tipo de dependencia
                                 const getDepColor = (tipo: string) => {
@@ -819,7 +979,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     }
                                 };
 
-                                const color = getDepColor(dep.tipo_dependencia);
+                                const color = getDepColor(tipo);
 
                                 return (
                                     <g key={dep.id}>
@@ -829,7 +989,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             stroke={color}
                                             strokeWidth="2"
                                             fill="none"
-                                            markerEnd={`url(#arrowhead-${dep.tipo_dependencia})`}
+                                            markerEnd={`url(#arrowhead-${tipo})`}
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
                                             className="hover:stroke-4 transition-all"
                                         />
                                         
@@ -851,14 +1013,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
                                         {/* Etiqueta del tipo de dependencia */}
                                         <text
-                                            x={midX}
+                                            x={clearX}
                                             y={Math.min(y1, y2) - 5}
                                             textAnchor="middle"
                                             fontSize="10"
                                             fill={color}
                                             className="font-medium"
                                         >
-                                            {dep.tipo_dependencia}
+                                            {tipo}
                                         </text>
                                     </g>
                                 );

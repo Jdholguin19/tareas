@@ -3,8 +3,8 @@ import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { GanttChart } from './components/GanttChart';
 import { Icon } from './components/Icon';
-import type { Task, Project } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser } from './services/apiService';
+import type { Task, Project, TaskDependency } from './types';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
@@ -14,6 +14,7 @@ import RegisterForm from './components/RegisterForm';
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState<boolean>(false);
@@ -185,6 +186,15 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const fetchDependencies = useCallback(async () => {
+    try {
+      const deps = await getDependencies();
+      setDependencies(deps);
+    } catch (error) {
+      console.error('Failed to fetch dependencies:', error);
+    }
+  }, []);
+
   useEffect(() => {
     const abortController = new AbortController();
     let isMounted = true;
@@ -198,9 +208,10 @@ const App: React.FC = () => {
           setIsAuthenticated(true);
           
           // Ejecutar llamadas en paralelo para mejor rendimiento
-          const [tasksResult, projectsResult, userResult] = await Promise.allSettled([
+          const [tasksResult, projectsResult, depsResult, userResult] = await Promise.allSettled([
             fetchTasks(),
             fetchProjects(),
+            fetchDependencies(),
             getCurrentUser()
           ]);
           
@@ -210,6 +221,9 @@ const App: React.FC = () => {
             setCurrentUser(userResult.value);
           } else if (userResult.status === 'rejected') {
             console.error('Error getting current user:', userResult.reason);
+          }
+          if (depsResult.status === 'rejected') {
+            console.error('Error loading dependencies:', depsResult.reason);
           }
         } else if (isMounted) {
           setIsAuthenticated(false);
@@ -1161,10 +1175,26 @@ const App: React.FC = () => {
               ) : (
                 <GanttChart 
                   tasks={filteredTasks} 
-                  dependencies={[]}
+                  dependencies={dependencies}
                   projects={projects}
                   currentUser={currentUser}
                   onTaskUpdate={handleGanttTaskUpdate}
+                  onDependencyCreate={async (pre, suc, tipo) => {
+                    try {
+                      const created = await createDependency(pre, suc, tipo);
+                      setDependencies(prev => [...prev, created]);
+                    } catch (err) {
+                      console.error('Failed to create dependency:', err);
+                    }
+                  }}
+                  onDependencyDelete={async (depId) => {
+                    try {
+                      await deleteDependency(depId);
+                      setDependencies(prev => prev.filter(d => d.id !== depId));
+                    } catch (err) {
+                      console.error('Failed to delete dependency:', err);
+                    }
+                  }}
                   onProjectCreated={handleProjectCreated}
                 />
               )}
