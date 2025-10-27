@@ -856,7 +856,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         {/* Dependency lines */}
                         <svg
                             className="absolute inset-0"
-                            style={{ zIndex: 20 }}
+                            style={{ zIndex: 20, pointerEvents: 'none' }}
                             width={Math.max(timelineDays.length * DAY_WIDTH, 320)}
                             height={Math.max(ganttTasks.length * ROW_HEIGHT, 200)}
                         >
@@ -876,6 +876,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                                 strokeDasharray="4 4"
                                                 fill="none"
                                                 markerEnd="url(#arrowhead-FS)"
+                                                pointerEvents="none"
                                             />
                                             {/* Punto en el cursor */}
                                             <circle cx={x2} cy={y2} r="3" fill="#6B7280" />
@@ -929,8 +930,15 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
                                 // Ruta ortogonal (líneas rectas con codos) alineada a rejilla y evitando barras
                                 const midXRaw = (x1 + x2) / 2;
-                                const verticalYMin = Math.min(y1, y2);
-                                const verticalYMax = Math.max(y1, y2);
+                                const sourceRowTop = sourceTask.y + TASK_MARGIN / 2;
+                                const sourceRowBottom = sourceRowTop + TASK_HEIGHT;
+                                const targetRowTop = targetTask.y + TASK_MARGIN / 2;
+                                const targetRowBottom = targetRowTop + TASK_HEIGHT;
+                                const OFFSET = 6;
+                                const exitY = y2 > y1 ? (sourceRowBottom + OFFSET) : (sourceRowTop - OFFSET);
+                                const entryY = y2 > y1 ? (targetRowTop - OFFSET) : (targetRowBottom + OFFSET);
+                                const verticalYMin = Math.min(exitY, entryY);
+                                const verticalYMax = Math.max(exitY, entryY);
 
                                 // candidatos de columna para el tramo vertical
                                 const candidates = [
@@ -965,8 +973,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 const maxX = Math.max(x1, x2) - 8;
                                 clearX = Math.max(minX, Math.min(maxX, clearX));
 
-                                // path con segmentos rectos
-                                const pathData = `M ${x1} ${y1} L ${clearX} ${y1} L ${clearX} ${y2} L ${x2} ${y2}`;
+                                // path con segmentos rectos, saliendo/entrando fuera de las barras
+                                const pathData = `M ${x1} ${y1} L ${x1} ${exitY} L ${clearX} ${exitY} L ${clearX} ${entryY} L ${x2} ${entryY} L ${x2} ${y2}`;
 
                                 // Color basado en el tipo de dependencia
                                 const getDepColor = (tipo: string) => {
@@ -992,6 +1000,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             markerEnd={`url(#arrowhead-${tipo})`}
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
+                                            pointerEvents="none"
                                             className="hover:stroke-4 transition-all"
                                         />
                                         
@@ -1002,6 +1011,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                              strokeWidth="8"
                                              fill="none"
                                              className="cursor-pointer"
+                                             pointerEvents="stroke"
                                              onClick={(e) => {
                                                  e.preventDefault();
                                                  e.stopPropagation();
@@ -1014,7 +1024,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         {/* Etiqueta del tipo de dependencia */}
                                         <text
                                             x={clearX}
-                                            y={Math.min(y1, y2) - 5}
+                                            y={Math.min(exitY, entryY) - 5}
                                             textAnchor="middle"
                                             fontSize="10"
                                             fill={color}
