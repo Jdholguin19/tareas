@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { GanttChart } from './components/GanttChart';
+import { KanbanBoard } from './components/KanbanBoard';
 import { Icon } from './components/Icon';
 import type { Task, Project, TaskDependency } from './types';
 import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency } from './services/apiService';
@@ -1147,12 +1148,19 @@ const App: React.FC = () => {
         {/* Kanban View */}
         {activeView === 'kanban' && (
           <section className="mb-12">
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-              <div className="text-center">
-                <Icon name="kanban" className="w-16 h-16 mx-auto text-slate-400 mb-4" />
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">Vista Kanban</h3>
-                <p className="text-slate-500">La vista Kanban estará disponible próximamente.</p>
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <Icon name="kanban" className="w-6 h-6 text-slate-500" />
+                <h3 className="text-lg font-semibold text-slate-700">Vista Kanban</h3>
               </div>
+              <KanbanBoard
+                tasks={filteredTasks}
+                projects={projects}
+                selectedProjectId={selectedProjectId}
+                onProjectFilterChange={setSelectedProjectId}
+                onTaskUpdate={handleGanttTaskUpdate}
+                onTaskClick={handleSelectTask}
+              />
             </div>
           </section>
         )}
