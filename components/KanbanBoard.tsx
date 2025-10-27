@@ -45,6 +45,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       updates.Porcentaje_Avance = 100;
     } else if (state === TaskState.EN_PROGRESO) {
       updates.Porcentaje_Avance = 20;
+    } else if (state === TaskState.PENDIENTE) {
+      updates.Porcentaje_Avance = 0;
     }
     onTaskUpdate(id, updates);
     setDraggingTaskId(null);

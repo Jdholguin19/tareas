@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Task, TaskDependency, GanttTask, GanttTimelineScale, TaskState, Project } from '../types';
 import { EditTaskModal } from './EditTaskModal';
 import { createSubTask, deleteTask } from '../services/apiService';
@@ -35,6 +35,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const [draggedTask, setDraggedTask] = useState<number | null>(null);
     const [isCreatingDependency, setIsCreatingDependency] = useState(false);
     const [dependencySource, setDependencySource] = useState<number | null>(null);
+    const timelineHeaderRef = useRef<HTMLDivElement | null>(null);
+    const chartAreaRef = useRef<HTMLDivElement | null>(null);
+    const sidebarRef = useRef<HTMLDivElement | null>(null);
+    const [contentWidth, setContentWidth] = useState<number>(0);
     
     // Estados adicionales para acordeón y edición
     const [collapsedTasks, setCollapsedTasks] = useState<Set<number>>(new Set());
@@ -48,6 +52,82 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const TIMELINE_HEIGHT = 60;
     const SIDEBAR_WIDTH = window.innerWidth < 1024 ? 320 : 480; // Responsive sidebar width
     const DAY_WIDTH = window.innerWidth < 640 ? 20 : 30; // Smaller day width on mobile
+    const DATE_COL_WIDTH = 80; // ancho fijo para columnas Inicio/Fin/Duración
+    const MIN_CHART_WIDTH = 320; // base mínima
+
+    // Generar timeline basado en la escala seleccionada (debe ir antes de usar timelineDays)
+    const timelineDays = useMemo(() => {
+        const days: any[] = [];
+        const totalDays = Math.ceil((viewEndDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000));
+        
+        if (timelineScale.unit === 'day') {
+            // Vista por días (actual)
+            for (let i = 0; i < totalDays; i++) {
+                const date = new Date(viewStartDate);
+                date.setDate(date.getDate() + i);
+                days.push({
+                    date,
+                    day: date.getDate().toString(),
+                    month: date.toLocaleDateString('es-ES', { month: 'short' }),
+                    x: i * DAY_WIDTH,
+                    isWeekend: date.getDay() === 0 || date.getDay() === 6
+                });
+            }
+        } else if (timelineScale.unit === 'week') {
+            // Vista por semanas
+            const startOfWeek = new Date(viewStartDate);
+            startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Ir al domingo
+            
+            const totalWeeks = Math.ceil(totalDays / 7);
+            for (let i = 0; i < totalWeeks; i++) {
+                const weekStart = new Date(startOfWeek);
+                weekStart.setDate(weekStart.getDate() + (i * 7));
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                days.push({
+                    date: weekStart,
+                    day: `S${i + 1}`,
+                    month: weekStart.toLocaleDateString('es-ES', { month: 'short' }),
+                    x: i * DAY_WIDTH * 7, // Cada semana ocupa 7 días de ancho
+                    isWeekend: false,
+                    weekEnd: weekEnd
+                });
+            }
+        } else if (timelineScale.unit === 'month') {
+            // Vista por meses
+            const currentDate = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth(), 1);
+            const endDate = new Date(viewEndDate.getFullYear(), viewEndDate.getMonth() + 1, 0);
+            
+            let monthIndex = 0;
+            while (currentDate <= endDate) {
+                const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                
+                days.push({
+                    date: new Date(currentDate),
+                    day: currentDate.toLocaleDateString('es-ES', { month: 'short' }),
+                    month: currentDate.getFullYear().toString(),
+                    x: monthIndex * DAY_WIDTH * 30, // Aproximadamente 30 días por mes
+                    isWeekend: false,
+                    daysInMonth: daysInMonth
+                });
+                
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                monthIndex++;
+            }
+        }
+        
+        return days;
+    }, [viewStartDate, viewEndDate, DAY_WIDTH, timelineScale.unit]);
+
+    // Calcular ancho interno deseado del timeline para habilitar scroll
+    const unitPixel = useMemo(() => (
+        timelineScale.unit === 'week' ? DAY_WIDTH * 7 : (timelineScale.unit === 'month' ? DAY_WIDTH * 30 : DAY_WIDTH)
+    ), [timelineScale.unit, DAY_WIDTH]);
+
+    const timelinePixelWidth = useMemo(() => (
+        Math.max(timelineDays.length * unitPixel, MIN_CHART_WIDTH)
+    ), [timelineDays.length, unitPixel]);
 
     // Función para calcular duración en días
     const calculateDuration = (startDate: string | null, endDate: string | null): string => {
@@ -239,70 +319,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
         });
     }, [getVisibleHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT, timelineScale.unit]);
 
-    // Generar timeline basado en la escala seleccionada
-    const timelineDays = useMemo(() => {
-        const days = [];
-        const totalDays = Math.ceil((viewEndDate.getTime() - viewStartDate.getTime()) / (24 * 60 * 60 * 1000));
-        
-        if (timelineScale.unit === 'day') {
-            // Vista por días (actual)
-            for (let i = 0; i < totalDays; i++) {
-                const date = new Date(viewStartDate);
-                date.setDate(date.getDate() + i);
-                days.push({
-                    date,
-                    day: date.getDate().toString(),
-                    month: date.toLocaleDateString('es-ES', { month: 'short' }),
-                    x: i * DAY_WIDTH,
-                    isWeekend: date.getDay() === 0 || date.getDay() === 6
-                });
-            }
-        } else if (timelineScale.unit === 'week') {
-            // Vista por semanas
-            const startOfWeek = new Date(viewStartDate);
-            startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Ir al domingo
-            
-            const totalWeeks = Math.ceil(totalDays / 7);
-            for (let i = 0; i < totalWeeks; i++) {
-                const weekStart = new Date(startOfWeek);
-                weekStart.setDate(weekStart.getDate() + (i * 7));
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekEnd.getDate() + 6);
-                
-                days.push({
-                    date: weekStart,
-                    day: `S${i + 1}`,
-                    month: weekStart.toLocaleDateString('es-ES', { month: 'short' }),
-                    x: i * DAY_WIDTH * 7, // Cada semana ocupa 7 días de ancho
-                    isWeekend: false,
-                    weekEnd: weekEnd
-                });
-            }
-        } else if (timelineScale.unit === 'month') {
-            // Vista por meses
-            const currentDate = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth(), 1);
-            const endDate = new Date(viewEndDate.getFullYear(), viewEndDate.getMonth() + 1, 0);
-            
-            let monthIndex = 0;
-            while (currentDate <= endDate) {
-                const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-                
-                days.push({
-                    date: new Date(currentDate),
-                    day: currentDate.toLocaleDateString('es-ES', { month: 'short' }),
-                    month: currentDate.getFullYear().toString(),
-                    x: monthIndex * DAY_WIDTH * 30, // Aproximadamente 30 días por mes
-                    isWeekend: false,
-                    daysInMonth: daysInMonth
-                });
-                
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                monthIndex++;
-            }
-        }
-        
-        return days;
-    }, [viewStartDate, viewEndDate, DAY_WIDTH, timelineScale.unit]);
+    
 
     // Obtener color por estado de tarea
     const getTaskColor = (estado: TaskState, progreso: number) => {
@@ -600,24 +617,37 @@ const GanttChart: React.FC<GanttChartProps> = ({
             {/* Main Content */}
             <div className="gantt-content flex flex-col lg:flex-row min-h-0 flex-1">
                 {/* Sidebar con lista de tareas */}
-                <div className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b overflow-y-auto" 
-                     style={{ 
-                         width: '100%', 
-                         maxWidth: SIDEBAR_WIDTH,
-                         minWidth: '320px'
-                     }}>
+                <div 
+                    ref={sidebarRef}
+                    className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b overflow-y-auto overflow-x-hidden" 
+                    style={{ 
+                        width: '100%', 
+                        maxWidth: SIDEBAR_WIDTH,
+                        minWidth: '320px',
+                        height: Math.max(ganttTasks.length * ROW_HEIGHT, 200)
+                    }}
+                    onScroll={(e) => {
+                        const target = chartAreaRef.current;
+                        if (target && target.scrollTop !== e.currentTarget.scrollTop) {
+                            target.scrollTop = e.currentTarget.scrollTop;
+                        }
+                    }}
+                >
                     {/* Timeline header con columnas */}
-                    <div className="h-[60px] border-b bg-gray-100 flex items-center sticky top-0 z-10">
-                        <div className="flex-1 px-2 sm:px-4">
+                    <div
+                        className="h-[60px] border-b bg-gray-100 grid items-center sticky top-0 z-10"
+                        style={{ gridTemplateColumns: `1fr ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px` }}
+                    >
+                        <div className="px-2 sm:px-4">
                             <span className="text-xs sm:text-sm font-medium text-gray-700">Tareas</span>
                         </div>
-                        <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                        <div className="px-1 sm:px-2 border-l text-center">
                             <span className="text-xs font-medium text-gray-600">Inicio</span>
                         </div>
-                        <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                        <div className="px-1 sm:px-2 border-l text-center">
                             <span className="text-xs font-medium text-gray-600">Fin</span>
                         </div>
-                        <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                        <div className="px-1 sm:px-2 border-l text-center">
                             <span className="text-xs font-medium text-gray-600">Duración</span>
                         </div>
                     </div>
@@ -636,12 +666,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                             return (
                                 <div 
                                     key={task.ID}
-                                    className="gantt-task-row border-b hover:bg-gray-100 flex items-center"
-                                    style={{ height: ROW_HEIGHT }}
+                                    className="gantt-task-row border-b hover:bg-gray-100 grid items-center"
+                                    style={{ height: ROW_HEIGHT, gridTemplateColumns: `1fr ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px` }}
                                     onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
                                 >
                                     {/* Columna de tarea con indentación y acordeón */}
-                                    <div className="flex-1 flex items-center h-full px-1 sm:px-2" style={{ paddingLeft: `${4 + indentWidth}px` }}>
+                                    <div className="flex items-center h-full px-1 sm:px-2" style={{ paddingLeft: `${4 + indentWidth}px` }}>
                                         {/* Botón de acordeón para tareas padre */}
                                         {taskHasChildren && (
                                             <button
@@ -688,21 +718,21 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     </div>
                                     
                                     {/* Columna fecha inicio - FIJA */}
-                                    <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                                    <div className="px-1 sm:px-2 border-l text-center">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio)) : '-'}
                                         </span>
                                     </div>
                                     
                                     {/* Columna fecha fin - FIJA */}
-                                    <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                                    <div className="px-1 sm:px-2 border-l text-center">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento)) : '-'}
                                         </span>
                                     </div>
                                     
                                     {/* Columna duración - NUEVA */}
-                                    <div className="w-12 sm:w-16 lg:w-20 px-1 sm:px-2 border-l text-center flex-shrink-0">
+                                    <div className="px-1 sm:px-2 border-l text-center">
                                         <span className="text-xs text-gray-600 font-medium">
                                             {calculateDuration(task.Fecha_Inicio, task.Fecha_Vencimiento)}
                                         </span>
@@ -714,10 +744,17 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 </div>
 
                 {/* Timeline y Chart */}
-                <div className="gantt-timeline-container flex-1 overflow-x-auto min-h-0">
+                <div className="gantt-timeline-container flex-1 min-h-0">
                     {/* Timeline Header */}
-                    <div className="gantt-timeline-header bg-gray-100 border-b overflow-x-auto sticky top-0 z-10" style={{ height: TIMELINE_HEIGHT }}>
-                        <div className="relative" style={{ width: Math.max(timelineDays.length * DAY_WIDTH, 320) }}>
+                    <div
+                        ref={timelineHeaderRef}
+                        className="gantt-timeline-header bg-gray-100 border-b overflow-x-hidden sticky top-0 z-10"
+                        style={{ height: TIMELINE_HEIGHT }}
+                    >
+                        <div
+                            className="relative"
+                            style={{ width: contentWidth }}
+                        >
                             {timelineDays.map((day, index) => (
                                 <div
                                     key={index}
@@ -739,15 +776,34 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
                     {/* Chart Area */}
                     <div 
-                        className="gantt-chart-area relative bg-white overflow-x-auto"
+                        ref={chartAreaRef}
+                        className="gantt-chart-area relative bg-white overflow-x-auto overflow-y-auto"
                         style={{ 
-                            width: Math.max(timelineDays.length * DAY_WIDTH, 320),
+                            width: '100%',
                             height: Math.max(ganttTasks.length * ROW_HEIGHT, 200),
                             minHeight: '200px'
+                        }}
+                        onScroll={(e) => {
+                            const target = timelineHeaderRef.current;
+                            if (target && target.scrollLeft !== e.currentTarget.scrollLeft) {
+                                target.scrollLeft = e.currentTarget.scrollLeft;
+                            }
+                            const sidebar = sidebarRef.current;
+                            if (sidebar && sidebar.scrollTop !== e.currentTarget.scrollTop) {
+                                sidebar.scrollTop = e.currentTarget.scrollTop;
+                            }
                         }}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                     >
+                        {/* Wrapper interno para proporcionar ancho total y habilitar scroll */}
+                        <div
+                            className="relative"
+                            style={{
+                                width: contentWidth,
+                                height: Math.max(ganttTasks.length * ROW_HEIGHT, 200)
+                            }}
+                        >
                         {/* Grid lines */}
                         {timelineDays.map((day, index) => (
                             <div
@@ -857,7 +913,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         <svg
                             className="absolute inset-0"
                             style={{ zIndex: 20, pointerEvents: 'none' }}
-                            width={Math.max(timelineDays.length * DAY_WIDTH, 320)}
+                            width={contentWidth}
                             height={Math.max(ganttTasks.length * ROW_HEIGHT, 200)}
                         >
                             {/* Línea temporal durante arrastre de dependencia */}
@@ -1051,6 +1107,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 })}
                             </defs>
                         </svg>
+                        </div>
                     </div>
                 </div>
             </div>
