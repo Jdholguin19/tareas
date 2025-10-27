@@ -19,7 +19,7 @@ if (!$id) {
 
 try {
     // First, get the current task data and verify ownership
-    $stmtCurrent = $pdo->prepare("SELECT proyecto_id, creado_por FROM tareas WHERE id = ?");
+    $stmtCurrent = $pdo->prepare("SELECT proyecto_id, creado_por, estado, fecha_vencimiento, fecha_completada FROM tareas WHERE id = ?");
     $stmtCurrent->execute([$id]);
     $currentTask = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
 
@@ -58,6 +58,28 @@ try {
         'Parent_ID' => 'tarea_padre_id',
         'Adjuntos_URL' => 'adjuntos_url'
     ];
+
+    // Auto-set completion/due date when marking as completed
+    $markCompleted = false;
+    if (isset($data['Estado']) && strtolower(trim($data['Estado'])) === 'completada') {
+        $markCompleted = true;
+    } elseif (isset($data['Porcentaje_Avance']) && floatval($data['Porcentaje_Avance']) >= 100) {
+        $markCompleted = true;
+    }
+
+    if ($markCompleted) {
+        // Set completion date to today if not provided
+        if (!isset($data['Fecha_Completada']) || empty($data['Fecha_Completada'])) {
+            $data['Fecha_Completada'] = date('Y-m-d');
+        }
+        // If task has no due date, default due date to today
+        if (
+            (!isset($data['Fecha_Vencimiento']) || $data['Fecha_Vencimiento'] === null || $data['Fecha_Vencimiento'] === '')
+            && (empty($currentTask['fecha_vencimiento']))
+        ) {
+            $data['Fecha_Vencimiento'] = date('Y-m-d');
+        }
+    }
 
     $fields = [];
     $values = [];

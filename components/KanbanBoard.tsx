@@ -43,10 +43,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const updates: Partial<Task> = { Estado: state };
     if (state === TaskState.COMPLETADA) {
       updates.Porcentaje_Avance = 100;
+      updates.Fecha_Completada = new Date().toISOString();
+      const todayStr = new Date().toISOString().slice(0,10);
+      updates.Fecha_Vencimiento = task.Fecha_Vencimiento || todayStr;
     } else if (state === TaskState.EN_PROGRESO) {
       updates.Porcentaje_Avance = 20;
+      updates.Fecha_Completada = null;
     } else if (state === TaskState.PENDIENTE) {
       updates.Porcentaje_Avance = 0;
+      updates.Fecha_Completada = null;
     }
     onTaskUpdate(id, updates);
     setDraggingTaskId(null);

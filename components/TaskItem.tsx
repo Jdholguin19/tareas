@@ -78,10 +78,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
       const isCompleted = e.target.checked;
+      const todayStr = new Date().toISOString().slice(0,10);
       onUpdate({
           ...task,
           Porcentaje_Avance: isCompleted ? 100 : 0,
           Estado: isCompleted ? TaskState.COMPLETADA : TaskState.PENDIENTE,
+          Fecha_Completada: isCompleted ? new Date().toISOString() : null,
+          // Si no tiene fecha de vencimiento, al completar se establece hoy
+          Fecha_Vencimiento: isCompleted
+            ? (task.Fecha_Vencimiento && task.Fecha_Vencimiento.trim() !== ''
+                ? task.Fecha_Vencimiento
+                : todayStr)
+            : task.Fecha_Vencimiento,
       });
   };
   
