@@ -262,14 +262,23 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
           />
 
           <div 
-              className="flex-grow cursor-pointer"
+              className="flex-grow cursor-pointer min-w-0"
               onClick={() => onTaskClick(task)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onTaskClick(task); }}
               role="button"
               tabIndex={0}
               aria-label={`Editar tarea: ${task.Titulo}`}
           >
-            <span className={`text-slate-800 ${task.Estado === TaskState.COMPLETADA ? 'line-through text-slate-500' : ''}`}>
+            <span
+              className={`text-slate-800 ${task.Estado === TaskState.COMPLETADA ? 'line-through text-slate-500' : ''}`}
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                wordBreak: 'break-word'
+              }}
+            >
               {task.Titulo}
             </span>
           </div>

@@ -975,7 +975,7 @@ const App: React.FC = () => {
                   <Icon name="search" className="w-4 h-4 mr-2" />
                   Filtrar
                 </button>*/}
-                {appliedSearchFilter && (
+                {(appliedSearchFilter || selectedProjectId !== null) && (
                   <button
                     onClick={handleClearSearch}
                     className="px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 flex items-center"
