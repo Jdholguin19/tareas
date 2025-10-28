@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Task, Project } from '../types';
 import { TaskItem } from './TaskItem';
 
@@ -12,6 +12,13 @@ interface TaskListProps {
 }
 
 export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete }) => {
+  const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
+
+  const handleFocusTask = (taskId: number) => {
+    setFocusedTaskId(taskId);
+    // Clear focus after 3 seconds
+    window.setTimeout(() => setFocusedTaskId(null), 3000);
+  };
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
@@ -46,6 +53,8 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
           onUpdate={onTaskUpdate}
           onDelete={onDelete}
           level={0}
+          focusedTaskId={focusedTaskId}
+          onFocusTask={handleFocusTask}
         />
       ))}
     </ul>

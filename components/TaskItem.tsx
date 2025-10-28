@@ -13,6 +13,8 @@ interface TaskItemProps {
   onDelete: (taskId: number) => void;
   level: number;
   taskAssigneesRecord: Record<number, {id: number, username: string}[]>;
+  focusedTaskId?: number | null;
+  onFocusTask?: (taskId: number) => void;
 }
 
 const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: string, isOverdue: boolean } => {
@@ -55,11 +57,12 @@ const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: stri
 };
 
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDraggingProgress, setIsDraggingProgress] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressFillRef = useRef<HTMLDivElement>(null);
@@ -174,6 +177,75 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     });
   };
 
+  // --- Drag & Drop helpers ---
+  const isTargetInDraggedSubtree = (draggedId: number, targetId: number): boolean => {
+    // Check if targetId is inside the subtree of draggedId
+    const stack: number[] = [draggedId];
+    const visited = new Set<number>();
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      const children = allTasks.filter(t => t.Parent_ID === current);
+      for (const child of children) {
+        if (child.ID === targetId) return true;
+        stack.push(child.ID);
+      }
+    }
+    return false;
+  };
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    try {
+      e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.ID }));
+    } catch {}
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    let draggedId: number | null = null;
+    try {
+      const raw = e.dataTransfer.getData('application/json');
+      const parsed = raw ? JSON.parse(raw) : null;
+      draggedId = parsed && parsed.taskId != null ? Number(parsed.taskId) : null;
+    } catch {
+      const text = e.dataTransfer.getData('text/plain');
+      const num = Number(text);
+      draggedId = Number.isFinite(num) ? num : null;
+    }
+
+    if (!draggedId || draggedId === task.ID) return;
+    const draggedTask = allTasks.find(t => t.ID === draggedId);
+    if (!draggedTask) return;
+
+    // Prevent cycles: don't allow dropping into its own subtree
+    if (isTargetInDraggedSubtree(draggedId, task.ID)) {
+      alert('No puedes mover una tarea dentro de sus propias subtareas.');
+      return;
+    }
+
+    const updatedTask: Task = {
+      ...draggedTask,
+      Parent_ID: task.ID,
+      Proyecto: task.Proyecto
+    };
+
+    onUpdate(updatedTask);
+    if (onFocusTask) onFocusTask(draggedId);
+  };
+
   const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent | React.TouchEvent | TouchEvent) => {
     if (!progressBarRef.current || !progressFillRef.current) return;
 
@@ -234,6 +306,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   };
 
   const { statusClass, statusColor, isOverdue } = getTaskStatusInfo(task);
+  const isFocused = focusedTaskId === task.ID;
 
   const children = allTasks
     .filter(child => child.Parent_ID === task.ID)
@@ -250,11 +323,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
           paddingLeft,
           borderLeft: `4px solid ${statusColor}`,
           // @ts-ignore
-          backgroundColor: `var(--color-${statusClass}-bg)`
+          backgroundColor: `var(--color-${statusClass}-bg)`,
+          // Visual focus overlay (semi-transparent dark gray)
+          boxShadow: isFocused ? 'inset 0 0 0 999px rgba(55, 65, 81, 0.18)' : undefined
         }}
         className={`
           flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow-sm p-3 pr-4 gap-3 transition-all duration-200 hover:shadow-md hover:scale-[1.01]
+          ${isDragOver ? 'ring-2 ring-blue-400/60' : ''}
         `}
+        draggable
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         {level > 0 && <Icon name="subtask" className="w-4 h-4 text-slate-400 shrink-0 -ml-1 hidden sm:block" />}
         
@@ -378,6 +459,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                     onUpdate={onUpdate}
                     onDelete={onDelete}
                     level={level + 1}
+                    focusedTaskId={focusedTaskId}
+                    onFocusTask={onFocusTask}
                 />
             ))}
         </ul>
