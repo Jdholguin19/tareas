@@ -180,16 +180,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   // --- Drag & Drop helpers ---
   const isTargetInDraggedSubtree = (draggedId: number, targetId: number): boolean => {
     // Check if targetId is inside the subtree of draggedId
-    const stack: number[] = [draggedId];
+    const stack: number[] = [parseInt(String(draggedId))];
     const visited = new Set<number>();
     while (stack.length > 0) {
       const current = stack.pop()!;
       if (visited.has(current)) continue;
       visited.add(current);
-      const children = allTasks.filter(t => t.Parent_ID === current);
+      const children = allTasks.filter(t => parseInt(String(t.Parent_ID)) === current);
       for (const child of children) {
-        if (child.ID === targetId) return true;
-        stack.push(child.ID);
+        if (parseInt(String(child.ID)) === parseInt(String(targetId))) return true;
+        stack.push(parseInt(String(child.ID)));
       }
     }
     return false;
@@ -219,15 +219,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     try {
       const raw = e.dataTransfer.getData('application/json');
       const parsed = raw ? JSON.parse(raw) : null;
-      draggedId = parsed && parsed.taskId != null ? Number(parsed.taskId) : null;
+      draggedId = parsed && parsed.taskId != null ? parseInt(String(parsed.taskId)) : null;
     } catch {
       const text = e.dataTransfer.getData('text/plain');
-      const num = Number(text);
+      const num = parseInt(String(text));
       draggedId = Number.isFinite(num) ? num : null;
     }
 
-    if (!draggedId || draggedId === task.ID) return;
-    const draggedTask = allTasks.find(t => t.ID === draggedId);
+    if (!draggedId || parseInt(String(draggedId)) === parseInt(String(task.ID))) return;
+    const draggedTask = allTasks.find(t => parseInt(String(t.ID)) === parseInt(String(draggedId)));
     if (!draggedTask) return;
 
     // Prevent cycles: don't allow dropping into its own subtree
@@ -238,12 +238,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
 
     const updatedTask: Task = {
       ...draggedTask,
-      Parent_ID: task.ID,
-      Proyecto: task.Proyecto
+      Parent_ID: parseInt(String(task.ID)),
+      Proyecto: parseInt(String(task.Proyecto))
     };
 
     onUpdate(updatedTask);
-    if (onFocusTask) onFocusTask(draggedId);
+    if (onFocusTask) onFocusTask(parseInt(String(draggedId)));
   };
 
   const updateProgressFromMouse = (e: React.MouseEvent | MouseEvent | React.TouchEvent | TouchEvent) => {
@@ -306,10 +306,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   };
 
   const { statusClass, statusColor, isOverdue } = getTaskStatusInfo(task);
-  const isFocused = focusedTaskId === task.ID;
+  const isFocused = parseInt(String(focusedTaskId)) === parseInt(String(task.ID));
 
   const children = allTasks
-    .filter(child => child.Parent_ID === task.ID)
+    .filter(child => parseInt(String(child.Parent_ID)) === parseInt(String(task.ID)))
     .sort((a,b) => new Date(a.Fecha_Creacion).getTime() - new Date(b.Fecha_Creacion).getTime());
 
   const paddingLeft = `${level * 1.5 + 0.75}rem`;
