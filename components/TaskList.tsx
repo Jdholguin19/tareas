@@ -13,77 +13,11 @@ interface TaskListProps {
 
 export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete }) => {
   const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
-  const [isDraggingAny, setIsDraggingAny] = useState<boolean>(false);
-  const [isRootDragOver, setIsRootDragOver] = useState<boolean>(false);
 
   const handleFocusTask = (taskId: number) => {
     setFocusedTaskId(taskId);
     // Clear focus after 3 seconds
-    window.setTimeout(() => setFocusedTaskId(null), 5000);
-  };
-  const handleDragStateChange = (dragging: boolean) => {
-    // Siempre mostrar el área de soltar cuando se está arrastrando cualquier tarea
-    setIsDraggingAny(dragging);
-    if (!dragging) {
-      setIsRootDragOver(false);
-    }
-  };
-  const handleRootDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
-    e.preventDefault();
-    setIsRootDragOver(false);
-    let draggedId: number | null = null;
-    try {
-      const raw = e.dataTransfer.getData('application/json');
-      const parsed = raw ? JSON.parse(raw) : null;
-      draggedId = parsed && parsed.taskId != null ? Number(parsed.taskId) : null;
-    } catch {
-      const text = e.dataTransfer.getData('text/plain');
-      const num = Number(text);
-      draggedId = Number.isFinite(num) ? num : null;
-    }
-    if (!draggedId) return;
-    const draggedTask = tasks.find(t => t.ID === draggedId);
-    if (!draggedTask) return;
-    const updatedTask = { ...draggedTask, Parent_ID: 0 };
-    onTaskUpdate(updatedTask);
-    handleFocusTask(draggedId);
-    setIsDraggingAny(false);
-  };
-
-  // Permitir soltar en el espacio vacío del contenedor para convertir en raíz
-  const handleContainerDragOver: React.DragEventHandler<HTMLUListElement> = (e) => {
-    if (e.currentTarget === e.target) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      setIsRootDragOver(true);
-    }
-  };
-
-  const handleContainerDrop: React.DragEventHandler<HTMLUListElement> = (e) => {
-    if (e.currentTarget !== e.target) return;
-    e.preventDefault();
-    setIsRootDragOver(false);
-
-    let draggedId: number | null = null;
-    try {
-      const raw = e.dataTransfer.getData('application/json');
-      const parsed = raw ? JSON.parse(raw) : null;
-      draggedId = parsed && parsed.taskId != null ? Number(parsed.taskId) : null;
-    } catch {
-      const text = e.dataTransfer.getData('text/plain');
-      const num = Number(text);
-      draggedId = Number.isFinite(num) ? num : null;
-    }
-    if (!draggedId) return;
-
-    const draggedTask = tasks.find(t => t.ID === draggedId);
-    if (!draggedTask) return;
-
-    // Convertir cualquier tarea en tarea principal sin importar su estado actual
-    const updatedTask = { ...draggedTask, Parent_ID: 0 };
-    onTaskUpdate(updatedTask);
-    handleFocusTask(draggedId);
-    setIsDraggingAny(false);
+    window.setTimeout(() => setFocusedTaskId(null), 3000);
   };
   if (tasks.length === 0) {
     return (
@@ -107,36 +41,22 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
     .sort((a, b) => new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime());
 
   return (
-    <div>
-      {isDraggingAny && (
-        <div
-          onDragOver={(e) => { e.preventDefault(); setIsRootDragOver(true); }}
-          onDragLeave={() => setIsRootDragOver(false)}
-          onDrop={handleRootDrop}
-          className={`mb-2 p-2 text-sm rounded-lg border-2 border-dashed transition-all ${isRootDragOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300 bg-slate-50'}`}
-          title="Arrastra aquí para convertir en tarea principal"
-        >
-          Soltar aquí para convertir en tarea principal (sin padre)
-        </div>
-      )}
-      <ul className="space-y-2" onDragOver={handleContainerDragOver} onDrop={handleContainerDrop}>
-        {topLevelTasks.map(task => (
-          <TaskItem
-            key={task.ID}
-            task={task}
-            allTasks={tasks}
-            projects={projects}
-            taskAssigneesRecord={taskAssigneesRecord}
-            onTaskClick={onTaskClick}
-            onUpdate={onTaskUpdate}
-            onDelete={onDelete}
-            level={0}
-            focusedTaskId={focusedTaskId}
-            onFocusTask={handleFocusTask}
-            onDragStateChange={handleDragStateChange}
-          />
-        ))}
-      </ul>
-    </div>
+    <ul className="space-y-2">
+      {topLevelTasks.map(task => (
+        <TaskItem
+          key={task.ID}
+          task={task}
+          allTasks={tasks}
+          projects={projects}
+          taskAssigneesRecord={taskAssigneesRecord}
+          onTaskClick={onTaskClick}
+          onUpdate={onTaskUpdate}
+          onDelete={onDelete}
+          level={0}
+          focusedTaskId={focusedTaskId}
+          onFocusTask={handleFocusTask}
+        />
+      ))}
+    </ul>
   );
 };
