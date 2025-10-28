@@ -111,7 +111,7 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
         {/* Botón de micrófono dentro del textarea solo en móviles */}
         <button 
           onClick={handleMicClick} 
-          className={`absolute right-2 top-2 p-2.5 rounded-full transition-colors sm:hidden ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} 
+          className={`absolute right-2 top-2 p-2.5 rounded-full border-2 transition-colors sm:hidden ${isRecording ? 'bg-red-100 text-red-600 border-red-300 animate-pulse' : 'hover:bg-slate-100 text-slate-500 border-slate-300'}`} 
           aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}
         >
           <Icon name="mic" className="w-7 h-7"/>
@@ -137,7 +137,7 @@ export const CreateQuickTask: React.FC<CreateQuickTaskProps> = ({ onTaskCreated 
           {/* Botón de micrófono para desktop (oculto en móviles) */}
           <button 
             onClick={handleMicClick} 
-            className={`hidden sm:block p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'hover:bg-slate-100 text-slate-500'}`} 
+            className={`hidden sm:block p-2 rounded-full border-2 transition-colors ${isRecording ? 'bg-red-100 text-red-600 border-red-300 animate-pulse' : 'hover:bg-slate-100 text-slate-500 border-slate-300'}`} 
             aria-label={isRecording ? 'Detener grabación' : 'Iniciar grabación'}
           >
             <Icon name="mic" className="w-6 h-6"/>

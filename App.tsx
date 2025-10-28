@@ -768,7 +768,7 @@ const App: React.FC = () => {
 
               {/* Notification Dropdown Menu */}
               {isNotificationMenuOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 z-50 max-h-96 overflow-y-auto">
+                <div className="fixed inset-x-4 top-20 sm:absolute sm:right-0 sm:left-auto sm:top-auto sm:inset-x-auto sm:mt-2 w-auto sm:w-80 bg-white rounded-lg shadow-lg border border-slate-200 z-50 max-h-96 overflow-y-auto">
                   <div className="p-4 border-b border-slate-200">
                     <h3 className="text-sm font-semibold text-slate-800">
                       Tareas Vencidas ({overdueTasksForNotifications.length})
@@ -850,7 +850,6 @@ const App: React.FC = () => {
               aria-label="Cerrar sesión"
             >
               <Icon name="logout" className="w-4 h-4 sm:w-5 sm:h-5"/>
-              <span className="font-medium hidden sm:inline">Salir</span>
             </button>
           </div>
         </div>
