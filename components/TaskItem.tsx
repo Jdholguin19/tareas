@@ -225,14 +225,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    console.log('🟢 TOUCH START TRIGGERED for task:', task.ID);
+    //console.log('🟢 TOUCH START TRIGGERED for task:', task.ID);
     
     const touch = e.touches[0];
     const startTime = Date.now();
     const startPos = { x: touch.clientX, y: touch.clientY };
     const element = e.currentTarget; // Capturar referencia del elemento antes del timer
     
-    console.log('Touch start position:', startPos, 'time:', startTime);
+    //console.log('Touch start position:', startPos, 'time:', startTime);
     
     setTouchStartPos(startPos);
     setTouchStartTime(startTime);
@@ -245,13 +245,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     
     // Set a timer for 2 seconds to enable drag mode
     const timer = setTimeout(() => {
-      console.log('⏰ Timer fired! Checking conditions...');
-      console.log('startTime:', startTime, 'isDraggingTouch:', isDraggingTouch);
+      //console.log('⏰ Timer fired! Checking conditions...');
+      //console.log('startTime:', startTime, 'isDraggingTouch:', isDraggingTouch);
       
       // Use local variables instead of state to avoid race conditions
       // Check if not already dragging (state might have changed)
       if (!isDraggingTouch) {
-        console.log('✅ Long press activated for task:', task.ID);
+        //console.log('✅ Long press activated for task:', task.ID);
         setIsDraggingTouch(true);
         
         // Add visual feedback using captured element reference
@@ -267,14 +267,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     }, 2000);
     
     setLongPressTimer(timer);
-    console.log('Timer set for 2 seconds');
+    //console.log('Timer set for 2 seconds');
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    console.log('🔄 TOUCH MOVE - touchStartPos:', touchStartPos, 'isDraggingTouch:', isDraggingTouch);
+    //console.log('🔄 TOUCH MOVE - touchStartPos:', touchStartPos, 'isDraggingTouch:', isDraggingTouch);
     
     if (!touchStartPos || !touchStartTime) {
-      console.log('❌ No touchStartPos or touchStartTime, returning');
+      //console.log('❌ No touchStartPos or touchStartTime, returning');
       return;
     }
     
@@ -282,7 +282,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     const deltaX = Math.abs(touch.clientX - touchStartPos.x);
     const deltaY = Math.abs(touch.clientY - touchStartPos.y);
     
-    console.log('Touch move delta:', { deltaX, deltaY });
+    //console.log('Touch move delta:', { deltaX, deltaY });
     
     // If user moves too much before 2 seconds, cancel drag mode
     // Increased threshold for real mobile devices (40px instead of 20px)
@@ -291,7 +291,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     const timeSinceStart = currentTime - touchStartTime;
     
     if ((deltaX > 40 || deltaY > 40) && !isDraggingTouch && timeSinceStart > 100) {
-      console.log('🚫 Movement too large, canceling drag mode');
+      //console.log('🚫 Movement too large, canceling drag mode');
       if (longPressTimer) {
         clearTimeout(longPressTimer);
         setLongPressTimer(null);
@@ -303,7 +303,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     
     // Only handle drag if we're in drag mode
     if (isDraggingTouch) {
-      console.log('🎯 In drag mode, finding target...');
+      //console.log('🎯 In drag mode, finding target...');
       
       // Prevent scrolling during drag
       e.preventDefault();
@@ -337,15 +337,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
       // Add drag over effect to target
       if (taskItemBelow && taskItemBelow !== e.currentTarget) {
         taskItemBelow.classList.add('touch-drag-over');
-        console.log('🎯 Drag over target:', taskItemBelow.getAttribute('data-task-id'));
+        //console.log('🎯 Drag over target:', taskItemBelow.getAttribute('data-task-id'));
       }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    console.log('🔚 Touch end - isDraggingTouch:', isDraggingTouch, 'touchStartPos:', touchStartPos);
-    console.log('🔚 Touch end - touchStartTime:', touchStartTime);
-    console.log('🔚 Touch end - longPressTimer:', !!longPressTimer);
+    //console.log('🔚 Touch end - isDraggingTouch:', isDraggingTouch, 'touchStartPos:', touchStartPos);
+    //console.log('🔚 Touch end - touchStartTime:', touchStartTime);
+    //console.log('🔚 Touch end - longPressTimer:', !!longPressTimer);
     
     // Clear the long press timer
     if (longPressTimer) {
@@ -363,11 +363,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     // Check if we should be in drag mode based on time elapsed
     const currentTime = Date.now();
     const timeElapsed = touchStartTime ? currentTime - touchStartTime : 0;
-    console.log('⏱️ Time elapsed since touch start:', timeElapsed, 'ms');
+    //console.log('⏱️ Time elapsed since touch start:', timeElapsed, 'ms');
     
     // If enough time has passed (2+ seconds) and we have valid touch data, we should be dragging
     const shouldBeDragging = timeElapsed >= 2000 && touchStartPos && touchStartTime;
-    console.log('🤔 Should be dragging:', shouldBeDragging, 'isDraggingTouch:', isDraggingTouch);
+    //console.log('🤔 Should be dragging:', shouldBeDragging, 'isDraggingTouch:', isDraggingTouch);
     
     if (!isDraggingTouch && !shouldBeDragging) {
       console.log('❌ Not in dragging mode and not enough time elapsed, exiting');
@@ -402,9 +402,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     
     const taskItemBelow = elementBelow?.closest('[data-task-id]') as HTMLElement;
     
-    console.log('🎯 Drop target found:', taskItemBelow?.getAttribute('data-task-id'));
-    console.log('📱 User agent:', navigator.userAgent);
-    console.log('📱 Touch support:', 'ontouchstart' in window);
+    //('🎯 Drop target found:', taskItemBelow?.getAttribute('data-task-id'));
+    //console.log('📱 User agent:', navigator.userAgent);
+    //console.log('📱 Touch support:', 'ontouchstart' in window);
     
     // Reset visual feedback
     if (draggedElement) {
@@ -423,10 +423,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
       const targetTaskId = parseInt(taskItemBelow.getAttribute('data-task-id') || '0');
       const targetTask = allTasks.find(t => parseInt(String(t.ID)) === targetTaskId);
       
-      console.log('🎯 Attempting to drop task', task.ID, 'onto task', targetTaskId);
-      console.log('🎯 Target task found:', !!targetTask);
-      console.log('🎯 Target task details:', targetTask ? { ID: targetTask.ID, Proyecto: targetTask.Proyecto } : 'null');
-      console.log('🎯 Current task details:', { ID: task.ID, Parent_ID: task.Parent_ID, Proyecto: task.Proyecto });
+      //console.log('🎯 Attempting to drop task', task.ID, 'onto task', targetTaskId);
+      //console.log('🎯 Target task found:', !!targetTask);
+      //console.log('🎯 Target task details:', targetTask ? { ID: targetTask.ID, Proyecto: targetTask.Proyecto } : 'null');
+      //console.log('🎯 Current task details:', { ID: task.ID, Parent_ID: task.Parent_ID, Proyecto: task.Proyecto });
       
       if (targetTask && parseInt(String(targetTaskId)) !== parseInt(String(task.ID))) {
         // Prevent cycles
@@ -441,12 +441,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
             Proyecto: parseInt(String(targetTask.Proyecto))
           };
           
-          console.log('✅ Calling onUpdate with task:', updatedTask);
-          console.log('✅ onUpdate function exists:', typeof onUpdate === 'function');
+          //console.log('✅ Calling onUpdate with task:', updatedTask);
+          //console.log('✅ onUpdate function exists:', typeof onUpdate === 'function');
           
           try {
             onUpdate(updatedTask);
-            console.log('✅ onUpdate called successfully');
+            //console.log('✅ onUpdate called successfully');
           } catch (error) {
             console.error('❌ Error calling onUpdate:', error);
           }
@@ -470,7 +470,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
           
           console.log('🎉 Drop completed successfully!');
           if (onFocusTask) {
-            console.log('🎯 Calling onFocusTask with:', task.ID);
+            //console.log('🎯 Calling onFocusTask with:', task.ID);
             onFocusTask(task.ID);
           } else {
             console.log('❌ onFocusTask not available');

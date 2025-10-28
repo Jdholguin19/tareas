@@ -369,10 +369,10 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
         aria-modal="true" 
         role="dialog"
     >
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl p-4 sm:p-6 lg:p-6 xl:p-8 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl p-4 sm:p-6 lg:p-6 xl:p-6 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start pb-3 sm:pb-4 border-b border-slate-200">
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-slate-800 truncate">Editar Tarea</h2>
+            <h2 className="text-lg sm:text-xl lg:text-xl xl:text-2xl font-bold text-slate-800 truncate">Editar Tarea</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Modifica los detalles de tu tarea.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -392,44 +392,80 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           </div>
         </div>
         
-        <div className="mt-4 sm:mt-6 lg:mt-6 xl:mt-8 space-y-4 sm:space-y-6 lg:space-y-6 xl:space-y-8 max-h-[60vh] sm:max-h-[65vh] lg:max-h-[70vh] xl:max-h-[75vh] overflow-y-auto">
-          {/* Main Form Fields */}
-          <div>
-            <label htmlFor="Titulo" className="block text-sm font-medium text-slate-700 mb-1">
-              {isLoadingCreator ? 'Tarea creada por...' : taskCreator ? `Tarea creada por ${taskCreator.username}` : 'Tarea creada por Desconocido'}
-            </label>
-            <textarea
-              id="Titulo"
-              name="Titulo"
-              value={formData.Titulo}
-              onChange={handleChange}
-              rows={2}
-              className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-              disabled={!canEdit}
-            />
-          </div>
+        <div className="mt-4 sm:mt-6 lg:mt-6 xl:mt-6 space-y-4 sm:space-y-6 lg:space-y-4 xl:space-y-4 max-h-[60vh] sm:max-h-[65vh] lg:max-h-[55vh] xl:max-h-[60vh] overflow-y-auto">
           
-          <div>
-            <label htmlFor="Descripcion" className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
-            <textarea
-              id="Descripcion"
-              name="Descripcion"
-              value={formData.Descripcion || ''}
-              onChange={handleChange}
-              rows={3}
-              className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-              disabled={!canEditDescription}
-            />
+          {/* --- INICIO DEL DIV AGRUPADOR --- */}
+          {/* Este div agrupa Título, Checkbox y Descripción */}
+          {/* Le ponemos un espaciado interno (p.ej. space-y-3) */}
+          <div className="flex flex-col space-y-3 lg:space-y-2 xl:space-y-2">
+
+            {/* 1. Div del Título (tu código original) */}
+            <div>
+              <label htmlFor="Titulo" className="block text-sm font-medium text-slate-700 mb-1">
+                {isLoadingCreator ? 'Tarea creada por...' : taskCreator ? `Tarea creada por ${taskCreator.username}` : 'Tarea creada por Desconocido'}
+              </label>
+              <textarea
+                id="Titulo"
+                name="Titulo"
+                value={formData.Titulo}
+                onChange={handleChange}
+                rows={2}
+                className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                disabled={!canEdit}
+              />
+            </div>
+            
+            {/* 2. Div del Checkbox (tu código original) */}
+            {/* Ahora está dentro del agrupador */}
+            <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+              {isParentTask ? (
+                <div className="flex items-center">
+                  <Icon name="check" className="w-4 h-4 text-green-600 mr-2" />
+                  <span className="text-sm font-medium text-slate-700"> ✔ Esta es una tarea principal</span>
+                </div>
+              ) : (
+                <>
+                  <input 
+                    type="checkbox" 
+                    id="makeParentTaskCheckbox" 
+                    checked={makeParentTask} 
+                    onChange={handleMakeParentTaskToggle} 
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    disabled={!canEditProgress} 
+                  />
+                  <label htmlFor="makeParentTaskCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">
+                    Convertir en tarea principal
+                  </label>
+                </>
+              )}
+            </div>
+
+            {/* 3. Div de la Descripción (MOVIDO AQUÍ DENTRO) */}
+            {/* Ahora también está dentro del agrupador */}
+            <div>
+              <label htmlFor="Descripcion" className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
+              <textarea
+                id="Descripcion"
+                name="Descripcion"
+                value={formData.Descripcion || ''}
+                onChange={handleChange}
+                rows={3}
+                className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                disabled={!canEditDescription}
+              />
+            </div>
+
           </div>
+          {/* --- FIN DEL DIV AGRUPADOR --- */}
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {/*<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {/*<div> Desactivo por el momento
               <label htmlFor="Estado" className="block text-sm font-medium text-slate-700 mb-1">Estado</label>
               <select id="Estado" name="Estado" value={formData.Estado} onChange={handleChange} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEdit}>
                 {Object.values(TaskState).map(state => (<option key={state} value={state}>{state}</option>))}
               </select>
-            </div> Estado */}
-          </div>
+            </div> Estado 
+          </div> */}
 
           {/* Campo de proyecto - movido arriba de asignar usuarios */}
           <div>
@@ -607,29 +643,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">Marcar como completada</label>
             </div>
 
-            {/* Checkbox para convertir en tarea principal */}
-            <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
-              {isParentTask ? (
-                <div className="flex items-center">
-                  <Icon name="check" className="w-4 h-4 text-green-600 mr-2" />
-                  <span className="text-sm font-medium text-slate-700">Esta ya es una tarea padre</span>
-                </div>
-              ) : (
-                <>
-                  <input 
-                    type="checkbox" 
-                    id="makeParentTaskCheckbox" 
-                    checked={makeParentTask} 
-                    onChange={handleMakeParentTaskToggle} 
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    disabled={!canEditProgress} 
-                  />
-                  <label htmlFor="makeParentTaskCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">
-                    Convertir tarea en principal
-                  </label>
-                </>
-              )}
-            </div>
           </div>
 
           <div>

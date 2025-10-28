@@ -745,7 +745,7 @@ const App: React.FC = () => {
                 <div className="bg-slate-900 p-2 rounded-lg">
                     <Icon name="check" className="w-6 h-6 text-white"/>
                 </div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Mis Tareas</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Mis Planics</h1>
               </div>
               <div className="flex items-center space-x-2">
             <div className="relative" ref={notificationMenuRef}>
@@ -1239,7 +1239,7 @@ const App: React.FC = () => {
       </button>
 
       <footer className="text-center py-6 text-sm text-slate-500">
-        <p>&copy; {new Date().getFullYear()} Minimalist Task Manager. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Planics. All rights reserved.</p>
       </footer>
         </>
       )}

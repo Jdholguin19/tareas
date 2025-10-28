@@ -1,4 +1,4 @@
-# 📋 Task Manager - Minimalist Task Manager
+# 📋 Task Manager - Planics
 
 Una aplicación web full-stack para gestión de tareas personales y de equipo, con interfaz moderna y funcionalidades avanzadas como subtareas, asignación de usuarios, búsqueda inteligente y gestión de proyectos.
 
