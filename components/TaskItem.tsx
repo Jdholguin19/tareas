@@ -195,6 +195,27 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     return false;
   };
 
+  // Get all descendant tasks (subtasks and their subtasks recursively)
+  const getAllDescendants = (taskId: number): Task[] => {
+    const descendants: Task[] = [];
+    const stack: number[] = [parseInt(String(taskId))];
+    const visited = new Set<number>();
+    
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      
+      const children = allTasks.filter(t => parseInt(String(t.Parent_ID)) === current);
+      for (const child of children) {
+        descendants.push(child);
+        stack.push(parseInt(String(child.ID)));
+      }
+    }
+    
+    return descendants;
+  };
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     try {
       e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.ID }));
@@ -242,7 +263,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
       Proyecto: parseInt(String(task.Proyecto))
     };
 
+    // Update the main task
     onUpdate(updatedTask);
+
+    // Get all descendants (subtasks) of the moved task and update their project
+    const descendants = getAllDescendants(draggedId);
+    descendants.forEach(descendant => {
+      const updatedDescendant: Task = {
+        ...descendant,
+        Proyecto: parseInt(String(task.Proyecto))
+      };
+      onUpdate(updatedDescendant);
+    });
+
     if (onFocusTask) onFocusTask(parseInt(String(draggedId)));
   };
 
