@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Task, TaskDependency, GanttTask, GanttTimelineScale, TaskState, Project } from '../types';
 import { EditTaskModal } from './EditTaskModal';
 import { createSubTask, deleteTask } from '../services/apiService';
+import { Icon } from './Icon';
 
 interface GanttChartProps {
     tasks: Task[];
@@ -39,6 +40,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const chartAreaRef = useRef<HTMLDivElement | null>(null);
     const sidebarRef = useRef<HTMLDivElement | null>(null);
     const [contentWidth, setContentWidth] = useState<number>(0);
+    const ganttRootRef = useRef<HTMLDivElement | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     
     // Estados adicionales para acordeón y edición
     const [collapsedTasks, setCollapsedTasks] = useState<Set<number>>(new Set());
@@ -566,14 +569,57 @@ const GanttChart: React.FC<GanttChartProps> = ({
         });
     };
 
+    // Manejo de pantalla completa
+    useEffect(() => {
+        const handler = () => {
+            const isFs = !!document.fullscreenElement;
+            setIsFullscreen(isFs);
+        };
+        document.addEventListener('fullscreenchange', handler);
+        return () => document.removeEventListener('fullscreenchange', handler);
+    }, []);
+
+    const toggleFullscreen = async () => {
+        try {
+            if (!isFullscreen) {
+                if (ganttRootRef.current && (ganttRootRef.current as any).requestFullscreen) {
+                    await (ganttRootRef.current as any).requestFullscreen();
+                } else {
+                    // Fallback a clases CSS si Fullscreen API no está disponible
+                    setIsFullscreen(true);
+                }
+            } else {
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    await document.exitFullscreen();
+                }
+                setIsFullscreen(false);
+            }
+        } catch (e) {
+            // Si falla, alternar por clases CSS
+            setIsFullscreen((prev) => !prev);
+        }
+    };
+
     return (
-        <div className="gantt-chart bg-white border rounded-lg shadow-sm overflow-hidden">
+        <div
+            ref={ganttRootRef}
+            className={`gantt-chart bg-white ${isFullscreen ? 'fixed inset-0 z-50' : 'border rounded-lg shadow-sm'} overflow-hidden flex flex-col`}
+        >
 
             {/* Header */}
             <div className="gantt-header bg-gray-50 border-b p-2 sm:p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-lg font-semibold text-gray-800">Vista Gantt</h3>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4">
+                        {/* Botón de pantalla completa (izquierda del selector de proyecto) */}
+                        <button
+                            onClick={toggleFullscreen}
+                            className="inline-flex items-center justify-center p-2 border rounded bg-white text-gray-700 hover:bg-gray-100"
+                            title={isFullscreen ? 'Salir de pantalla completa' : 'Ampliar pantalla'}
+                            aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Ampliar pantalla'}
+                        >
+                            <Icon name={isFullscreen ? 'compress' : 'expand'} className="w-5 h-5" />
+                        </button>
                         {/* Project Selector */}
                         <select 
                             value={selectedProjectId || ''}
@@ -624,7 +670,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         width: '100%', 
                         maxWidth: SIDEBAR_WIDTH,
                         minWidth: '320px',
-                        height: TIMELINE_HEIGHT + Math.max(ganttTasks.length * ROW_HEIGHT, 200)
+                        height: '100%',
+                        minHeight: '200px'
                     }}
                     onScroll={(e) => {
                         const target = chartAreaRef.current;
@@ -780,7 +827,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         className="gantt-chart-area relative bg-white overflow-x-auto overflow-y-auto"
                         style={{ 
                             width: '100%',
-                            height: Math.max(ganttTasks.length * ROW_HEIGHT, 200),
+                            height: '100%',
                             minHeight: '200px'
                         }}
                         onScroll={(e) => {
