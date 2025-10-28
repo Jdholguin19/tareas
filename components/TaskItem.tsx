@@ -15,13 +15,19 @@ interface TaskItemProps {
   taskAssigneesRecord: Record<number, {id: number, username: string}[]>;
   focusedTaskId?: number | null;
   onFocusTask?: (taskId: number) => void;
+  sectionType?: 'urgent' | 'today' | 'scheduled' | 'completed';
 }
 
-const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: string, isOverdue: boolean } => {
+const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: string, statusColor: string, isOverdue: boolean } => {
   // Only consider overdue if due date is before today (not including today)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const isOverdue = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento + 'T00:00:00') < today && task.Estado !== TaskState.COMPLETADA : false;
+
+  // If we're in the urgent section, always use overdue color regardless of task state
+  if (sectionType === 'urgent') {
+    return { statusClass: 'overdue', statusColor: 'var(--color-overdue)', isOverdue: true };
+  }
 
   if (isOverdue) {
     return { statusClass: 'overdue', statusColor: 'var(--color-overdue)', isOverdue: true };
@@ -57,7 +63,7 @@ const getTaskStatusInfo = (task: Task): { statusClass: string, statusColor: stri
 };
 
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask, sectionType }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -641,7 +647,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
     });
   };
 
-  const { statusClass, statusColor, isOverdue } = getTaskStatusInfo(task);
+  const { statusClass, statusColor, isOverdue } = getTaskStatusInfo(task, sectionType);
   const isFocused = parseInt(String(focusedTaskId)) === parseInt(String(task.ID));
 
   const children = allTasks
@@ -807,6 +813,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                     level={level + 1}
                     focusedTaskId={focusedTaskId}
                     onFocusTask={onFocusTask}
+                    sectionType={sectionType}
                 />
             ))}
         </ul>

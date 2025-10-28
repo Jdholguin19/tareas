@@ -9,9 +9,10 @@ interface TaskListProps {
   onTaskClick: (task: Task) => void;
   onTaskUpdate: (task: Task) => void;
   onDelete: (taskId: number) => void;
+  sectionType?: 'urgent' | 'today' | 'scheduled' | 'completed';
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete, sectionType }) => {
   const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
 
   const handleFocusTask = (taskId: number) => {
@@ -55,6 +56,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
           level={0}
           focusedTaskId={focusedTaskId}
           onFocusTask={handleFocusTask}
+          sectionType={sectionType}
         />
       ))}
     </ul>

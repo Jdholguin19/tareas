@@ -3,9 +3,10 @@ import React from 'react';
 interface IconProps {
   name: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
+export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6', style }) => {
   // Fix: Changed JSX.Element to React.JSX.Element to resolve "Cannot find namespace 'JSX'" error.
   const icons: { [key: string]: React.JSX.Element } = {
     mic: (
@@ -135,5 +136,5 @@ export const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     )
   };
 
-  return <div className={className}>{icons[name] || null}</div>;
+  return <div className={className} style={style}>{icons[name] || null}</div>;
 };

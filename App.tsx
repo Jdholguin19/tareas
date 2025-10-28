@@ -158,10 +158,10 @@ const App: React.FC = () => {
       .slice(0, 10);
   };
 
-  // Accordion states
+  // Accordion states - reorganizados según nueva prioridad
+  const [isUrgentTasksExpanded, setIsUrgentTasksExpanded] = useState<boolean>(true);
   const [isTodayTasksExpanded, setIsTodayTasksExpanded] = useState<boolean>(true);
-  const [isOverdueTasksExpanded, setIsOverdueTasksExpanded] = useState<boolean>(true);
-  const [isPendingTasksExpanded, setIsPendingTasksExpanded] = useState<boolean>(false);
+  const [isScheduledTasksExpanded, setIsScheduledTasksExpanded] = useState<boolean>(false);
   const [isCompletedTasksExpanded, setIsCompletedTasksExpanded] = useState<boolean>(false);
 
   const fetchTasks = useCallback(async () => {
@@ -543,7 +543,45 @@ const App: React.FC = () => {
     });
   };
 
-  const getTasksForTodayAndNoDate = (allTasks: Task[], searchFilter: string = '') => {
+  // Nueva función para "Primero Urgente" - combina atrasadas y sin fecha
+  const getUrgentTasks = (allTasks: Task[], searchFilter: string = '') => {
+    // First filter by current user
+    const userTasks = filterTasksForCurrentUser(allTasks);
+    
+    const today = getCurrentDate();
+
+    // Get all completed task IDs (100% progress)
+    const completedTaskIds = new Set(
+      userTasks
+        .filter(task => isCompleted(task))
+        .map(task => task.ID)
+    );
+
+    // Return tasks that are either:
+    // 1. Overdue (due date before today), OR
+    // 2. Have no due date
+    // AND are NOT completed
+    // AND match search filter
+    return userTasks.filter(task => {
+      if (completedTaskIds.has(task.ID)) return false;
+
+      // Apply search filter (check if either searchFilter OR selectedProjectId is set)
+      if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+
+      if (!task.Fecha_Vencimiento) {
+        // No due date - include in urgent
+        return true;
+      }
+
+      // Check if overdue (due date before today)
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today;
+    });
+  };
+
+  // Nueva función para "Importantes" - solo tareas de hoy
+  const getTodayTasks = (allTasks: Task[], searchFilter: string = '') => {
     // First filter by current user
     const userTasks = filterTasksForCurrentUser(allTasks);
     
@@ -558,11 +596,7 @@ const App: React.FC = () => {
         .map(task => task.ID)
     );
 
-    // Return tasks that are either:
-    // 1. Due today, OR
-    // 2. Have no due date
-    // AND are NOT completed
-    // AND match search filter
+    // Return tasks that are due today only
     return userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
 
@@ -570,8 +604,8 @@ const App: React.FC = () => {
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
 
       if (!task.Fecha_Vencimiento) {
-        // No due date - include
-        return true;
+        // No due date - exclude from today tasks (they go to urgent)
+        return false;
       }
 
       // Check if due today (between start of today and end of today)
@@ -581,13 +615,14 @@ const App: React.FC = () => {
     });
   };
 
-  const getPendingTasks = (allTasks: Task[], searchFilter: string = '') => {
+  // Función para "Programadas" - tareas futuras (sin cambios)
+  const getScheduledTasks = (allTasks: Task[], searchFilter: string = '') => {
     // First filter by current user
     const userTasks = filterTasksForCurrentUser(allTasks);
     
     const today = getCurrentDate();
 
-    console.log('=== DEBUG: getPendingTasks ===');
+    console.log('=== DEBUG: getScheduledTasks ===');
 
     // Get all completed task IDs (100% progress)
     const completedTaskIds = new Set(
@@ -675,11 +710,11 @@ const App: React.FC = () => {
     });
   };
 
-  const currentTasks = useMemo(() => getTasksForTodayAndNoDate(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
-  const overdueTasks = useMemo(() => getOverdueTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  const currentTasks = useMemo(() => getTodayTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  const urgentTasks = useMemo(() => getUrgentTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  const scheduledTasks = useMemo(() => getScheduledTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
-  const pendingTasks = useMemo(() => getPendingTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   
   // Filtered tasks for Gantt view - includes all user tasks with search/project filtering
   const filteredTasks = useMemo(() => {
@@ -709,14 +744,23 @@ const App: React.FC = () => {
     }).length;
   };
 
-  const getNoDateTasksCount = (allTasks: Task[]) => {
-    return allTasks.filter(task => !task.Fecha_Vencimiento && !isCompleted(task)).length;
+  const getUrgentTasksCount = (allTasks: Task[]) => {
+    const today = getCurrentDate();
+    return allTasks.filter(task => {
+      if (isCompleted(task)) return false;
+      
+      // Sin fecha o atrasada
+      if (!task.Fecha_Vencimiento) return true;
+      
+      const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today;
+    }).length;
   };
 
   const todayCount = getTodayTasksCount(filterTasksForCurrentUser(tasks).filter(task => matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)));
-  const noDateCount = getNoDateTasksCount(filterTasksForCurrentUser(tasks).filter(task => matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)));
-  const overdueCount = overdueTasks.length;
-  const pendingCount = pendingTasks.length;
+  const urgentCount = getUrgentTasksCount(filterTasksForCurrentUser(tasks).filter(task => matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)));
+  const scheduledCount = scheduledTasks.length;
   const completedCount = completedTasks.length;
 
   return (
@@ -1002,23 +1046,74 @@ const App: React.FC = () => {
         {/* Main Content Area - Conditional Rendering Based on Active View */}
         {activeView === 'list' && (
           <>
-            <section aria-labelledby="current-tasks-heading" className="mb-12">
+            {/* 1. PRIMERO URGENTE - Atrasadas y sin fecha */}
+            <section aria-labelledby="urgent-tasks-heading" className="mb-12">
                 <button
-                  onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
-                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-slate-50 transition-colors"
-                  aria-expanded={isTodayTasksExpanded ? "true" : "false"}
-                  aria-controls="current-tasks-content"
+                  onClick={() => setIsUrgentTasksExpanded(!isUrgentTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 rounded-lg p-2 transition-colors"
+                  style={{ 
+                    backgroundColor: isUrgentTasksExpanded ? 'var(--color-overdue-bg)' : 'transparent',
+                    borderColor: 'var(--color-overdue)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-overdue-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isUrgentTasksExpanded ? 'var(--color-overdue-bg)' : 'transparent'}
+                  aria-expanded={isUrgentTasksExpanded ? "true" : "false"}
+                  aria-controls="urgent-tasks-content"
                 >
-                  <h2 id="current-tasks-heading" className="text-xl font-semibold text-slate-800">
-                    Tareas: Hoy: {todayCount} y sin fecha: {noDateCount}
+                  <h2 id="urgent-tasks-heading" className="text-xl font-semibold" style={{ color: 'var(--color-overdue)' }}>
+                    Urgente: {urgentCount}
                   </h2>
                   <Icon
-                    name={isTodayTasksExpanded ? "chevronUp" : "chevronDown"}
-                    className="w-5 h-5 text-slate-600 transition-transform duration-200"
+                    name={isUrgentTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 transition-transform duration-200"
+                    style={{ color: 'var(--color-overdue)' }}
                   />
                 </button>
                 <div
-                  id="current-tasks-content"
+                  id="urgent-tasks-content"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isUrgentTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                    <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
+                    {isLoading ? (
+                        <TaskSkeleton />
+                    ) : urgentTasks.length > 0 ? (
+                      <TaskList tasks={urgentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="urgent" />
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-lg shadow-sm">
+                        <p className="text-slate-500">¡Excelente! No hay tareas urgentes.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+            </section>
+
+            {/* 2. IMPORTANTES - Solo tareas de hoy */}
+            <section aria-labelledby="today-tasks-heading" className="mb-12">
+                <button
+                  onClick={() => setIsTodayTasksExpanded(!isTodayTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 rounded-lg p-2 transition-colors"
+                  style={{ 
+                    backgroundColor: isTodayTasksExpanded ? 'var(--color-in-progress-bg)' : 'transparent',
+                    borderColor: 'var(--color-in-progress)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-in-progress-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isTodayTasksExpanded ? 'var(--color-in-progress-bg)' : 'transparent'}
+                  aria-expanded={isTodayTasksExpanded ? "true" : "false"}
+                  aria-controls="today-tasks-content"
+                >
+                  <h2 id="today-tasks-heading" className="text-xl font-semibold" style={{ color: 'var(--color-in-progress)' }}>
+                    Importantes: {todayCount}
+                  </h2>
+                  <Icon
+                    name={isTodayTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 transition-transform duration-200"
+                    style={{ color: 'var(--color-in-progress)' }}
+                  />
+                </button>
+                <div
+                  id="today-tasks-content"
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
                     isTodayTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
                   }`}
@@ -1027,77 +1122,50 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : currentTasks.length > 0 ? (
-                      <TaskList tasks={currentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                      <TaskList tasks={currentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="today" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                        <p className="text-slate-500">¡Todo al día! No hay tareas pendientes para hoy.</p>
+                        <p className="text-slate-500">¡Todo al día! No hay tareas importantes para hoy.</p>
                       </div>
                     )}
                   </div>
                 </div>
             </section>
 
-            <section aria-labelledby="overdue-tasks-heading" data-section="overdue">
+            {/* 3. PROGRAMADAS - Tareas futuras */}
+            <section aria-labelledby="scheduled-tasks-heading" className="mb-12">
                 <button
-                  onClick={() => setIsOverdueTasksExpanded(!isOverdueTasksExpanded)}
-                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-2 hover:bg-red-50 transition-colors"
-                  aria-expanded={isOverdueTasksExpanded ? "true" : "false"}
-                  aria-controls="overdue-tasks-content"
+                  onClick={() => setIsScheduledTasksExpanded(!isScheduledTasksExpanded)}
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 rounded-lg p-2 transition-colors"
+                  style={{ 
+                    backgroundColor: isScheduledTasksExpanded ? 'var(--color-proximate-bg)' : 'transparent',
+                    borderColor: 'var(--color-proximate)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-proximate-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isScheduledTasksExpanded ? 'var(--color-proximate-bg)' : 'transparent'}
+                  aria-expanded={isScheduledTasksExpanded ? "true" : "false"}
+                  aria-controls="scheduled-tasks-content"
                 >
-                  <h2 id="overdue-tasks-heading" className="text-xl font-semibold text-red-700">
-                    Tareas atrasadas: {overdueCount}
+                  <h2 id="scheduled-tasks-heading" className="text-xl font-semibold" style={{ color: 'var(--color-proximate)' }}>
+                    Programadas: {scheduledCount}
                   </h2>
                   <Icon
-                    name={isOverdueTasksExpanded ? "chevronUp" : "chevronDown"}
-                    className="w-5 h-5 text-red-600 transition-transform duration-200"
+                    name={isScheduledTasksExpanded ? "chevronUp" : "chevronDown"}
+                    className="w-5 h-5 transition-transform duration-200"
+                    style={{ color: 'var(--color-proximate)' }}
                   />
                 </button>
                 <div
-                  id="overdue-tasks-content"
+                  id="scheduled-tasks-content"
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isOverdueTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                    isScheduledTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
                   }`}
                 >
                     <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
                     {isLoading ? (
                         <TaskSkeleton />
-                    ) : overdueTasks.length > 0 ? (
-                      <TaskList tasks={overdueTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                    ) : (
-                      <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                        <p className="text-slate-500">¡Excelente! No hay tareas vencidas.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-            </section>
-
-            <section aria-labelledby="pending-tasks-heading" className="mt-12">
-                <button
-                  onClick={() => setIsPendingTasksExpanded(!isPendingTasksExpanded)}
-                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-blue-50 transition-colors"
-                  aria-expanded={isPendingTasksExpanded ? "true" : "false"}
-                  aria-controls="pending-tasks-content"
-                >
-                  <h2 id="pending-tasks-heading" className="text-xl font-semibold text-[var(--color-proximate)]">
-                    Tareas proximas: {pendingCount}
-                  </h2>
-                  <Icon
-                    name={isPendingTasksExpanded ? "chevronUp" : "chevronDown"}
-                    className="w-5 h-5 text-[var(--color-proximate)] transition-transform duration-200"
-                  />
-                </button>
-                <div
-                  id="pending-tasks-content"
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isPendingTasksExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
-                  }`}
-                >
-                    <div className={`mt-4 ${isLoading ? 'min-h-[200px]' : ''}`}>
-                    {isLoading ? (
-                        <TaskSkeleton />
-                    ) : pendingTasks.length > 0 ? (
-                      <TaskList tasks={pendingTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                    ) : scheduledTasks.length > 0 ? (
+                      <TaskList tasks={scheduledTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="scheduled" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
@@ -1107,19 +1175,27 @@ const App: React.FC = () => {
                 </div>
             </section>
 
-            <section aria-labelledby="completed-tasks-heading" className="mt-12">
+            {/* 4. COMPLETADAS */}
+            <section aria-labelledby="completed-tasks-heading" className="mb-12">
                 <button
                   onClick={() => setIsCompletedTasksExpanded(!isCompletedTasksExpanded)}
-                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 hover:bg-green-50 transition-colors"
+                  className="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 rounded-lg p-2 transition-colors"
+                  style={{ 
+                    backgroundColor: isCompletedTasksExpanded ? 'var(--color-completed-bg)' : 'transparent',
+                    borderColor: 'var(--color-completed)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-completed-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isCompletedTasksExpanded ? 'var(--color-completed-bg)' : 'transparent'}
                   aria-expanded={isCompletedTasksExpanded ? "true" : "false"}
                   aria-controls="completed-tasks-content"
                 >
-                  <h2 id="completed-tasks-heading" className="text-xl font-semibold text-blue-700">
-                    Tareas completadas: {completedCount}
+                  <h2 id="completed-tasks-heading" className="text-xl font-semibold" style={{ color: 'var(--color-completed)' }}>
+                    Completadas: {completedCount}
                   </h2>
                   <Icon
                     name={isCompletedTasksExpanded ? "chevronUp" : "chevronDown"}
-                    className="w-5 h-5 text-blue-600 transition-transform duration-200"
+                    className="w-5 h-5 transition-transform duration-200"
+                    style={{ color: 'var(--color-completed)' }}
                   />
                 </button>
                 <div
@@ -1132,7 +1208,7 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : completedTasks.length > 0 ? (
-                      <TaskList tasks={completedTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
+                      <TaskList tasks={completedTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="completed" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">Aún no has completado ninguna tarea.</p>
