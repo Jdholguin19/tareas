@@ -247,8 +247,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const handleSave = async () => {
     setIsSaving(true);
     await onSave(formData);
-    // Reload page to ensure all changes are visually reflected
-    window.location.reload();
+    setIsSaving(false);
+    onClose();
   };
   
   const handleAddNewSubtask = async () => {
