@@ -38,6 +38,9 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isSearchingProjects, setIsSearchingProjects] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const userSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Estado para el checkbox de convertir en tarea principal
+  const [makeParentTask, setMakeParentTask] = useState(false);
 
   useEffect(() => {
     console.log('EditTaskModal - task received:', task);
@@ -221,6 +224,26 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
       }
   };
 
+  // Función para manejar el checkbox de convertir en tarea principal
+  const handleMakeParentTaskToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setMakeParentTask(isChecked);
+    
+    if (isChecked) {
+      // Si se marca como tarea principal, quitar el Parent_ID
+      setFormData(prev => ({
+        ...prev,
+        Parent_ID: null
+      }));
+    } else {
+      // Si se desmarca, restaurar el Parent_ID original
+      setFormData(prev => ({
+        ...prev,
+        Parent_ID: task.Parent_ID
+      }));
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     await onSave(formData);
@@ -337,6 +360,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
   const isCompleted = formData.Porcentaje_Avance === 100;
   const subtasks = allTasks.filter(t => t.Parent_ID === task.ID);
+  const isParentTask = !formData.Parent_ID; // Es tarea padre si no tiene Parent_ID
 
   return (
     <div 
@@ -575,9 +599,37 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             </div>
           </div>
           
-          <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
-            <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!canEditProgress} />
-            <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">Marcar como completada</label>
+          {/* Checkboxes en fila horizontal */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Checkbox de completada */}
+            <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+              <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!canEditProgress} />
+              <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">Marcar como completada</label>
+            </div>
+
+            {/* Checkbox para convertir en tarea principal */}
+            <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+              {isParentTask ? (
+                <div className="flex items-center">
+                  <Icon name="check" className="w-4 h-4 text-green-600 mr-2" />
+                  <span className="text-sm font-medium text-slate-700">Esta ya es una tarea padre</span>
+                </div>
+              ) : (
+                <>
+                  <input 
+                    type="checkbox" 
+                    id="makeParentTaskCheckbox" 
+                    checked={makeParentTask} 
+                    onChange={handleMakeParentTaskToggle} 
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    disabled={!canEditProgress} 
+                  />
+                  <label htmlFor="makeParentTaskCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">
+                    Convertir tarea en principal
+                  </label>
+                </>
+              )}
+            </div>
           </div>
 
           <div>
