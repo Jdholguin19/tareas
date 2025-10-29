@@ -20,8 +20,8 @@ if (empty($titulo)) {
 
 try {
     $stmt = $pdo->prepare("
-        INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, adjuntos_url, tarea_padre_id, proyecto_id)
-        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, NULL, 1)
+        INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, adjuntos_url, tarea_padre_id, proyecto_id, tipos_tareas_id)
+        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, NULL, 1, 1)
     ");
     $stmt->execute([$titulo, $userId, json_encode($adjuntos)]);
     $taskId = $pdo->lastInsertId();

@@ -39,8 +39,8 @@ try {
 
     // Crear la subtarea
     $stmt = $pdo->prepare("
-        INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_vencimiento, adjuntos_url)
-        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]')
+        INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_vencimiento, adjuntos_url, tipos_tareas_id)
+        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]', 1)
     ");
     $stmt->execute([$titulo, $userId, $parentId, $parent['proyecto_id'], $parent['asignado_a'], $parent['fecha_vencimiento']]);
     $taskId = $pdo->lastInsertId();

@@ -26,14 +26,15 @@ try {
             t.proyecto_id AS Proyecto,
             t.tarea_padre_id AS Parent_ID,
             t.adjuntos_url AS Adjuntos_URL,
+            t.tipos_tareas_id AS Tipos_Tareas_ID,
             u.username AS asignado_a_username,
             p.nombre AS proyecto_nombre
         FROM tareas t
         LEFT JOIN usuarios u ON t.asignado_a = u.id
         LEFT JOIN proyectos p ON t.proyecto_id = p.id
-        WHERE t.creado_por = ? OR t.id IN (
+        WHERE (t.creado_por = ? OR t.id IN (
             SELECT ta.tarea_id FROM tareas_asignados ta WHERE ta.usuario_id = ?
-        )
+        )) AND (t.tipos_tareas_id = 1 OR t.tipos_tareas_id IS NULL)
         ORDER BY t.fecha_creacion DESC
     ");
     $stmt->execute([$userId, $userId]);
