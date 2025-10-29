@@ -56,7 +56,8 @@ try {
         'Usuario_Asignado_ID' => 'asignado_a',
         'Proyecto' => 'proyecto_id',
         'Parent_ID' => 'tarea_padre_id',
-        'Adjuntos_URL' => 'adjuntos_url'
+        'Adjuntos_URL' => 'adjuntos_url',
+        'Prioridad' => 'prioridad'
     ];
 
     // Auto-set completion/due date when marking as completed
@@ -137,6 +138,7 @@ try {
             t.proyecto_id AS Proyecto,
             t.tarea_padre_id AS Parent_ID,
             t.adjuntos_url AS Adjuntos_URL,
+            t.prioridad AS Prioridad,
             p.nombre AS proyecto_nombre
         FROM tareas t
         LEFT JOIN proyectos p ON t.proyecto_id = p.id

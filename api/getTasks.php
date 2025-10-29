@@ -27,6 +27,7 @@ try {
             t.tarea_padre_id AS Parent_ID,
             t.adjuntos_url AS Adjuntos_URL,
             t.tipos_tareas_id AS Tipos_Tareas_ID,
+            t.prioridad AS Prioridad,
             u.username AS asignado_a_username,
             p.nombre AS proyecto_nombre
         FROM tareas t
@@ -35,7 +36,13 @@ try {
         WHERE (t.creado_por = ? OR t.id IN (
             SELECT ta.tarea_id FROM tareas_asignados ta WHERE ta.usuario_id = ?
         )) AND (t.tipos_tareas_id = 1 OR t.tipos_tareas_id IS NULL)
-        ORDER BY t.fecha_creacion DESC
+        ORDER BY 
+            CASE t.prioridad 
+                WHEN 'alta' THEN 1 
+                WHEN 'media' THEN 2 
+                WHEN 'baja' THEN 3 
+            END,
+            t.fecha_creacion DESC
     ");
     $stmt->execute([$userId, $userId]);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);

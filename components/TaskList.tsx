@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Task, Project } from '../types';
+import { TaskPriority } from '../types';
 import { TaskItem } from './TaskItem';
 
 interface TaskListProps {
@@ -29,6 +30,70 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
     );
   }
 
+  // Special logic for urgent section: important tasks don't follow hierarchy
+  if (sectionType === 'urgent') {
+    // Separate important tasks from other tasks
+    const importantTasks = tasks.filter(task => task.Prioridad === TaskPriority.ALTA);
+    const otherTasks = tasks.filter(task => task.Prioridad !== TaskPriority.ALTA);
+    
+    // For important tasks: render them flat (no hierarchy)
+    const importantTasksFlat = importantTasks.map(task => (
+      <TaskItem
+        key={task.ID}
+        task={task}
+        allTasks={tasks}
+        projects={projects}
+        taskAssigneesRecord={taskAssigneesRecord}
+        onTaskClick={onTaskClick}
+        onUpdate={onTaskUpdate}
+        onDelete={onDelete}
+        level={0} // Always level 0 for important tasks
+        focusedTaskId={focusedTaskId}
+        onFocusTask={handleFocusTask}
+        sectionType={sectionType}
+        hideChildren={true} // Don't show children for important tasks in urgent section
+      />
+    ));
+    
+    // For other urgent tasks: follow normal hierarchy
+    const taskIds = new Set(otherTasks.map(t => t.ID));
+    const topLevelOtherTasks = otherTasks
+      .filter(task => {
+        // Root tasks
+        if (task.Parent_ID === 0 || task.Parent_ID === null) return true;
+        // Tasks whose parent is not in this filtered list (orphaned branches)
+        return task.Parent_ID && !taskIds.has(task.Parent_ID);
+      })
+      .sort((a, b) => new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime());
+    
+    const otherTasksHierarchical = topLevelOtherTasks.map(task => (
+      <TaskItem
+        key={task.ID}
+        task={task}
+        allTasks={otherTasks}
+        projects={projects}
+        taskAssigneesRecord={taskAssigneesRecord}
+        onTaskClick={onTaskClick}
+        onUpdate={onTaskUpdate}
+        onDelete={onDelete}
+        level={0}
+        focusedTaskId={focusedTaskId}
+        onFocusTask={handleFocusTask}
+        sectionType={sectionType}
+      />
+    ));
+    
+    return (
+      <ul className="space-y-2">
+        {/* Important tasks first (flat) */}
+        {importantTasksFlat}
+        {/* Other urgent tasks (hierarchical) */}
+        {otherTasksHierarchical}
+      </ul>
+    );
+  }
+
+  // Normal logic for other sections
   // Filter for top-level tasks to start the recursive rendering
   // Include tasks that are root (Parent_ID = 0/null) OR whose parent is not in the list
   const taskIds = new Set(tasks.map(t => t.ID));

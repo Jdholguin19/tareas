@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Task, Project } from '../types';
-import { TaskState } from '../types';
+import { TaskState, TaskPriority } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
@@ -16,6 +16,7 @@ interface TaskItemProps {
   focusedTaskId?: number | null;
   onFocusTask?: (taskId: number) => void;
   sectionType?: 'urgent' | 'today' | 'scheduled' | 'completed';
+  hideChildren?: boolean;
 }
 
 const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: string, statusColor: string, isOverdue: boolean } => {
@@ -63,7 +64,7 @@ const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: str
 };
 
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask, sectionType }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask, sectionType, hideChildren = false }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -124,6 +125,60 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(true);
+  };
+
+  const handleToggleImportant = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const currentPriority = task.Prioridad || TaskPriority.MEDIA;
+      const newPriority = currentPriority === TaskPriority.ALTA ? TaskPriority.MEDIA : TaskPriority.ALTA;
+      
+      // Actualizar optimísticamente la UI primero
+      const optimisticTask = {
+        ...task,
+        Prioridad: newPriority
+      };
+      
+      onUpdate(optimisticTask);
+      
+      const response = await fetch('/api/toggleImportant.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          taskId: task.ID
+        }),
+      });
+
+      if (!response.ok) {
+        // Revertir el cambio optimista si falla
+        onUpdate(task);
+        throw new Error('Error al actualizar la prioridad');
+      }
+
+      // Verificar la respuesta de la API
+      const result = await response.json();
+      
+      if (result.error) {
+        // Revertir el cambio optimista si hay error
+        onUpdate(task);
+        throw new Error(result.error);
+      }
+
+      // Siempre forzar una actualización para asegurar que React re-renderice las listas
+      // Esto es necesario porque la tarea podría necesitar moverse entre secciones
+      const serverPriority = result.newPriority === 'alta' ? TaskPriority.ALTA : TaskPriority.MEDIA;
+      const serverTask = {
+        ...task,
+        Prioridad: serverPriority
+      };
+      onUpdate(serverTask);
+    } catch (error) {
+      console.error('Error toggling important:', error);
+      alert('Error al cambiar la prioridad de la tarea');
+    }
   };
 
   const handleProgressMouseDown = (e: React.MouseEvent) => {
@@ -699,6 +754,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
               aria-label={`Marcar tarea ${task.Titulo} como completada`}
           />
 
+          {/* Icono de estrella para marcar como importante */}
+          <button
+            onClick={handleToggleImportant}
+            className="p-1 rounded-full hover:bg-yellow-50 transition-colors shrink-0"
+            title={task.Prioridad === TaskPriority.ALTA ? "Quitar de importante" : "Marcar como importante"}
+            aria-label={task.Prioridad === TaskPriority.ALTA ? "Quitar de importante" : "Marcar como importante"}
+          >
+            <Icon 
+              name={task.Prioridad === TaskPriority.ALTA ? "starFilled" : "starEmpty"} 
+              className={`w-5 h-5 ${task.Prioridad === TaskPriority.ALTA ? "text-yellow-500" : "text-gray-400 hover:text-yellow-400"}`} 
+            />
+          </button>
+
           <div 
               className="flex-grow cursor-pointer min-w-0"
               onClick={() => onTaskClick(task)}
@@ -798,7 +866,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
         </div>
       </div>
 
-      {children.length > 0 && (
+      {children.length > 0 && !hideChildren && (
         <ul className="mt-2 space-y-2">
             {children.map(child => (
                 <TaskItem

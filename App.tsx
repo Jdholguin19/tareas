@@ -5,6 +5,7 @@ import { GanttChart } from './components/GanttChart';
 import { KanbanBoard } from './components/KanbanBoard';
 import { Icon } from './components/Icon';
 import type { Task, Project, TaskDependency } from './types';
+import { TaskPriority } from './types';
 import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
@@ -306,7 +307,11 @@ const App: React.FC = () => {
   const handleUpdateTask = async (taskToUpdate: Task) => {
     try {
       const savedTask = await updateTask(taskToUpdate);
-      setTasks(currentTasks => currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t)));
+      
+      setTasks(currentTasks => {
+        const updatedTasks = currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t));
+        return updatedTasks;
+      });
       
       // Keep modal open if it's open, so user can see changes reflected.
       if (editingTask && editingTask.ID === savedTask.ID) {
@@ -543,12 +548,15 @@ const App: React.FC = () => {
     });
   };
 
-  // Nueva función para "Primero Urgente" - combina atrasadas y sin fecha
+  // Nueva función para "Primero Urgente" - combina atrasadas, sin fecha y tareas importantes
   const getUrgentTasks = (allTasks: Task[], searchFilter: string = '') => {
     // First filter by current user
     const userTasks = filterTasksForCurrentUser(allTasks);
     
     const today = getCurrentDate();
+
+    console.log('=== DEBUG: getUrgentTasks ===');
+    console.log('📋 Total user tasks:', userTasks.length);
 
     // Get all completed task IDs (100% progress)
     const completedTaskIds = new Set(
@@ -557,16 +565,17 @@ const App: React.FC = () => {
         .map(task => task.ID)
     );
 
-    // Return tasks that are either:
-    // 1. Overdue (due date before today), OR
-    // 2. Have no due date
-    // AND are NOT completed
-    // AND match search filter
-    return userTasks.filter(task => {
+    // Filter tasks that qualify for urgent section
+    const urgentTasks = userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
 
       // Apply search filter (check if either searchFilter OR selectedProjectId is set)
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+
+      // Check if task is marked as important (high priority)
+      if (task.Prioridad === TaskPriority.ALTA) {
+        return true;
+      }
 
       if (!task.Fecha_Vencimiento) {
         // No due date - include in urgent
@@ -578,6 +587,24 @@ const App: React.FC = () => {
       dueDate.setHours(0, 0, 0, 0);
       return dueDate < today;
     });
+
+    // Separate important tasks from other urgent tasks
+    const importantTasks = urgentTasks.filter(task => task.Prioridad === TaskPriority.ALTA);
+    const otherUrgentTasks = urgentTasks.filter(task => task.Prioridad !== TaskPriority.ALTA);
+
+    // Sort important tasks by creation date (newest first) - NO HIERARCHY
+    const sortedImportantTasks = importantTasks.sort((a, b) => 
+      new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime()
+    );
+
+    // Sort other urgent tasks by creation date (newest first)
+    const sortedOtherTasks = otherUrgentTasks.sort((a, b) => 
+      new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime()
+    );
+
+    // Return important tasks first, then other urgent tasks
+    const result = [...sortedImportantTasks, ...sortedOtherTasks];
+    return result;
   };
 
   // Nueva función para "Importantes" - solo tareas de hoy
@@ -596,12 +623,17 @@ const App: React.FC = () => {
         .map(task => task.ID)
     );
 
-    // Return tasks that are due today only
+    // Return tasks that are due today only, excluding important tasks (they go to urgent)
     return userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
 
       // Apply search filter (check if either searchFilter OR selectedProjectId is set)
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
+
+      // Exclude important tasks (they appear in urgent section)
+      if (task.Prioridad === TaskPriority.ALTA) {
+        return false;
+      }
 
       if (!task.Fecha_Vencimiento) {
         // No due date - exclude from today tasks (they go to urgent)
@@ -622,8 +654,6 @@ const App: React.FC = () => {
     
     const today = getCurrentDate();
 
-    console.log('=== DEBUG: getScheduledTasks ===');
-
     // Get all completed task IDs (100% progress)
     const completedTaskIds = new Set(
       userTasks
@@ -631,19 +661,28 @@ const App: React.FC = () => {
         .map(task => task.ID)
     );
 
-    // Return tasks that are due in the future (tomorrow or later) and NOT completed
-    return userTasks.filter(task => {
+    // Return tasks that are due in the future (tomorrow or later) and NOT completed, excluding important tasks
+    const scheduledTasks = userTasks.filter(task => {
       if (completedTaskIds.has(task.ID)) return false;
       
       // Apply search filter (check if either searchFilter OR selectedProjectId is set)
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
       
+      // Exclude important tasks (they appear in urgent section)
+      if (task.Prioridad === TaskPriority.ALTA) {
+        return false;
+      }
+      
       if (!task.Fecha_Vencimiento) return false;
 
       const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
       dueDate.setHours(0, 0, 0, 0);
-      return dueDate > today;
+      const isScheduled = dueDate > today;
+      
+      return isScheduled;
     });
+
+    return scheduledTasks;
   };
 
   const getOverdueTasks = (allTasks: Task[], searchFilter: string = '') => {
@@ -748,6 +787,9 @@ const App: React.FC = () => {
     const today = getCurrentDate();
     return allTasks.filter(task => {
       if (isCompleted(task)) return false;
+      
+      // Tareas importantes (prioridad alta)
+      if (task.Prioridad === TaskPriority.ALTA) return true;
       
       // Sin fecha o atrasada
       if (!task.Fecha_Vencimiento) return true;

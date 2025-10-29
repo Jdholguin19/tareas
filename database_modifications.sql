@@ -46,6 +46,11 @@ ALTER TABLE `tareas`
 ADD COLUMN `tipos_tareas_id` int(11) DEFAULT NULL COMMENT 'Referencia al tipo de tarea' 
 AFTER `tarea_padre_id`;
 
+-- Agregar columna prioridad
+ALTER TABLE `tareas` 
+ADD COLUMN `prioridad` ENUM('baja', 'media', 'alta') DEFAULT 'media' COMMENT 'Prioridad de la tarea' 
+AFTER `tipos_tareas_id`;
+
 -- =====================================================
 -- 4. CREAR FOREIGN KEY CONSTRAINT
 -- =====================================================
@@ -68,6 +73,13 @@ ADD INDEX `idx_tipos_tareas_id` (`tipos_tareas_id`);
 -- Crear índice compuesto para consultas frecuentes
 ALTER TABLE `tareas` 
 ADD INDEX `idx_tipo_estado` (`tipos_tareas_id`, `estado`);
+
+-- Crear índices para prioridad
+ALTER TABLE `tareas` 
+ADD INDEX `idx_prioridad` (`prioridad`);
+
+ALTER TABLE `tareas` 
+ADD INDEX `idx_prioridad_estado` (`prioridad`, `estado`);
 
 -- =====================================================
 -- 6. ACTUALIZAR DATOS EXISTENTES (OPCIONAL)
@@ -174,7 +186,7 @@ ADD INDEX `idx_tipo_estado` (`tipos_proyectos_id`, `estado`);
 -- Agregar la nueva columna nivel_esquema
 ALTER TABLE `tareas` 
 ADD COLUMN `nivel_esquema` int(11) DEFAULT 1 COMMENT 'Nivel jerárquico en el esquema de tareas (1=principal, 2=subtarea, etc.)' 
-AFTER `tipos_tareas_id`;
+AFTER `prioridad`;
 
 -- Crear índice para la nueva columna nivel_esquema
 ALTER TABLE `tareas` 
@@ -235,6 +247,14 @@ WHERE `tarea_padre_id` IS NOT NULL AND `nivel_esquema` IS NULL;
 -- FROM tareas 
 -- GROUP BY nivel_esquema 
 -- ORDER BY nivel_esquema;
+
+-- Verificar la distribución de prioridades
+-- SELECT 
+--     prioridad,
+--     COUNT(*) as cantidad_tareas
+-- FROM tareas 
+-- GROUP BY prioridad 
+-- ORDER BY prioridad;
 
 -- =====================================================
 -- NOTAS IMPORTANTES:

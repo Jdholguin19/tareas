@@ -5,6 +5,12 @@ export enum TaskState {
     COMPLETADA = 'completada'
 }
 
+export enum TaskPriority {
+    BAJA = 'baja',
+    MEDIA = 'media',
+    ALTA = 'alta'
+}
+
 export interface Task {
     ID: number;
     Titulo: string;
@@ -22,6 +28,8 @@ export interface Task {
     Parent_ID: number;
     Adjuntos_URL: string[];
     asignado_a_username?: string; // Optional field for displaying assigned user name
+    Tipos_Tareas_ID?: number; // Optional field for task type
+    Prioridad?: TaskPriority; // Optional field for task priority
 }
 
 export interface User {
