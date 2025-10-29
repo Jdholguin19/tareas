@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [taskNavigationHistory, setTaskNavigationHistory] = useState<Task[]>([]);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState<boolean>(false);
   const notificationMenuRef = useRef<HTMLDivElement>(null);
   const createTaskRef = useRef<HTMLDivElement>(null);
@@ -292,8 +293,24 @@ const App: React.FC = () => {
     setEditingTask(task);
   };
 
+  const handleSubtaskClick = (subtask: Task) => {
+    // Agregar la tarea actual al historial antes de navegar a la subtarea
+    if (editingTask) {
+      setTaskNavigationHistory(prev => [...prev, editingTask]);
+    }
+    setEditingTask(subtask);
+  };
+
   const handleCloseModal = () => {
-    setEditingTask(null);
+    // Si hay historial, volver a la tarea anterior
+    if (taskNavigationHistory.length > 0) {
+      const previousTask = taskNavigationHistory[taskNavigationHistory.length - 1];
+      setTaskNavigationHistory(prev => prev.slice(0, -1));
+      setEditingTask(previousTask);
+    } else {
+      // Si no hay historial, cerrar el modal completamente
+      setEditingTask(null);
+    }
   };
 
   const handleProjectCreated = (project: Project) => {
@@ -309,12 +326,12 @@ const App: React.FC = () => {
       const savedTask = await updateTask(taskToUpdate);
       
       setTasks(currentTasks => {
-        const updatedTasks = currentTasks.map(t => (t.ID === savedTask.ID ? savedTask : t));
+        const updatedTasks = currentTasks.map(t => (parseInt(String(t.ID)) === parseInt(String(savedTask.ID)) ? savedTask : t));
         return updatedTasks;
       });
       
       // Keep modal open if it's open, so user can see changes reflected.
-      if (editingTask && editingTask.ID === savedTask.ID) {
+      if (editingTask && parseInt(String(editingTask.ID)) === parseInt(String(savedTask.ID))) {
         setEditingTask(savedTask);
       }
     } catch (error) {
@@ -325,7 +342,7 @@ const App: React.FC = () => {
 
   // Wrapper function for Gantt chart updates
   const handleGanttTaskUpdate = async (taskId: number, updates: Partial<Task>) => {
-    const taskToUpdate = tasks.find(t => t.ID === taskId);
+    const taskToUpdate = tasks.find(t => parseInt(String(t.ID)) === parseInt(String(taskId)));
     if (!taskToUpdate) {
       console.error("Task not found:", taskId);
       return;
@@ -498,8 +515,9 @@ const App: React.FC = () => {
   const matchesSearch = (task: Task, searchTerm: string, projects: Project[], selectedProjectId: number | null): boolean => {
     // If a specific project is selected, only show tasks from that project
     if (selectedProjectId !== null) {
-      const taskProjectId = task.Proyecto ? Number(task.Proyecto) : null;
-      if (taskProjectId !== selectedProjectId) return false;
+      const taskProjectId = task.Proyecto ? parseInt(String(task.Proyecto)) : null;
+      const normalizedSelectedProjectId = parseInt(String(selectedProjectId));
+      if (taskProjectId !== normalizedSelectedProjectId) return false;
 
       // If we also have a search term, apply text search within the selected project
       if (searchTerm.trim()) {
@@ -1359,6 +1377,8 @@ const App: React.FC = () => {
           }}
           onCreateSubtask={handleCreateSubTask}
           onDelete={handleDeleteTask}
+          onSubtaskClick={handleSubtaskClick}
+          hasNavigationHistory={taskNavigationHistory.length > 0}
         />
       )}
 

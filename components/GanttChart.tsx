@@ -149,7 +149,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
         if (selectedProjectId === null) {
             return tasks;
         }
-        return tasks.filter(task => task.Proyecto === selectedProjectId);
+        return tasks.filter(task => {
+            const taskProjectId = parseInt(String(task.Proyecto || 0));
+            const normalizedSelectedProjectId = parseInt(String(selectedProjectId));
+            return taskProjectId === normalizedSelectedProjectId;
+        });
     }, [tasks, selectedProjectId]);
 
     // Función para alternar colapso de tareas padre

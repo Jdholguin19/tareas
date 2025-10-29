@@ -15,9 +15,11 @@ interface EditTaskModalProps {
   onSave: (updatedTask: Task) => Promise<void>;
   onCreateSubtask: (parentTaskId: number, title: string) => Promise<void>;
   onDelete: (taskId: number) => void;
+  onSubtaskClick?: (subtask: Task) => void;
+  hasNavigationHistory?: boolean;
 }
 
-export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, currentUser, onClose, onSave, onCreateSubtask, onDelete, onProjectCreated }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, currentUser, onClose, onSave, onCreateSubtask, onDelete, onProjectCreated, onSubtaskClick, hasNavigationHistory }) => {
   const [formData, setFormData] = useState<Task>({ ...task });
   const [isSaving, setIsSaving] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -372,7 +374,21 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl p-4 sm:p-6 lg:p-6 xl:p-6 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start pb-3 sm:pb-4 border-b border-slate-200">
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg sm:text-xl lg:text-xl xl:text-2xl font-bold text-slate-800 truncate">Editar Tarea</h2>
+            <div className="flex items-center gap-2 mb-1">
+              {hasNavigationHistory && (
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  title="Volver a la tarea padre"
+                >
+                  <Icon name="arrow-left" className="w-3 h-3" />
+                  <span>Volver</span>
+                </button>
+              )}
+            </div>
+            <h2 className="text-lg sm:text-xl lg:text-xl xl:text-2xl font-bold text-slate-800 truncate">
+              {hasNavigationHistory ? 'Editar Subtarea' : 'Editar Tarea'}
+            </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Modifica los detalles de tu tarea.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -680,10 +696,18 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               {subtasks.length > 0 && (
                   <ul className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
                       {subtasks.map(st => (
-                          <li key={st.ID} className={`flex items-center justify-between bg-slate-50 p-2 sm:p-2.5 rounded-md text-xs sm:text-sm ${st.Estado === TaskState.COMPLETADA ? 'text-slate-500' : 'text-slate-800'}`}>
+                          <li key={st.ID} 
+                              className={`flex items-center justify-between bg-slate-50 p-2 sm:p-2.5 rounded-md text-xs sm:text-sm transition-colors ${st.Estado === TaskState.COMPLETADA ? 'text-slate-500' : 'text-slate-800'} ${onSubtaskClick ? 'hover:bg-slate-100 cursor-pointer' : ''}`}
+                              onClick={() => onSubtaskClick && onSubtaskClick(st)}
+                          >
                               <span className={`truncate mr-2 ${st.Estado === TaskState.COMPLETADA ? 'line-through' : ''}`}>{st.Titulo}</span>
-                              <div className="w-12 sm:w-16 bg-slate-200 rounded-full h-1 sm:h-1.5 flex-shrink-0">
-                                <div className="progress-bar-fill"></div>
+                              <div className="flex items-center gap-2">
+                                  <div className="w-12 sm:w-16 bg-slate-200 rounded-full h-1 sm:h-1.5 flex-shrink-0">
+                                    <div className="progress-bar-fill"></div>
+                                  </div>
+                                  {onSubtaskClick && (
+                                      <Icon name="edit" className="w-3 h-3 text-slate-400" />
+                                  )}
                               </div>
                           </li>
                       ))}

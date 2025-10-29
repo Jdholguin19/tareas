@@ -36,9 +36,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleDropOnColumn = (state: TaskState) => (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const idStr = e.dataTransfer.getData('text/plain');
-    const id = parseInt(idStr);
+    const id = Number(idStr);
     if (!id || !onTaskUpdate) return;
-    const task = tasks.find(t => parseInt(String(t.ID)) === id);
+    const task = tasks.find(t => t.ID === id);
     if (!task || task.Estado === state) return;
     const updates: Partial<Task> = { Estado: state };
     if (state === TaskState.COMPLETADA) {
