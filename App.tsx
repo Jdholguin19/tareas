@@ -754,6 +754,22 @@ const App: React.FC = () => {
   const scheduledTasks = useMemo(() => getScheduledTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
   const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
+
+  // Global subtask counts map (does NOT depend on section filters)
+  const subtaskCounts = useMemo(() => {
+    const map: Record<number, { total: number; completed: number }> = {};
+    for (const t of tasks) {
+      if (t.Parent_ID && t.Parent_ID !== 0) {
+        const parentId = Number(t.Parent_ID);
+        if (!map[parentId]) map[parentId] = { total: 0, completed: 0 };
+        map[parentId].total += 1;
+        if (isCompleted(t)) {
+          map[parentId].completed += 1;
+        }
+      }
+    }
+    return map;
+  }, [tasks]);
   
   // Filtered tasks for Gantt view - includes all user tasks with search/project filtering
   const filteredTasks = useMemo(() => {
@@ -1121,7 +1137,7 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : urgentTasks.length > 0 ? (
-                      <TaskList tasks={urgentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="urgent" />
+                      <TaskList tasks={urgentTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="urgent" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">¡Excelente! No hay tareas urgentes.</p>
@@ -1164,7 +1180,7 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : currentTasks.length > 0 ? (
-                      <TaskList tasks={currentTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="today" />
+                      <TaskList tasks={currentTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="today" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">¡Todo al día! No hay tareas importantes para hoy.</p>
@@ -1207,7 +1223,7 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : scheduledTasks.length > 0 ? (
-                      <TaskList tasks={scheduledTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="scheduled" />
+                      <TaskList tasks={scheduledTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="scheduled" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
@@ -1250,7 +1266,7 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : completedTasks.length > 0 ? (
-                      <TaskList tasks={completedTasks} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="completed" />
+                      <TaskList tasks={completedTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="completed" />
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">Aún no has completado ninguna tarea.</p>

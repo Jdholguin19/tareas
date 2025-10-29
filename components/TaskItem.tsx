@@ -6,7 +6,8 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 interface TaskItemProps {
   task: Task;
-  allTasks: Task[];
+  allTasks: Task[]; // tareas filtradas para render (jerarquía visible)
+  allTasksGlobal?: Task[]; // lista completa para el indicador
   projects: Project[];
   onTaskClick: (task: Task) => void;
   onUpdate: (task: Task) => void;
@@ -17,6 +18,7 @@ interface TaskItemProps {
   onFocusTask?: (taskId: number) => void;
   sectionType?: 'urgent' | 'today' | 'scheduled' | 'completed';
   hideChildren?: boolean;
+  subtaskCounts?: Record<number, { total: number; completed: number }>;
 }
 
 const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: string, statusColor: string, isOverdue: boolean } => {
@@ -64,7 +66,7 @@ const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: str
 };
 
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask, sectionType, hideChildren = false }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlobal, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask, sectionType, hideChildren = false, subtaskCounts }) => {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -167,14 +169,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
         throw new Error(result.error);
       }
 
-      // Siempre forzar una actualización para asegurar que React re-renderice las listas
-      // Esto es necesario porque la tarea podría necesitar moverse entre secciones
-      const serverPriority = result.newPriority === 'alta' ? TaskPriority.ALTA : TaskPriority.MEDIA;
-      const serverTask = {
-        ...task,
-        Prioridad: serverPriority
-      };
-      onUpdate(serverTask);
+      // No necesitamos una segunda actualización si la respuesta es exitosa
+      // La actualización optimista ya se aplicó y es suficiente
     } catch (error) {
       console.error('Error toggling important:', error);
       alert('Error al cambiar la prioridad de la tarea');
@@ -705,6 +701,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const { statusClass, statusColor, isOverdue } = getTaskStatusInfo(task, sectionType);
   const isFocused = parseInt(String(focusedTaskId)) === parseInt(String(task.ID));
 
+  // Hijos para render (según la sección actual)
   const children = allTasks
     .filter(child => parseInt(String(child.Parent_ID)) === parseInt(String(task.ID)))
     .sort((a,b) => new Date(a.Fecha_Creacion).getTime() - new Date(b.Fecha_Creacion).getTime());
@@ -712,6 +709,33 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
   const paddingLeft = `${level * 1.5 + 0.75}rem`;
 
   const taskAssignees = taskAssigneesRecord[task.ID] || [];
+
+  // Helper specific to subtasks indicator (does not interfere with other logic)
+  const parseProgressForIndicator = (p: number | string | undefined) => {
+    if (p === undefined || p === null) return 0;
+    if (typeof p === 'number') return p;
+    const cleaned = String(p).replace('%', '').trim();
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : n;
+  };
+
+  const isCompletedForIndicator = (t: Task) => {
+    return t.Estado === TaskState.COMPLETADA || parseProgressForIndicator(t.Porcentaje_Avance) >= 100;
+  };
+
+  const countSubtasksCompletion = (list: Task[]) => {
+    const total = list.length;
+    const completed = list.filter(isCompletedForIndicator).length;
+    return { total, completed };
+  };
+
+  // Hijos para el indicador (globales, no filtrados por sección)
+  const sourceList = (allTasksGlobal || allTasks);
+  // Contar hijos directos de forma robusta (soporta string/number en Parent_ID)
+  const indicatorChildren = sourceList.filter(t => t.Parent_ID != null && Number(t.Parent_ID) === Number(task.ID));
+  const countsFromMap = subtaskCounts ? subtaskCounts[Number(task.ID)] : undefined;
+  const totalSubtasks = countsFromMap ? countsFromMap.total : indicatorChildren.length;
+  const completedSubtasks = countsFromMap ? countsFromMap.completed : countSubtasksCompletion(indicatorChildren).completed;
 
   return (
     <li>
@@ -790,6 +814,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
             >
               {task.Titulo}
             </span>
+            {totalSubtasks > 0 && (
+              <div className="text-xs text-slate-500 mt-0.5">
+                {`${completedSubtasks}/${totalSubtasks} tareas completas`}
+              </div>
+            )}
           </div>
         </div>
         
@@ -873,6 +902,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                     key={child.ID}
                     task={child}
                     allTasks={allTasks}
+                    allTasksGlobal={allTasksGlobal}
                     projects={projects}
                     taskAssigneesRecord={taskAssigneesRecord}
                     onTaskClick={onTaskClick}
@@ -882,6 +912,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, projects, on
                     focusedTaskId={focusedTaskId}
                     onFocusTask={onFocusTask}
                     sectionType={sectionType}
+                    subtaskCounts={subtaskCounts}
                 />
             ))}
         </ul>

@@ -4,7 +4,9 @@ import { TaskPriority } from '../types';
 import { TaskItem } from './TaskItem';
 
 interface TaskListProps {
-  tasks: Task[];
+  tasks: Task[]; // tareas filtradas para esta sección (render)
+  allTasksGlobal: Task[]; // lista completa para conteos/indicadores
+  subtaskCounts: Record<number, { total: number; completed: number }>; // mapa global desde App
   projects: Project[];
   taskAssigneesRecord: Record<number, {id: number, username: string}[]>;
   onTaskClick: (task: Task) => void;
@@ -13,7 +15,7 @@ interface TaskListProps {
   sectionType?: 'urgent' | 'today' | 'scheduled' | 'completed';
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete, sectionType }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, allTasksGlobal, subtaskCounts, projects, taskAssigneesRecord, onTaskClick, onTaskUpdate, onDelete, sectionType }) => {
   const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
 
   const handleFocusTask = (taskId: number) => {
@@ -21,6 +23,8 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
     // Clear focus after 3 seconds
     window.setTimeout(() => setFocusedTaskId(null), 3000);
   };
+
+  // Mapa de conteos llega desde App para garantizar que no dependa de filtros de sección
   if (tasks.length === 0) {
     return (
       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
@@ -41,7 +45,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
       <TaskItem
         key={task.ID}
         task={task}
-        allTasks={tasks}
+        allTasks={tasks} // render: no jerarquía, pero mantenemos contexto de sección
+        allTasksGlobal={allTasksGlobal}
+        subtaskCounts={subtaskCounts}
         projects={projects}
         taskAssigneesRecord={taskAssigneesRecord}
         onTaskClick={onTaskClick}
@@ -70,7 +76,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
       <TaskItem
         key={task.ID}
         task={task}
-        allTasks={otherTasks}
+        allTasks={otherTasks} // render jerárquico según sección
+        allTasksGlobal={allTasksGlobal}
+        subtaskCounts={subtaskCounts}
         projects={projects}
         taskAssigneesRecord={taskAssigneesRecord}
         onTaskClick={onTaskClick}
@@ -112,7 +120,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, projects, taskAssigne
         <TaskItem
           key={task.ID}
           task={task}
-          allTasks={tasks}
+          allTasks={tasks} // render jerárquico según sección
+          allTasksGlobal={allTasksGlobal}
+          subtaskCounts={subtaskCounts}
           projects={projects}
           taskAssigneesRecord={taskAssigneesRecord}
           onTaskClick={onTaskClick}
