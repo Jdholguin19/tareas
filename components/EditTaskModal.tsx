@@ -650,6 +650,46 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               <input type="date" id="Fecha_Vencimiento" name="Fecha_Vencimiento" value={formatDateForInput(formData.Fecha_Vencimiento)} onChange={handleChange} min={formData.Fecha_Inicio ? formData.Fecha_Inicio.split('T')[0] : undefined} className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base" disabled={!canEditDeadline} />
             </div>
           </div>
+
+          {/* Selectores de Prioridad e Importancia */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label htmlFor="Prioridad" className="block text-sm font-medium text-slate-700 mb-1">
+                Prioridad
+                <span className="ml-1 text-xs text-slate-500">(urgencia)</span>
+              </label>
+              <select 
+                id="Prioridad" 
+                name="Prioridad" 
+                value={formData.Prioridad || 'baja'} 
+                onChange={handleChange} 
+                className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                disabled={!canEdit}
+              >
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="Importancia" className="block text-sm font-medium text-slate-700 mb-1">
+                Importancia
+                <span className="ml-1 text-xs text-slate-500">(impacto)</span>
+              </label>
+              <select 
+                id="Importancia" 
+                name="Importancia" 
+                value={formData.Importancia || 'baja'} 
+                onChange={handleChange} 
+                className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                disabled={!canEdit}
+              >
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+          </div>
           
           {/* Checkboxes en fila horizontal */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

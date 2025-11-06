@@ -3,6 +3,7 @@ import { CreateQuickTask } from './components/CreateQuickTask';
 import { TaskList } from './components/TaskList';
 import { GanttChart } from './components/GanttChart';
 import { KanbanBoard } from './components/KanbanBoard';
+import { EisenhowerMatrix } from './components/EisenhowerMatrix';
 import { Icon } from './components/Icon';
 import type { Task, Project, TaskDependency } from './types';
 import { TaskPriority } from './types';
@@ -32,7 +33,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
 
   // View state
-  const [activeView, setActiveView] = useState<'list' | 'kanban' | 'gantt'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'kanban' | 'gantt' | 'matrix'>('list');
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -1037,6 +1038,18 @@ const App: React.FC = () => {
                 <Icon name="gantt" className="w-5 h-5" />
                 <span className="hidden sm:inline">Gantt</span>
               </button>
+              <button
+                onClick={() => setActiveView('matrix')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  activeView === 'matrix'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title="Matriz de Eisenhower"
+              >
+                <Icon name="grid" className="w-5 h-5" />
+                <span className="hidden sm:inline">Matriz</span>
+              </button>
             </div>
           </div>
         </section>
@@ -1355,6 +1368,37 @@ const App: React.FC = () => {
                     }
                   }}
                   onProjectCreated={handleProjectCreated}
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Matrix View - Eisenhower Matrix */}
+        {activeView === 'matrix' && (
+          <section className="mb-12">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+              <div className="mb-6">
+                <div className="flex items-center gap-3">
+                  <Icon name="grid" className="w-6 h-6 text-slate-500" />
+                  <h3 className="text-xl font-semibold text-slate-800">Matriz de Eisenhower</h3>
+                </div>
+                <p className="text-slate-600 mt-2">
+                  Organiza tus tareas según urgencia e importancia
+                </p>
+              </div>
+              {isLoading ? (
+                <div className="p-8">
+                  <TaskSkeleton />
+                </div>
+              ) : (
+                <EisenhowerMatrix
+                  tasks={filteredTasks}
+                  projects={projects}
+                  taskAssigneesRecord={taskAssigneesRecord}
+                  onTaskClick={handleSelectTask}
+                  onTaskUpdate={handleUpdateTask}
+                  onDelete={handleDeleteTask}
                 />
               )}
             </div>

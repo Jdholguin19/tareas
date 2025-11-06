@@ -28,6 +28,7 @@ try {
             t.adjuntos_url AS Adjuntos_URL,
             t.tipos_tareas_id AS Tipos_Tareas_ID,
             t.prioridad AS Prioridad,
+            t.importancia AS Importancia,
             u.username AS asignado_a_username,
             p.nombre AS proyecto_nombre
         FROM tareas t
@@ -47,9 +48,35 @@ try {
     $stmt->execute([$userId, $userId]);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Convert Adjuntos_URL from JSON string to array
+    // Convert Adjuntos_URL from JSON string to array and apply auto priority/importance logic
     foreach ($tasks as &$task) {
         $task['Adjuntos_URL'] = json_decode($task['Adjuntos_URL'] ?? '[]', true);
+        
+        // Aplicar lógica automática de prioridad e importancia
+        // Solo si ambos están en 'baja' (no sobrescribir cambios manuales)
+        if ($task['Prioridad'] === 'baja' && $task['Importancia'] === 'baja') {
+            $fechaVencimiento = $task['Fecha_Vencimiento'];
+            
+            // Si no tiene fecha de vencimiento, ambos son media
+            if (empty($fechaVencimiento)) {
+                $task['Prioridad'] = 'media';
+                $task['Importancia'] = 'media';
+            } else {
+                // Calcular días restantes
+                $today = new DateTime();
+                $today->setTime(0, 0, 0);
+                $dueDate = new DateTime($fechaVencimiento);
+                $dueDate->setTime(0, 0, 0);
+                $interval = $today->diff($dueDate);
+                $diffDays = (int)$interval->format('%r%a'); // %r incluye el signo
+                
+                // Si faltan 7 días o menos (o ya venció), ambos son media
+                if ($diffDays <= 7) {
+                    $task['Prioridad'] = 'media';
+                    $task['Importancia'] = 'media';
+                }
+            }
+        }
     }
 
     echo json_encode($tasks);

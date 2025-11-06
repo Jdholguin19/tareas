@@ -11,6 +11,20 @@ export enum TaskPriority {
     ALTA = 'alta'
 }
 
+export enum TaskImportance {
+    BAJA = 'baja',
+    MEDIA = 'media',
+    ALTA = 'alta'
+}
+
+// Cuadrantes de la Matriz de Eisenhower
+export enum EisenhowerQuadrant {
+    URGENTE_IMPORTANTE = 'urgente_importante',     // Alta prioridad + Alta importancia - Hacer ahora
+    NO_URGENTE_IMPORTANTE = 'no_urgente_importante', // Baja prioridad + Alta importancia - Programar
+    URGENTE_NO_IMPORTANTE = 'urgente_no_importante', // Alta prioridad + Baja importancia - Delegar
+    NO_URGENTE_NO_IMPORTANTE = 'no_urgente_no_importante' // Baja prioridad + Baja importancia - Eliminar
+}
+
 export interface Task {
     ID: number;
     Titulo: string;
@@ -29,7 +43,8 @@ export interface Task {
     Adjuntos_URL: string[];
     asignado_a_username?: string; // Optional field for displaying assigned user name
     Tipos_Tareas_ID?: number; // Optional field for task type
-    Prioridad?: TaskPriority; // Optional field for task priority
+    Prioridad?: TaskPriority; // Optional field for task priority (urgencia)
+    Importancia?: TaskImportance; // Optional field for task importance
 }
 
 export interface User {
