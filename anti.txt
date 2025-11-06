@@ -1,52 +1,336 @@
-KanbanBoard.tsx:58 🔍 TOTAL TASKS: 18
-KanbanBoard.tsx:62 🔍 Task 1: {id: 268, titulo: 'arreglar el camban', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 2: {id: 267, titulo: 'arreglar el selector de fechas', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 3: {id: 251, titulo: 'prueba 323', estado_original: 'en_progreso', estado_normalizado: 'en_progreso'}
-KanbanBoard.tsx:62 🔍 Task 4: {id: 250, titulo: 'prueba 24', estado_original: 'en_progreso', estado_normalizado: 'en_progreso'}
-KanbanBoard.tsx:62 🔍 Task 5: {id: 249, titulo: 'preuba 2354\n', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 6: {id: 247, titulo: 'subsubprueba', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 7: {id: 246, titulo: 'sub prueba 2', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 8: {id: 245, titulo: 'sub prueba', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 9: {id: 244, titulo: 'prueba', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 10: {id: 243, titulo: 'prueba23', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 11: {id: 242, titulo: 'p7\n', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 12: {id: 241, titulo: 'p6', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 13: {id: 240, titulo: 'p5', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 14: {id: 239, titulo: 'p4', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 15: {id: 238, titulo: 'p3', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 16: {id: 237, titulo: 'p2', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 17: {id: 129, titulo: 'prueba arreglar carga de tareas', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 18: {id: 128, titulo: 'Prueba network www', estado_original: 'en_progreso', estado_normalizado: 'en_progreso'}
-KanbanBoard.tsx:76 🔍 FILTERED RESULTS:
-KanbanBoard.tsx:77   - Pendiente: 8 tasks
-KanbanBoard.tsx:78   - En Progreso: 3 tasks
-KanbanBoard.tsx:79   - Completada: 7 tasks
-KanbanBoard.tsx:83 🔍 pendiente tasks: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-KanbanBoard.tsx:83 🔍 en_progreso tasks: (3) [{…}, {…}, {…}]
-KanbanBoard.tsx:83 🔍 completada tasks: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-KanbanBoard.tsx:58 🔍 TOTAL TASKS: 18
-KanbanBoard.tsx:62 🔍 Task 1: {id: 268, titulo: 'arreglar el camban', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 2: {id: 267, titulo: 'arreglar el selector de fechas', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 3: {id: 251, titulo: 'prueba 323', estado_original: 'en_progreso', estado_normalizado: 'en_progreso'}
-KanbanBoard.tsx:62 🔍 Task 4: {id: 250, titulo: 'prueba 24', estado_original: 'en_progreso', estado_normalizado: 'en_progreso'}
-KanbanBoard.tsx:62 🔍 Task 5: {id: 249, titulo: 'preuba 2354\n', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 6: {id: 247, titulo: 'subsubprueba', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 7: {id: 246, titulo: 'sub prueba 2', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 8: {id: 245, titulo: 'sub prueba', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 9: {id: 244, titulo: 'prueba', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 10: {id: 243, titulo: 'prueba23', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 11: {id: 242, titulo: 'p7\n', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 12: {id: 241, titulo: 'p6', estado_original: 'pendiente', estado_normalizado: 'pendiente'}
-KanbanBoard.tsx:62 🔍 Task 13: {id: 240, titulo: 'p5', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 14: {id: 239, titulo: 'p4', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 15: {id: 238, titulo: 'p3', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 16: {id: 237, titulo: 'p2', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 17: {id: 129, titulo: 'prueba arreglar carga de tareas', estado_original: 'completada', estado_normalizado: 'completada'}
-KanbanBoard.tsx:62 🔍 Task 18: {id: 128, titulo: 'Prueba network www', estado_original: 'en_progreso', estado_normalizado: 'en_progreso'}
-KanbanBoard.tsx:76 🔍 FILTERED RESULTS:
-KanbanBoard.tsx:77   - Pendiente: 8 tasks
-KanbanBoard.tsx:78   - En Progreso: 3 tasks
-KanbanBoard.tsx:79   - Completada: 7 tasks
-KanbanBoard.tsx:83 🔍 pendiente tasks: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-KanbanBoard.tsx:83 🔍 en_progreso tasks: (3) [{…}, {…}, {…}]
-KanbanBoard.tsx:83 🔍 completada tasks: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+CONSOLA DE PRODUCCION ( Ya se ven )
+
+index-CocGfO7l.js:69 📍 Dependency 0 coords: {tipo: 'FS', sourceTask: 'arreglar el camban', targetTask: 'prueba 323', pathData: 'M 120 660 L 120 638 L 60 638 L 60 602 L 0 602 L 0 580', x1: 120, …}
+index-CocGfO7l.js:69 🎨 Color for dependency 0: {tipo: 'FS', color: '#3B82F6', rawTipo: 'FS'}
+index-CocGfO7l.js:69 ⚠️ Dependency 2: Missing task {depId: 23, sourceId: 129, targetId: 127, foundSource: true, foundTarget: false, …}
+(anónimo) @ index-CocGfO7l.js:69
+Vh @ index-CocGfO7l.js:69
+Si @ index-CocGfO7l.js:48
+Xi @ index-CocGfO7l.js:48
+sf @ index-CocGfO7l.js:48
+Hf @ index-CocGfO7l.js:48
+gm @ index-CocGfO7l.js:48
+rc @ index-CocGfO7l.js:48
+Mf @ index-CocGfO7l.js:48
+$f @ index-CocGfO7l.js:48
+as @ index-CocGfO7l.js:48
+Kf @ index-CocGfO7l.js:48
+(anónimo) @ index-CocGfO7l.js:48
+index-CocGfO7l.js:69 ⚠️ Dependency 6: Missing task {depId: 14, sourceId: 90, targetId: 129, foundSource: false, foundTarget: true, …}
+(anónimo) @ index-CocGfO7l.js:69
+Vh @ index-CocGfO7l.js:69
+Si @ index-CocGfO7l.js:48
+Xi @ index-CocGfO7l.js:48
+sf @ index-CocGfO7l.js:48
+Hf @ index-CocGfO7l.js:48
+gm @ index-CocGfO7l.js:48
+rc @ index-CocGfO7l.js:48
+Mf @ index-CocGfO7l.js:48
+$f @ index-CocGfO7l.js:48
+as @ index-CocGfO7l.js:48
+Kf @ index-CocGfO7l.js:48
+(anónimo) @ index-CocGfO7l.js:48
+index-CocGfO7l.js:68 🎨 Gantt Debug: {timelinePixelWidth: 320, svgMaxHeight: 812, ganttTasksCount: 18, dependenciesCount: 9, hasVisibleTasks: true, …}
+index-CocGfO7l.js:69 📍 Dependency 0 coords: {tipo: 'FS', sourceTask: 'arreglar el camban', targetTask: 'prueba 323', pathData: 'M 840 660 L 840 638 L 900 638 L 900 602 L 930 602 L 930 580', x1: 840, …}
+index-CocGfO7l.js:69 🎨 Color for dependency 0: {tipo: 'FS', color: '#3B82F6', rawTipo: 'FS'}
+index-CocGfO7l.js:69 ⚠️ Dependency 2: Missing task {depId: 23, sourceId: 129, targetId: 127, foundSource: true, foundTarget: false, …}
+(anónimo) @ index-CocGfO7l.js:69
+Vh @ index-CocGfO7l.js:69
+Si @ index-CocGfO7l.js:48
+Xi @ index-CocGfO7l.js:48
+sf @ index-CocGfO7l.js:48
+Hf @ index-CocGfO7l.js:48
+gm @ index-CocGfO7l.js:48
+rc @ index-CocGfO7l.js:48
+Mf @ index-CocGfO7l.js:48
+Ff @ index-CocGfO7l.js:48
+V @ index-CocGfO7l.js:25
+index-CocGfO7l.js:69 ⚠️ Dependency 6: Missing task {depId: 14, sourceId: 90, targetId: 129, foundSource: false, foundTarget: true, …}
+(anónimo) @ index-CocGfO7l.js:69
+Vh @ index-CocGfO7l.js:69
+Si @ index-CocGfO7l.js:48
+Xi @ index-CocGfO7l.js:48
+sf @ index-CocGfO7l.js:48
+Hf @ index-CocGfO7l.js:48
+gm @ index-CocGfO7l.js:48
+rc @ index-CocGfO7l.js:48
+Mf @ index-CocGfO7l.js:48
+Ff @ index-CocGfO7l.js:48
+V @ index-CocGfO7l.js:25
+index-CocGfO7l.js:68 🎨 Gantt Debug: {timelinePixelWidth: 1830, svgMaxHeight: 812, ganttTasksCount: 18, dependenciesCount: 9, hasVisibleTasks: true, …}
+
+
+
+CONSOLA DE LOCAL ( SI se ve ):
+
+GanttChart.tsx:1135 📍 Dependency 0 coords: {tipo: 'FS', sourceTask: 'arreglar el camban', targetTask: 'prueba 323', pathData: 'M 120 660 L 120 638 L 60 638 L 60 602 L 0 602 L 0 580', x1: 120, …}
+GanttChart.tsx:1148 🎨 Color for dependency 0: {tipo: 'FS', color: '#3B82F6', rawTipo: 'FS'}
+GanttChart.tsx:1026 ⚠️ Dependency 2: Missing task {depId: 23, sourceId: 129, targetId: 127, foundSource: true, foundTarget: false, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooks @ react-dom_client.js?v=f283af18:5652
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:1026 ⚠️ Dependency 6: Missing task {depId: 14, sourceId: 90, targetId: 129, foundSource: false, foundTarget: true, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooks @ react-dom_client.js?v=f283af18:5652
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:1135 📍 Dependency 0 coords: {tipo: 'FS', sourceTask: 'arreglar el camban', targetTask: 'prueba 323', pathData: 'M 120 660 L 120 638 L 60 638 L 60 602 L 0 602 L 0 580', x1: 120, …}
+GanttChart.tsx:1148 🎨 Color for dependency 0: {tipo: 'FS', color: '#3B82F6', rawTipo: 'FS'}
+GanttChart.tsx:1026 ⚠️ Dependency 2: Missing task {depId: 23, sourceId: 129, targetId: 127, foundSource: true, foundTarget: false, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:1026 ⚠️ Dependency 6: Missing task {depId: 14, sourceId: 90, targetId: 129, foundSource: false, foundTarget: true, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:337 🎨 Gantt Debug: {timelinePixelWidth: 320, svgMaxHeight: 812, ganttTasksCount: 18, dependenciesCount: 9, hasVisibleTasks: true, …}
+GanttChart.tsx:337 🎨 Gantt Debug: {timelinePixelWidth: 320, svgMaxHeight: 812, ganttTasksCount: 18, dependenciesCount: 9, hasVisibleTasks: true, …}
+GanttChart.tsx:1135 📍 Dependency 0 coords: {tipo: 'FS', sourceTask: 'arreglar el camban', targetTask: 'prueba 323', pathData: 'M 840 660 L 840 638 L 900 638 L 900 602 L 930 602 L 930 580', x1: 840, …}
+GanttChart.tsx:1148 🎨 Color for dependency 0: {tipo: 'FS', color: '#3B82F6', rawTipo: 'FS'}
+GanttChart.tsx:1026 ⚠️ Dependency 2: Missing task {depId: 23, sourceId: 129, targetId: 127, foundSource: true, foundTarget: false, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooks @ react-dom_client.js?v=f283af18:5652
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f283af18:13503
+performWorkUntilDeadline @ react-dom_client.js?v=f283af18:34
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:1026 ⚠️ Dependency 6: Missing task {depId: 14, sourceId: 90, targetId: 129, foundSource: false, foundTarget: true, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooks @ react-dom_client.js?v=f283af18:5652
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f283af18:13503
+performWorkUntilDeadline @ react-dom_client.js?v=f283af18:34
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:1135 📍 Dependency 0 coords: {tipo: 'FS', sourceTask: 'arreglar el camban', targetTask: 'prueba 323', pathData: 'M 840 660 L 840 638 L 900 638 L 900 602 L 930 602 L 930 580', x1: 840, …}
+GanttChart.tsx:1148 🎨 Color for dependency 0: {tipo: 'FS', color: '#3B82F6', rawTipo: 'FS'}
+GanttChart.tsx:1026 ⚠️ Dependency 2: Missing task {depId: 23, sourceId: 129, targetId: 127, foundSource: true, foundTarget: false, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f283af18:13503
+performWorkUntilDeadline @ react-dom_client.js?v=f283af18:34
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:1026 ⚠️ Dependency 6: Missing task {depId: 14, sourceId: 90, targetId: 129, foundSource: false, foundTarget: true, …}
+(anónimo) @ GanttChart.tsx:1026
+GanttChart @ GanttChart.tsx:1018
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f283af18:13503
+performWorkUntilDeadline @ react-dom_client.js?v=f283af18:34
+<GanttChart>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f283af18:245
+App @ App.tsx:1335
+react_stack_bottom_frame @ react-dom_client.js?v=f283af18:18507
+renderWithHooksAgain @ react-dom_client.js?v=f283af18:5727
+renderWithHooks @ react-dom_client.js?v=f283af18:5663
+updateFunctionComponent @ react-dom_client.js?v=f283af18:7473
+beginWork @ react-dom_client.js?v=f283af18:8523
+runWithFiberInDEV @ react-dom_client.js?v=f283af18:995
+performUnitOfWork @ react-dom_client.js?v=f283af18:12559
+workLoopSync @ react-dom_client.js?v=f283af18:12422
+renderRootSync @ react-dom_client.js?v=f283af18:12406
+performWorkOnRoot @ react-dom_client.js?v=f283af18:11764
+performSyncWorkOnRoot @ react-dom_client.js?v=f283af18:13515
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f283af18:13412
+processRootScheduleInMicrotask @ react-dom_client.js?v=f283af18:13435
+(anónimo) @ react-dom_client.js?v=f283af18:13529
+GanttChart.tsx:337 🎨 Gantt Debug: {timelinePixelWidth: 1830, svgMaxHeight: 812, ganttTasksCount: 18, dependenciesCount: 9, hasVisibleTasks: true, …}

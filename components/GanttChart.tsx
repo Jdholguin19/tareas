@@ -39,7 +39,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const timelineHeaderRef = useRef<HTMLDivElement | null>(null);
     const chartAreaRef = useRef<HTMLDivElement | null>(null);
     const sidebarRef = useRef<HTMLDivElement | null>(null);
-    const [contentWidth, setContentWidth] = useState<number>(0);
     const ganttRootRef = useRef<HTMLDivElement | null>(null);
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     
@@ -326,7 +325,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
         });
     }, [getVisibleHierarchicalTasks, dependencies, viewStartDate, DAY_WIDTH, ROW_HEIGHT, timelineScale.unit]);
 
-    
+    // Calcular altura máxima necesaria para el SVG de dependencias
+    const svgMaxHeight = useMemo(() => {
+        if (ganttTasks.length === 0) return 200;
+        const lastTaskY = ganttTasks[ganttTasks.length - 1].y + TASK_HEIGHT;
+        return lastTaskY + 100; // 100px de margen para las líneas
+    }, [ganttTasks, TASK_HEIGHT]);
 
     // Obtener color por estado de tarea
     const getTaskColor = (estado: TaskState, progreso: number) => {
@@ -607,7 +611,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
     return (
         <div
             ref={ganttRootRef}
-            className={`gantt-chart bg-white ${isFullscreen ? 'fixed inset-0 z-50' : 'border rounded-lg shadow-sm'} overflow-hidden flex flex-col`}
+            className={`gantt-chart bg-white ${isFullscreen ? 'fixed inset-0 z-50' : 'border rounded-lg shadow-sm'} overflow-hidden flex flex-col h-auto`}
         >
 
             {/* Header */}
@@ -665,28 +669,20 @@ const GanttChart: React.FC<GanttChartProps> = ({
             </div>
 
             {/* Main Content */}
-            <div className="gantt-content flex flex-col lg:flex-row min-h-0 flex-1">
+            <div className="gantt-content flex flex-col lg:flex-row min-h-0 flex-1 overflow-hidden">
                 {/* Sidebar con lista de tareas */}
                 <div 
-                    ref={sidebarRef}
-                    className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b overflow-y-auto overflow-x-hidden" 
+                    className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b flex flex-col" 
                     style={{ 
                         width: '100%', 
                         maxWidth: SIDEBAR_WIDTH,
                         minWidth: '320px',
-                        height: '100%',
-                        minHeight: '200px'
-                    }}
-                    onScroll={(e) => {
-                        const target = chartAreaRef.current;
-                        if (target && target.scrollTop !== e.currentTarget.scrollTop) {
-                            target.scrollTop = e.currentTarget.scrollTop;
-                        }
+                        overflow: 'hidden'
                     }}
                 >
-                    {/* Timeline header con columnas */}
+                    {/* Timeline header con columnas - FIJO */}
                     <div
-                        className="h-[60px] border-b bg-gray-100 grid items-center sticky top-0 z-10"
+                        className="h-[60px] border-b bg-gray-100 grid items-center flex-shrink-0"
                         style={{ gridTemplateColumns: `1fr ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px` }}
                     >
                         <div className="px-2 sm:px-4">
@@ -703,8 +699,17 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         </div>
                     </div>
                     
-                    {/* Task list con jerarquía, fechas y acordeón */}
-                    <div className="gantt-task-list">
+                    {/* Task list con jerarquía, fechas y acordeón - SCROLLABLE */}
+                    <div 
+                        ref={sidebarRef}
+                        className="gantt-task-list flex-1 overflow-auto"
+                        onScroll={(e) => {
+                            const target = chartAreaRef.current;
+                            if (target && target.scrollTop !== e.currentTarget.scrollTop) {
+                                target.scrollTop = e.currentTarget.scrollTop;
+                            }
+                        }}
+                    >
                         {ganttTasks.map((task) => {
                             const level = (task as any).level || 0;
                             const indentWidth = level * 12; // Reducido para móviles
@@ -795,16 +800,16 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 </div>
 
                 {/* Timeline y Chart */}
-                <div className="gantt-timeline-container flex-1 min-h-0">
-                    {/* Timeline Header */}
+                <div className="gantt-timeline-container flex flex-col flex-1 min-h-0 overflow-hidden">
+                    {/* Timeline Header - FIJO */}
                     <div
                         ref={timelineHeaderRef}
-                        className="gantt-timeline-header bg-gray-100 border-b overflow-x-hidden sticky top-0 z-10"
+                        className="gantt-timeline-header bg-gray-100 border-b overflow-x-hidden flex-shrink-0"
                         style={{ height: TIMELINE_HEIGHT }}
                     >
                         <div
                             className="relative"
-                            style={{ width: contentWidth }}
+                            style={{ width: timelinePixelWidth }}
                         >
                             {timelineDays.map((day, index) => (
                                 <div
@@ -825,15 +830,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         </div>
                     </div>
 
-                    {/* Chart Area */}
+                    {/* Chart Area - SCROLLABLE */}
                     <div 
                         ref={chartAreaRef}
-                        className="gantt-chart-area relative bg-white overflow-x-auto overflow-y-auto"
-                        style={{ 
-                            width: '100%',
-                            height: '100%',
-                            minHeight: '200px'
-                        }}
+                        className="gantt-chart-area relative bg-white overflow-auto flex-1"
                         onScroll={(e) => {
                             const target = timelineHeaderRef.current;
                             if (target && target.scrollLeft !== e.currentTarget.scrollLeft) {
@@ -851,8 +851,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         <div
                             className="relative"
                             style={{
-                                width: contentWidth,
-                                height: Math.max(ganttTasks.length * ROW_HEIGHT, 200)
+                                width: timelinePixelWidth,
+                                height: svgMaxHeight
                             }}
                         >
                         {/* Grid lines */}
@@ -962,10 +962,18 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
                         {/* Dependency lines */}
                         <svg
-                            className="absolute inset-0"
-                            style={{ zIndex: 20, pointerEvents: 'none' }}
-                            width={contentWidth}
-                            height={Math.max(ganttTasks.length * ROW_HEIGHT, 200)}
+                            className="pointer-events-none"
+                            style={{ 
+                                position: 'absolute', 
+                                top: 0, 
+                                left: 0, 
+                                width: '100%', 
+                                height: '100%',
+                                zIndex: 20, 
+                                pointerEvents: 'none'
+                            }}
+                            viewBox={`0 0 ${timelinePixelWidth} ${svgMaxHeight}`}
+                            preserveAspectRatio="none"
                         >
                             {/* Línea temporal durante arrastre de dependencia */}
                             {linkDragState?.isActive && linkDragState.currentMousePos && (
@@ -991,11 +999,24 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     );
                                 })()
                             )}
-                            {dependencies.map((dep) => {
-                                const sourceTask = ganttTasks.find(t => t.ID === Number(dep.tarea_predecesora_id));
-                                const targetTask = ganttTasks.find(t => t.ID === Number(dep.tarea_sucesora_id));
+                            {dependencies.map((dep, depIndex) => {
+                                // Normalizar IDs para comparación consistente (local vs producción)
+                                const normalizeId = (id: any): number => parseInt(String(id));
                                 
-                                if (!sourceTask || !targetTask) return null;
+                                const sourceTask = ganttTasks.find(t => normalizeId(t.ID) === normalizeId(dep.tarea_predecesora_id));
+                                const targetTask = ganttTasks.find(t => normalizeId(t.ID) === normalizeId(dep.tarea_sucesora_id));
+                                
+                                if (!sourceTask || !targetTask) {
+                                    console.warn(`⚠️ Dependency ${depIndex}: Missing task`, { 
+                                        depId: dep.id, 
+                                        sourceId: dep.tarea_predecesora_id, 
+                                        targetId: dep.tarea_sucesora_id,
+                                        foundSource: !!sourceTask,
+                                        foundTarget: !!targetTask,
+                                        availableTaskIds: ganttTasks.map(t => normalizeId(t.ID))
+                                    });
+                                    return null;
+                                }
 
                                 // Calcular puntos de conexión basados en el tipo de dependencia
                                 let x1, y1, x2, y2;
@@ -1003,6 +1024,16 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 const targetY = targetTask.y + TASK_MARGIN / 2 + TASK_HEIGHT / 2;
 
                                 const tipo = (dep.tipo_dependencia || 'FS').toUpperCase() as 'FS' | 'SS' | 'FF' | 'SF';
+                                
+                                // Asegurar que tipo sea válido y obtener color directamente
+                                const colorMap: Record<string, string> = {
+                                    'FS': '#3B82F6', // Azul
+                                    'SS': '#10B981', // Verde
+                                    'FF': '#F59E0B', // Amarillo
+                                    'SF': '#EF4444'  // Rojo
+                                };
+                                const color = colorMap[tipo] || '#3B82F6'; // Default azul
+                                
                                 switch (tipo) {
                                     case 'FS': // Finish to Start (por defecto)
                                         x1 = sourceTask.x + sourceTask.width;
@@ -1083,19 +1114,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 // path con segmentos rectos, saliendo/entrando fuera de las barras
                                 const pathData = `M ${x1} ${y1} L ${x1} ${exitY} L ${clearX} ${exitY} L ${clearX} ${entryY} L ${x2} ${entryY} L ${x2} ${y2}`;
 
-                                // Color basado en el tipo de dependencia
-                                const getDepColor = (tipo: string) => {
-                                    switch (tipo) {
-                                        case 'FS': return '#3B82F6'; // Azul
-                                        case 'SS': return '#10B981'; // Verde
-                                        case 'FF': return '#F59E0B'; // Amarillo
-                                        case 'SF': return '#EF4444'; // Rojo
-                                        default: return '#3B82F6';
-                                    }
-                                };
-
-                                const color = getDepColor(tipo);
-
                                 return (
                                     <g key={dep.id}>
                                         {/* Línea principal */}
@@ -1108,7 +1126,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                             pointerEvents="none"
-                                            className="hover:stroke-4 transition-all"
                                         />
                                         
                                         {/* Línea invisible más gruesa para mejor hover */}
