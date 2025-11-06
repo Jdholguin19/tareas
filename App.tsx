@@ -5,9 +5,9 @@ import { GanttChart } from './components/GanttChart';
 import { KanbanBoard } from './components/KanbanBoard';
 import { EisenhowerMatrix } from './components/EisenhowerMatrix';
 import { Icon } from './components/Icon';
-import type { Task, Project, TaskDependency } from './types';
+import type { Task, Project, TaskDependency, TaskType } from './types';
 import { TaskPriority } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency } from './services/apiService';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency, getTaskTypes } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
@@ -17,6 +17,8 @@ import RegisterForm from './components/RegisterForm';
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [selectedTaskTypes, setSelectedTaskTypes] = useState<number[]>([1]); // Por defecto solo "tareas" (id=1)
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -129,6 +131,19 @@ const App: React.FC = () => {
     }, 200);
   };
 
+  // Task type filter handler
+  const handleTaskTypeToggle = (typeId: number) => {
+    setSelectedTaskTypes(prev => {
+      if (prev.includes(typeId)) {
+        // Si es el único seleccionado, no permitir desmarcarlo
+        if (prev.length === 1) return prev;
+        return prev.filter(id => id !== typeId);
+      } else {
+        return [...prev, typeId];
+      }
+    });
+  };
+
   // Get search suggestions
   const getSearchSuggestions = () => {
     if (!searchQuery.trim() || searchQuery.length < 1) return [];
@@ -190,6 +205,17 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const fetchTaskTypes = useCallback(async () => {
+    try {
+      const types = await getTaskTypes();
+      console.log('Loaded task types:', types);
+      setTaskTypes(types);
+      // NO sobreescribir selectedTaskTypes - ya está inicializado con [1] por defecto
+    } catch (error) {
+      console.error("Failed to fetch task types:", error);
+    }
+  }, []);
+
   const fetchDependencies = useCallback(async () => {
     try {
       const deps = await getDependencies();
@@ -212,11 +238,12 @@ const App: React.FC = () => {
           setIsAuthenticated(true);
           
           // Ejecutar llamadas en paralelo para mejor rendimiento
-          const [tasksResult, projectsResult, depsResult, userResult] = await Promise.allSettled([
+          const [tasksResult, projectsResult, depsResult, userResult, taskTypesResult] = await Promise.allSettled([
             fetchTasks(),
             fetchProjects(),
             fetchDependencies(),
-            getCurrentUser()
+            getCurrentUser(),
+            fetchTaskTypes()
           ]);
           
           if (abortController.signal.aborted) return;
@@ -556,6 +583,14 @@ const App: React.FC = () => {
     if (!currentUser) return allTasks;
     
     return allTasks.filter(task => {
+      // PRIMERO: Filtrar por tipo de tarea
+      // Si la tarea no tiene tipo asignado, asumimos que es tipo 1 (tareas genéricas)
+      const taskTypeId = task.Tipos_Tareas_ID || 1;
+      if (selectedTaskTypes.length > 0 && !selectedTaskTypes.includes(taskTypeId)) {
+        return false;
+      }
+      
+      // SEGUNDO: Filtrar por permisos de usuario
       // User created the task
       if (task.Usuario_Creador_ID === currentUser.id) return true;
       
@@ -768,10 +803,10 @@ const App: React.FC = () => {
     });
   };
 
-  const currentTasks = useMemo(() => getTodayTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
-  const urgentTasks = useMemo(() => getUrgentTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
-  const scheduledTasks = useMemo(() => getScheduledTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
-  const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  const currentTasks = useMemo(() => getTodayTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
+  const urgentTasks = useMemo(() => getUrgentTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
+  const scheduledTasks = useMemo(() => getScheduledTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
+  const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
   const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
 
   // Global subtask counts map (does NOT depend on section filters)
@@ -801,7 +836,7 @@ const App: React.FC = () => {
     return userTasks.filter(task => 
       matchesSearch(task, appliedSearchFilter, projects, selectedProjectId)
     );
-  }, [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId]);
+  }, [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
   const allTaskIds = useMemo(() => tasks.map(t => t.ID), [tasks]);
 
   // Counter functions for section titles
@@ -1127,6 +1162,35 @@ const App: React.FC = () => {
                     : `"${appliedSearchFilter}"`}
                 </span>
                 {selectedProjectId && <span className="ml-1 text-blue-600">(Proyecto)</span>}
+              </div>
+            )}
+            
+            {/* Task Type Filters */}
+            {taskTypes.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <span className="text-sm font-medium text-slate-700">Filtrar por tipo:</span>
+                  {taskTypes.map(type => (
+                    <label 
+                      key={type.id} 
+                      className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 px-3 py-2 rounded-lg transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTaskTypes.includes(type.id)}
+                        onChange={() => handleTaskTypeToggle(type.id)}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                        style={{ accentColor: type.color }}
+                      />
+                      <span 
+                        className="text-sm font-medium"
+                        style={{ color: type.color }}
+                      >
+                        {type.nombre.charAt(0).toUpperCase() + type.nombre.slice(1)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
             )}
           </div>

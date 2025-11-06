@@ -1,5 +1,5 @@
 import { CURRENT_USER_ID } from '../constants';
-import type { Task, Project, TaskDependency } from '../types';
+import type { Task, Project, TaskDependency, TaskType } from '../types';
 import { TaskState } from '../types';
 import { fetchWithSessionCheck, handleSessionExpired } from '../utils/sessionUtils';
 
@@ -21,6 +21,17 @@ export const getTasks = async (): Promise<Task[]> => {
 export const getProjects = async (): Promise<Project[]> => {
   const response = await fetchWithSessionCheck(`${API_BASE}/getProjects.php`);
   if (!response.ok) throw new Error('Failed to fetch projects');
+  const data = await response.json();
+  if (data.error) {
+    handleSessionExpired(data);
+    throw new Error(data.error);
+  }
+  return data;
+};
+
+export const getTaskTypes = async (): Promise<TaskType[]> => {
+  const response = await fetchWithSessionCheck(`${API_BASE}/getTaskTypes.php`);
+  if (!response.ok) throw new Error('Failed to fetch task types');
   const data = await response.json();
   if (data.error) {
     handleSessionExpired(data);

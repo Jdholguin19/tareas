@@ -111,4 +111,5 @@ NO exponer información sensible en mensajes de error
 
  ## Acceder a Mysql desde terminal
     - mysql -u username -p -h hostname database_name
-    C:\xampp\mysql\bin\mysql.exe -u root portalao_BDU_ReunionesCS -e
+    Ejemplo:
+C:\xampp\mysql\bin\mysql.exe -u portalao_jholguin -h box5500.bluehost.com -pjofCTV321!* portalao_ReunionesCS -e "Select * from reuniones"

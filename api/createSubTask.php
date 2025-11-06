@@ -34,15 +34,40 @@ try {
         exit;
     }
 
+    // CRÍTICO: Asegurar que SIEMPRE se herede el proyecto_id del padre
+    // Si el padre no tiene proyecto, buscar en la cadena de padres hasta encontrar uno
+    $proyectoId = $parent['proyecto_id'];
+    
+    if (!$proyectoId) {
+        // Buscar proyecto_id en la cadena de tareas padre
+        $currentParentId = $parent['tarea_padre_id'];
+        while ($currentParentId && !$proyectoId) {
+            $stmt = $pdo->prepare("SELECT proyecto_id, tarea_padre_id FROM tareas WHERE id = ?");
+            $stmt->execute([$currentParentId]);
+            $ancestor = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($ancestor) {
+                $proyectoId = $ancestor['proyecto_id'];
+                $currentParentId = $ancestor['tarea_padre_id'];
+            } else {
+                break;
+            }
+        }
+    }
+
+    // Log para debugging (opcional - remover en producción si no es necesario)
+    error_log("CreateSubTask: Parent ID=$parentId, Found proyecto_id=$proyectoId, Parent proyecto_id=" . $parent['proyecto_id']);
+
     // Iniciar transacción para asegurar que tanto la tarea como las asignaciones se creen
     $pdo->beginTransaction();
 
-    // Crear la subtarea
+    // Crear la subtarea - SIEMPRE con proyecto_id heredado
     $stmt = $pdo->prepare("
         INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_vencimiento, adjuntos_url, tipos_tareas_id)
-        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]', 1)
+        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]', ?)
     ");
-    $stmt->execute([$titulo, $userId, $parentId, $parent['proyecto_id'], $parent['asignado_a'], $parent['fecha_vencimiento']]);
+    // Heredar tipos_tareas_id del padre también
+    $tiposTareasId = $parent['tipos_tareas_id'] ?? 1;
+    $stmt->execute([$titulo, $userId, $parentId, $proyectoId, $parent['asignado_a'], $parent['fecha_vencimiento'], $tiposTareasId]);
     $taskId = $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("

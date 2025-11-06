@@ -17,6 +17,15 @@ export enum TaskImportance {
     ALTA = 'alta'
 }
 
+export interface TaskType {
+    id: number;
+    nombre: string;
+    descripcion: string;
+    color: string;
+    icono: string;
+    activo: number;
+}
+
 // Cuadrantes de la Matriz de Eisenhower
 export enum EisenhowerQuadrant {
     URGENTE_IMPORTANTE = 'urgente_importante',     // Alta prioridad + Alta importancia - Hacer ahora

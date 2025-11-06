@@ -36,7 +36,7 @@ try {
         LEFT JOIN proyectos p ON t.proyecto_id = p.id
         WHERE (t.creado_por = ? OR t.id IN (
             SELECT ta.tarea_id FROM tareas_asignados ta WHERE ta.usuario_id = ?
-        )) AND (t.tipos_tareas_id = 1 OR t.tipos_tareas_id IS NULL)
+        ))
         ORDER BY 
             CASE t.prioridad 
                 WHEN 'alta' THEN 1 

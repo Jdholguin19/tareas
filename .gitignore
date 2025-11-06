@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.github/instructions/intructions.instructions.md
+.github/copilot-instructions.md

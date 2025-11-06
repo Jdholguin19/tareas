@@ -42,3 +42,8 @@ Cuando trabajes con APIs REST entre PHP/MySQL y React/TypeScript:
    ❌ selectedProjectId === task.proyecto  // si uno es string y otro number
    ✅ parseInt(String(selectedProjectId)) === parseInt(String(task.proyecto))
  
+
+5.  ## Acceder a Mysql desde terminal
+    - mysql -u username -p -h hostname database_name
+    Ejemplo:
+C:\xampp\mysql\bin\mysql.exe -u portalao_jholguin -h box5500.bluehost.com -pjofCTV321!* portalao_ReunionesCS -e "Select * from reuniones"
