@@ -55,15 +55,22 @@ export const createQuickTask = async (titulo: string, adjuntos: string[]): Promi
 
 // PUT /api/tareas/:id
 export const updateTask = async (updatedTask: Task): Promise<Task> => {
-  const response = await fetch(`${API_BASE}/updateTask.php?id=${updatedTask.ID}`, {
+  const response = await fetchWithSessionCheck(`${API_BASE}/updateTask.php?id=${updatedTask.ID}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(updatedTask)
   });
-  if (!response.ok) throw new Error('Failed to update task');
+  if (!response.ok) {
+    console.error('updateTask failed with status:', response.status);
+    throw new Error('Failed to update task');
+  }
   const data = await response.json();
-  if (data.error) throw new Error(data.error);
+  if (data.error) {
+    console.error('updateTask error from backend:', data.error);
+    handleSessionExpired(data);
+    throw new Error(data.error);
+  }
+  console.log('updateTask success:', data);
   return data;
 };
 

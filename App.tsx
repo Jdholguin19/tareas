@@ -210,7 +210,17 @@ const App: React.FC = () => {
       const types = await getTaskTypes();
       console.log('Loaded task types:', types);
       setTaskTypes(types);
-      // NO sobreescribir selectedTaskTypes - ya está inicializado con [1] por defecto
+      // Asegurar que solo "tareas" (id=1) esté seleccionado por defecto
+      // Solo establecer si aún no se ha modificado
+      setSelectedTaskTypes(prev => {
+        // Si ya tiene valores personalizados, no tocar
+        if (prev.length !== 1 || prev[0] !== 1) {
+          return prev;
+        }
+        // Asegurar que el ID 1 existe en los tipos cargados
+        const tareasType = types.find(t => t.id === 1);
+        return tareasType ? [1] : (types.length > 0 ? [types[0].id] : [1]);
+      });
     } catch (error) {
       console.error("Failed to fetch task types:", error);
     }
@@ -277,6 +287,16 @@ const App: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Solo ejecutar una vez al montar el componente
+
+  // Asegurar que el valor por defecto de selectedTaskTypes sea correcto cuando taskTypes se carga
+  useEffect(() => {
+    if (taskTypes.length > 0 && selectedTaskTypes.length === 0) {
+      // Si por alguna razón selectedTaskTypes está vacío después de cargar tipos, establecer [1]
+      const tareasType = taskTypes.find(t => t.id === 1);
+      setSelectedTaskTypes(tareasType ? [1] : [taskTypes[0].id]);
+      console.log('Setting default task type filter to:', tareasType ? [1] : [taskTypes[0].id]);
+    }
+  }, [taskTypes, selectedTaskTypes.length]);
 
   // Load task assignees when tasks are loaded and user is authenticated
   useEffect(() => {

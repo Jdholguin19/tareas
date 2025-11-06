@@ -139,6 +139,7 @@ try {
             t.proyecto_id AS Proyecto,
             t.tarea_padre_id AS Parent_ID,
             t.adjuntos_url AS Adjuntos_URL,
+            t.tipos_tareas_id AS Tipos_Tareas_ID,
             t.prioridad AS Prioridad,
             t.importancia AS Importancia,
             p.nombre AS proyecto_nombre
