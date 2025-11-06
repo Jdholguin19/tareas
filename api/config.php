@@ -75,9 +75,21 @@ try {
     exit();
 }
 
-// Ensure session cookie params are set reasonably for local dev
+// Configurar duración de sesión a 48 horas
 if (session_status() === PHP_SESSION_NONE) {
-    // samesite is left as Lax by default to avoid some cross-site restrictions in browsers during dev
+    // 48 horas = 172800 segundos
+    ini_set('session.gc_maxlifetime', 172800);
+    
+    // Configurar cookie de sesión para que dure 48 horas
+    session_set_cookie_params([
+        'lifetime' => 172800, // 48 horas en segundos
+        'path' => '/',
+        'domain' => '', // Dejar vacío para usar el dominio actual
+        'secure' => false, // Cambiar a true si usas HTTPS
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    
     session_start();
 }
 ?>

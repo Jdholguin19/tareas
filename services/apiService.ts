@@ -1,33 +1,39 @@
 import { CURRENT_USER_ID } from '../constants';
 import type { Task, Project, TaskDependency } from '../types';
 import { TaskState } from '../types';
+import { fetchWithSessionCheck, handleSessionExpired } from '../utils/sessionUtils';
 
 const API_BASE = '/api';
 
 // --- API Functions ---
 
 export const getTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_BASE}/getTasks.php`, { credentials: 'include' });
+  const response = await fetchWithSessionCheck(`${API_BASE}/getTasks.php`);
   if (!response.ok) throw new Error('Failed to fetch tasks');
   const data = await response.json();
-  if (data.error) throw new Error(data.error);
+  if (data.error) {
+    handleSessionExpired(data);
+    throw new Error(data.error);
+  }
   return data;
 };
 
 export const getProjects = async (): Promise<Project[]> => {
-  const response = await fetch(`${API_BASE}/getProjects.php`, { credentials: 'include' });
+  const response = await fetchWithSessionCheck(`${API_BASE}/getProjects.php`);
   if (!response.ok) throw new Error('Failed to fetch projects');
   const data = await response.json();
-  if (data.error) throw new Error(data.error);
+  if (data.error) {
+    handleSessionExpired(data);
+    throw new Error(data.error);
+  }
   return data;
 };
 
 // POST /api/tareas/rapida
 export const createQuickTask = async (titulo: string, adjuntos: string[]): Promise<Task> => {
-  const response = await fetch(`${API_BASE}/createQuickTask.php`, {
+  const response = await fetchWithSessionCheck(`${API_BASE}/createQuickTask.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ titulo, adjuntos })
   });
   if (!response.ok) throw new Error('Failed to create task');

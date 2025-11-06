@@ -392,6 +392,52 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Modifica los detalles de tu tarea.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {canEdit && (
+              <button
+                onClick={async () => {
+                  try {
+                    // Llamar al API para toggle important
+                    const response = await fetch('/api/toggleImportant.php', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({ taskId: task.ID })
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to toggle important');
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+                    
+                    // Actualizar el estado local inmediatamente
+                    const updatedFormData = { 
+                      ...formData, 
+                      Prioridad: data.newPriority as any 
+                    };
+                    setFormData(updatedFormData);
+                    
+                    // Guardar en el backend para que se refleje en todas las vistas
+                    await onSave(updatedFormData);
+                    
+                    console.log('Prioridad actualizada:', data.newPriority);
+                  } catch (error) {
+                    console.error('Error al marcar como importante:', error);
+                    alert('Error al actualizar la importancia');
+                  }
+                }}
+                className={`p-1.5 sm:p-2 rounded-full transition-colors ${
+                  formData.Prioridad === 'alta' 
+                    ? 'text-yellow-500 hover:bg-yellow-50' 
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-yellow-500'
+                }`}
+                title={formData.Prioridad === 'alta' ? 'Desmarcar como importante' : 'Marcar como importante'}
+                aria-label={formData.Prioridad === 'alta' ? 'Desmarcar como importante' : 'Marcar como importante'}
+              >
+                <Icon 
+                  name={formData.Prioridad === 'alta' ? 'starFilled' : 'starEmpty'} 
+                  className="w-5 h-5 sm:w-6 sm:h-6" 
+                />
+              </button>
+            )}
             {canDelete && (
               <button
                 onClick={handleDeleteClick}
