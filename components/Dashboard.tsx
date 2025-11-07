@@ -23,6 +23,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isMyTasksModalOpen, setIsMyTasksModalOpen] = useState(false);
+  const [isAllTasksModalOpen, setIsAllTasksModalOpen] = useState(false);
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<number>>(new Set());
 
   // Expandir todas las tareas cuando se abre un modal
@@ -64,6 +65,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setExpandedTaskIds(allTaskIds);
     }
   }, [isMyTasksModalOpen, currentUser, tasks, taskAssigneesRecord]);
+
+  // Expandir todas las tareas cuando se abre el modal de "Todas las Tareas"
+  useEffect(() => {
+    if (isAllTasksModalOpen && currentUser) {
+      // Todas las tareas del usuario (creadas O asignadas)
+      const userTasks = tasks.filter(t => 
+        normalizeId(t.Usuario_Creador_ID) === normalizeId(currentUser.id) || 
+        isTaskAssignedToUser(t, false)
+      );
+      const allTaskIds = new Set<number>();
+      
+      const buildUserTasksHierarchy = (parentId: number): Task[] => {
+        return userTasks
+          .filter(t => normalizeId(t.Parent_ID) === normalizeId(parentId))
+          .sort((a, b) => a.ID - b.ID);
+      };
+      
+      const collectAllTaskIds = (task: Task) => {
+        allTaskIds.add(task.ID);
+        const children = buildUserTasksHierarchy(task.ID);
+        children.forEach(child => collectAllTaskIds(child));
+      };
+      
+      userTasks.filter(t => !t.Parent_ID || t.Parent_ID === 0).forEach(task => collectAllTaskIds(task));
+      setExpandedTaskIds(allTaskIds);
+    }
+  }, [isAllTasksModalOpen, currentUser, tasks, taskAssigneesRecord]);
 
   // Helper function to normalize IDs for comparison
   const normalizeId = (id: any): number => parseInt(String(id));
@@ -289,12 +317,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Resumen General */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total de Tareas */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+          {/* Total de Tareas - Clickable */}
+          <div 
+            onClick={() => currentUser && setIsAllTasksModalOpen(true)}
+            className={`bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500 transition-all ${currentUser ? 'cursor-pointer hover:shadow-md hover:scale-[1.02]' : ''}`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Total de Tareas</p>
                 <p className="text-3xl font-bold text-slate-900 mt-2">{metrics.totalTasks}</p>
+                {currentUser && (
+                  <p className="text-xs text-blue-600 mt-1">Haz clic para ver todas</p>
+                )}
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
                 <Icon name="list" className="w-6 h-6 text-blue-600" />
@@ -583,6 +617,99 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-200 bg-slate-50">
                 <button
                   onClick={() => setIsMyTasksModalOpen(false)}
+                  className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Todas las Tareas del Usuario */}
+        {isAllTasksModalOpen && currentUser && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4"
+            onClick={() => setIsAllTasksModalOpen(false)}
+          >
+            <div 
+              className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header del Modal */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-200">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Todas Mis Tareas</h2>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Tareas que he creado o donde estoy asignado
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAllTasksModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <Icon name="close" className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Body del Modal - Lista de Tareas */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {(() => {
+                  // Todas las tareas del usuario (creadas O asignadas)
+                  const userTasks = tasks.filter(t => 
+                    normalizeId(t.Usuario_Creador_ID) === normalizeId(currentUser.id) || 
+                    isTaskAssignedToUser(t, false)
+                  );
+                  
+                  console.log('Todas las tareas del usuario:', userTasks.length);
+                  
+                  if (userTasks.length === 0) {
+                    return (
+                      <div className="text-center py-12 text-slate-500">
+                        <Icon name="list" className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                        <p>No tienes tareas</p>
+                      </div>
+                    );
+                  }
+
+                  // Mostrar todas las tareas con jerarquía
+                  const rootUserTasks = userTasks.filter(t => !t.Parent_ID || t.Parent_ID === 0);
+                  const childUserTasks = userTasks.filter(t => t.Parent_ID && t.Parent_ID !== 0);
+                  
+                  const buildUserTasksHierarchy = (parentId: number): Task[] => {
+                    return userTasks
+                      .filter(t => normalizeId(t.Parent_ID) === normalizeId(parentId))
+                      .sort((a, b) => a.ID - b.ID);
+                  };
+
+                  return (
+                    <>
+                      <div className="text-sm text-slate-600 mb-4">
+                        Total de tareas: <span className="font-semibold">{userTasks.length}</span>
+                        <span className="text-slate-400 ml-2">
+                          (Creadas: {tasks.filter(t => normalizeId(t.Usuario_Creador_ID) === normalizeId(currentUser.id)).length}, 
+                          Asignadas: {tasks.filter(t => isTaskAssignedToUser(t, false)).length})
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {/* Tareas raíz con su jerarquía */}
+                        {rootUserTasks.map(task => renderTaskWithChildren(task, buildUserTasksHierarchy, 0))}
+                        
+                        {/* Tareas huérfanas */}
+                        {childUserTasks.filter(childTask => {
+                          const parentExists = userTasks.some(t => t.ID === childTask.Parent_ID);
+                          return !parentExists;
+                        }).map(task => renderTaskWithChildren(task, buildUserTasksHierarchy, 0))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Footer del Modal */}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-200 bg-slate-50">
+                <button
+                  onClick={() => setIsAllTasksModalOpen(false)}
                   className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   Cerrar
