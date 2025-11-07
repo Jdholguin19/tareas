@@ -13,6 +13,8 @@ interface GanttChartProps {
     onDependencyDelete?: (dependencyId: number) => void;
     currentUser?: {id: number, username: string, email: string} | null;
     onProjectCreated?: (project: Project) => void;
+    focusedTaskId?: number | null; // New: ID of task to focus and highlight
+    onFullscreenChange?: (isFullscreen: boolean) => void; // New: callback when fullscreen changes
 }
 
 const GanttChart: React.FC<GanttChartProps> = ({
@@ -23,7 +25,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
     onDependencyCreate,
     onDependencyDelete,
     currentUser,
-    onProjectCreated
+    onProjectCreated,
+    focusedTaskId,
+    onFullscreenChange
 }) => {
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [timelineScale, setTimelineScale] = useState<GanttTimelineScale>({
@@ -41,21 +45,39 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const sidebarRef = useRef<HTMLDivElement | null>(null);
     const ganttRootRef = useRef<HTMLDivElement | null>(null);
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+    const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
     
     // Estados adicionales para acordeón y edición
     const [collapsedTasks, setCollapsedTasks] = useState<Set<number>>(new Set());
     const [editingTask, setEditingTask] = useState<number | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
+    // Estados para anchos de columnas redimensionables
+    const [columnWidths, setColumnWidths] = useState({
+        id: 50,
+        tareas: 350,
+        inicio: 80,
+        fin: 80,
+        predecesoras: 100,
+        duracion: 80
+    });
+    const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+    const [resizeStartX, setResizeStartX] = useState<number>(0);
+    const [resizeStartWidth, setResizeStartWidth] = useState<number>(0);
+
     // Constantes para el layout
     const TASK_HEIGHT = 32;
     const TASK_MARGIN = 8;
     const ROW_HEIGHT = TASK_HEIGHT + TASK_MARGIN;
     const TIMELINE_HEIGHT = 60;
-    const SIDEBAR_WIDTH = window.innerWidth < 1024 ? 320 : 480; // Responsive sidebar width
     const DAY_WIDTH = window.innerWidth < 640 ? 20 : 30; // Smaller day width on mobile
-    const DATE_COL_WIDTH = 80; // ancho fijo para columnas Inicio/Fin/Duración
     const MIN_CHART_WIDTH = 320; // base mínima
+    
+    // Calcular ancho total del sidebar basado en las columnas
+    const SIDEBAR_WIDTH = useMemo(() => {
+        return columnWidths.id + columnWidths.tareas + columnWidths.inicio + 
+               columnWidths.fin + columnWidths.predecesoras + columnWidths.duracion;
+    }, [columnWidths]);
 
     // Generar timeline basado en la escala seleccionada (debe ir antes de usar timelineDays)
     const timelineDays = useMemo(() => {
@@ -166,6 +188,57 @@ const GanttChart: React.FC<GanttChartProps> = ({
             }
             return newSet;
         });
+    };
+
+    // Funciones para redimensionar columnas
+    const handleColumnResizeStart = (columnName: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setResizingColumn(columnName);
+        setResizeStartX(e.clientX);
+        setResizeStartWidth(columnWidths[columnName as keyof typeof columnWidths]);
+    };
+
+    const handleColumnResizeMove = (e: MouseEvent) => {
+        if (!resizingColumn) return;
+        
+        const deltaX = e.clientX - resizeStartX;
+        const newWidth = Math.max(40, resizeStartWidth + deltaX); // Mínimo 40px
+        
+        setColumnWidths(prev => ({
+            ...prev,
+            [resizingColumn]: newWidth
+        }));
+    };
+
+    const handleColumnResizeEnd = () => {
+        setResizingColumn(null);
+    };
+
+    // Effect para manejar resize de columnas
+    useEffect(() => {
+        if (resizingColumn) {
+            document.addEventListener('mousemove', handleColumnResizeMove);
+            document.addEventListener('mouseup', handleColumnResizeEnd);
+            
+            return () => {
+                document.removeEventListener('mousemove', handleColumnResizeMove);
+                document.removeEventListener('mouseup', handleColumnResizeEnd);
+            };
+        }
+    }, [resizingColumn, resizeStartX, resizeStartWidth]);
+
+    // Función para obtener predecesoras de una tarea
+    const getTaskPredecessors = (taskId: number): string => {
+        const predecessorDeps = dependencies.filter(dep => 
+            parseInt(String(dep.tarea_sucesora_id)) === parseInt(String(taskId))
+        );
+        
+        if (predecessorDeps.length === 0) return '';
+        
+        return predecessorDeps
+            .map(dep => String(dep.tarea_predecesora_id))
+            .join(', ');
     };
 
     // Función para verificar si una tarea debe estar visible (no colapsada por su padre)
@@ -573,7 +646,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const formatDate = (date: Date) => {
         return date.toLocaleDateString('es-ES', { 
             day: '2-digit', 
-            month: '2-digit' 
+            month: '2-digit',
+            year: '2-digit'
         });
     };
 
@@ -582,10 +656,65 @@ const GanttChart: React.FC<GanttChartProps> = ({
         const handler = () => {
             const isFs = !!document.fullscreenElement;
             setIsFullscreen(isFs);
+            if (onFullscreenChange) {
+                onFullscreenChange(isFs);
+            }
         };
         document.addEventListener('fullscreenchange', handler);
         return () => document.removeEventListener('fullscreenchange', handler);
-    }, []);
+    }, [onFullscreenChange]);
+
+    // Efecto para hacer focus a una tarea específica
+    useEffect(() => {
+        if (focusedTaskId && chartAreaRef.current && sidebarRef.current) {
+            // Encontrar el índice de la tarea en ganttTasks
+            const taskIndex = ganttTasks.findIndex(t => 
+                parseInt(String(t.ID)) === parseInt(String(focusedTaskId))
+            );
+            
+            if (taskIndex !== -1) {
+                const task = ganttTasks[taskIndex];
+                
+                // Esperar a que el DOM se actualice y el fullscreen se complete
+                const performScroll = () => {
+                    if (!chartAreaRef.current || !sidebarRef.current) return;
+                    
+                    // Calcular posición de scroll vertical (para la tarea en la lista)
+                    const scrollY = task.y;
+                    
+                    // Calcular posición de scroll horizontal (para centrar la barra en el timeline)
+                    const chartWidth = chartAreaRef.current.clientWidth;
+                    const scrollX = Math.max(0, task.x + task.width / 2 - chartWidth / 2);
+                    
+                    // Hacer scroll suave
+                    chartAreaRef.current.scrollTo({
+                        left: scrollX,
+                        top: scrollY - 100, // Offset para que no quede pegado arriba
+                        behavior: 'smooth'
+                    });
+                    
+                    sidebarRef.current.scrollTo({
+                        top: scrollY - 100,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Highlight temporal
+                    setHighlightedTaskId(focusedTaskId);
+                    
+                    // Quitar highlight después de 3 segundos
+                    setTimeout(() => {
+                        setHighlightedTaskId(null);
+                    }, 3000);
+                };
+                
+                // Usar requestAnimationFrame para asegurar que el DOM esté listo
+                // y darle tiempo al fullscreen para completarse
+                requestAnimationFrame(() => {
+                    setTimeout(performScroll, 300); // Esperar 300ms adicionales
+                });
+            }
+        }
+    }, [focusedTaskId, ganttTasks]);
 
     const toggleFullscreen = async () => {
         try {
@@ -595,16 +724,26 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 } else {
                     // Fallback a clases CSS si Fullscreen API no está disponible
                     setIsFullscreen(true);
+                    if (onFullscreenChange) {
+                        onFullscreenChange(true);
+                    }
                 }
             } else {
                 if (document.fullscreenElement && document.exitFullscreen) {
                     await document.exitFullscreen();
                 }
                 setIsFullscreen(false);
+                if (onFullscreenChange) {
+                    onFullscreenChange(false);
+                }
             }
         } catch (e) {
             // Si falla, alternar por clases CSS
-            setIsFullscreen((prev) => !prev);
+            const newState = !isFullscreen;
+            setIsFullscreen(newState);
+            if (onFullscreenChange) {
+                onFullscreenChange(newState);
+            }
         }
     };
 
@@ -672,30 +811,73 @@ const GanttChart: React.FC<GanttChartProps> = ({
             <div className="gantt-content flex flex-col lg:flex-row min-h-0 flex-1 overflow-hidden">
                 {/* Sidebar con lista de tareas */}
                 <div 
-                    className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b flex flex-col" 
+                    className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b flex flex-col flex-shrink-0" 
                     style={{ 
-                        width: '100%', 
-                        maxWidth: SIDEBAR_WIDTH,
-                        minWidth: '320px',
+                        width: `${SIDEBAR_WIDTH}px`,
+                        minWidth: `${SIDEBAR_WIDTH}px`,
+                        maxWidth: `${SIDEBAR_WIDTH}px`,
                         overflow: 'hidden'
                     }}
                 >
                     {/* Timeline header con columnas - FIJO */}
                     <div
                         className="h-[60px] border-b bg-gray-100 grid items-center flex-shrink-0"
-                        style={{ gridTemplateColumns: `1fr ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px` }}
+                        style={{ 
+                            gridTemplateColumns: `${columnWidths.id}px ${columnWidths.tareas}px ${columnWidths.inicio}px ${columnWidths.fin}px ${columnWidths.predecesoras}px ${columnWidths.duracion}px` 
+                        }}
                     >
-                        <div className="px-2 sm:px-4">
+                        {/* Columna ID */}
+                        <div className="px-1 sm:px-2 border-r relative group">
+                            <span className="text-xs font-medium text-gray-600">ID</span>
+                            <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                onMouseDown={(e) => handleColumnResizeStart('id', e)}
+                            />
+                        </div>
+                        
+                        {/* Columna Tareas */}
+                        <div className="px-2 sm:px-4 border-r relative group">
                             <span className="text-xs sm:text-sm font-medium text-gray-700">Tareas</span>
+                            <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                onMouseDown={(e) => handleColumnResizeStart('tareas', e)}
+                            />
                         </div>
-                        <div className="px-1 sm:px-2 border-l text-center">
+                        
+                        {/* Columna Inicio */}
+                        <div className="px-1 sm:px-2 border-r text-center relative group">
                             <span className="text-xs font-medium text-gray-600">Inicio</span>
+                            <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                onMouseDown={(e) => handleColumnResizeStart('inicio', e)}
+                            />
                         </div>
-                        <div className="px-1 sm:px-2 border-l text-center">
+                        
+                        {/* Columna Fin */}
+                        <div className="px-1 sm:px-2 border-r text-center relative group">
                             <span className="text-xs font-medium text-gray-600">Fin</span>
+                            <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                onMouseDown={(e) => handleColumnResizeStart('fin', e)}
+                            />
                         </div>
-                        <div className="px-1 sm:px-2 border-l text-center">
+                        
+                        {/* Columna Predecesoras */}
+                        <div className="px-1 sm:px-2 border-r text-center relative group">
+                            <span className="text-xs font-medium text-gray-600">Predec.</span>
+                            <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                onMouseDown={(e) => handleColumnResizeStart('predecesoras', e)}
+                            />
+                        </div>
+                        
+                        {/* Columna Duración */}
+                        <div className="px-1 sm:px-2 text-center relative group">
                             <span className="text-xs font-medium text-gray-600">Duración</span>
+                            <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                onMouseDown={(e) => handleColumnResizeStart('duracion', e)}
+                            />
                         </div>
                     </div>
                     
@@ -712,22 +894,39 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     >
                         {ganttTasks.map((task) => {
                             const level = (task as any).level || 0;
-                            const indentWidth = level * 12; // Reducido para móviles
+                            const indentWidth = level * 12;
                             const taskHasChildren = hasChildren(task.ID);
                             const isCollapsed = collapsedTasks.has(task.ID);
                             
-                            // Ancho dinámico basado en el nivel de jerarquía
-                            const taskNameMaxWidth = level > 0 ? '120px' : '160px'; // Subtareas más limitadas
+                            // Verificar si esta tarea está resaltada
+                            const isTaskHighlighted = highlightedTaskId && parseInt(String(task.ID)) === parseInt(String(highlightedTaskId));
+                            
+                            // Obtener predecesoras
+                            const predecessors = getTaskPredecessors(task.ID);
                             
                             return (
                                 <div 
                                     key={task.ID}
-                                    className="gantt-task-row border-b hover:bg-gray-100 grid items-center"
-                                    style={{ height: ROW_HEIGHT, gridTemplateColumns: `1fr ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px ${DATE_COL_WIDTH}px` }}
+                                    className={`gantt-task-row border-b hover:bg-gray-100 grid items-center transition-all ${
+                                        isTaskHighlighted 
+                                            ? 'bg-yellow-100 ring-2 ring-yellow-400 ring-inset animate-pulse' 
+                                            : ''
+                                    }`}
+                                    style={{ 
+                                        height: ROW_HEIGHT, 
+                                        gridTemplateColumns: `${columnWidths.id}px ${columnWidths.tareas}px ${columnWidths.inicio}px ${columnWidths.fin}px ${columnWidths.predecesoras}px ${columnWidths.duracion}px` 
+                                    }}
                                     onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
                                 >
+                                    {/* Columna ID */}
+                                    <div className="px-1 sm:px-2 border-r text-center">
+                                        <span className="text-xs text-gray-700 font-mono">
+                                            {task.ID}
+                                        </span>
+                                    </div>
+                                    
                                     {/* Columna de tarea con indentación y acordeón */}
-                                    <div className="flex items-center h-full px-1 sm:px-2" style={{ paddingLeft: `${4 + indentWidth}px` }}>
+                                    <div className="flex items-center h-full px-1 sm:px-2 border-r overflow-hidden" style={{ paddingLeft: `${4 + indentWidth}px` }}>
                                         {/* Botón de acordeón para tareas padre */}
                                         {taskHasChildren && (
                                             <button
@@ -759,7 +958,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                             </div>
                                         )}
                                         
-                                        <div className="flex-1 min-w-0 mr-1 sm:mr-2" style={{ maxWidth: taskNameMaxWidth }}>
+                                        <div className="flex-1 min-w-0 mr-1 sm:mr-2">
                                             <div className={`text-xs sm:text-sm truncate ${level === 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`} title={task.Titulo}>
                                                 {task.Titulo}
                                             </div>
@@ -773,22 +972,48 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         </div>
                                     </div>
                                     
-                                    {/* Columna fecha inicio - FIJA */}
-                                    <div className="px-1 sm:px-2 border-l text-center">
+                                    {/* Columna fecha inicio */}
+                                    <div className="px-1 sm:px-2 border-r text-center">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio)) : '-'}
                                         </span>
                                     </div>
                                     
-                                    {/* Columna fecha fin - FIJA */}
-                                    <div className="px-1 sm:px-2 border-l text-center">
+                                    {/* Columna fecha fin */}
+                                    <div className="px-1 sm:px-2 border-r text-center">
                                         <span className="text-xs text-gray-600">
                                             {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento)) : '-'}
                                         </span>
                                     </div>
                                     
-                                    {/* Columna duración - NUEVA */}
-                                    <div className="px-1 sm:px-2 border-l text-center">
+                                    {/* Columna Predecesoras */}
+                                    <div className="px-1 sm:px-2 border-r text-center">
+                                        {predecessors ? (
+                                            <div className="flex flex-wrap gap-1 justify-center items-center">
+                                                {predecessors.split(', ').map((predId, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="text-xs text-blue-600 font-mono cursor-pointer hover:text-blue-800 hover:underline"
+                                                        onDoubleClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const taskId = parseInt(predId.trim());
+                                                            if (!isNaN(taskId)) {
+                                                                handleTaskDoubleClick(taskId, e as any);
+                                                            }
+                                                        }}
+                                                        title="Doble click para editar esta tarea"
+                                                    >
+                                                        {predId.trim()}{idx < predecessors.split(', ').length - 1 ? ',' : ''}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-600">-</span>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Columna duración */}
+                                    <div className="px-1 sm:px-2 text-center">
                                         <span className="text-xs text-gray-600 font-medium">
                                             {calculateDuration(task.Fecha_Inicio, task.Fecha_Vencimiento)}
                                         </span>
@@ -907,6 +1132,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                             let additionalClasses = '';
                             if (isDragging) {
                                 additionalClasses = 'opacity-80 z-10 shadow-xl';
+                            }
+                            
+                            // Agregar highlight si es la tarea enfocada
+                            const isHighlighted = highlightedTaskId && parseInt(String(task.ID)) === parseInt(String(highlightedTaskId));
+                            if (isHighlighted) {
+                                additionalClasses += ' ring-4 ring-yellow-400 ring-opacity-75 shadow-2xl z-20 animate-pulse';
                             }
                             
                             return (

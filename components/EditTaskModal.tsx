@@ -3,7 +3,7 @@ import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, createProject } from '../services/apiService';
+import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, createProject, updateTask } from '../services/apiService';
 
 interface EditTaskModalProps {
   task: Task;
@@ -13,13 +13,15 @@ interface EditTaskModalProps {
   onProjectCreated?: (project: Project) => void;
   onClose: () => void;
   onSave: (updatedTask: Task) => Promise<void>;
+  onTaskUpdate?: (updatedTask: Task) => void; // New: update task without closing modal
   onCreateSubtask: (parentTaskId: number, title: string) => Promise<void>;
   onDelete: (taskId: number) => void;
   onSubtaskClick?: (subtask: Task) => void;
   hasNavigationHistory?: boolean;
+  onGanttFocus?: (taskId: number) => void; // New: focus task in Gantt view
 }
 
-export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, currentUser, onClose, onSave, onCreateSubtask, onDelete, onProjectCreated, onSubtaskClick, hasNavigationHistory }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, projects, currentUser, onClose, onSave, onTaskUpdate, onCreateSubtask, onDelete, onProjectCreated, onSubtaskClick, hasNavigationHistory, onGanttFocus }) => {
   const [formData, setFormData] = useState<Task>({ ...task });
   const [isSaving, setIsSaving] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -123,11 +125,28 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     }, 300);
   };
 
-  const handleProjectSelect = (project: {id: number, nombre: string}) => {
-    setFormData(prev => ({ ...prev, Proyecto: project.id }));
+  const handleProjectSelect = async (project: {id: number, nombre: string}) => {
+    const updatedTask = { ...formData, Proyecto: project.id };
+    setFormData(updatedTask);
     setProjectSearchQuery('');
     setShowProjectDropdown(false);
     setProjectSearchResults([]);
+    
+    // Save the updated task to the database WITHOUT closing the modal
+    try {
+      const savedTask = await updateTask(updatedTask);
+      // Update formData with the saved task to ensure we have the latest data
+      setFormData(savedTask);
+      // Notify parent to update the task list without closing the modal
+      if (onTaskUpdate) {
+        onTaskUpdate(savedTask);
+      }
+    } catch (error) {
+      console.error('Error updating project:', error);
+      // Revert on error
+      setFormData(formData);
+      alert('Error al asignar el proyecto');
+    }
   };
 
   const handleClearProject = async () => {
@@ -136,7 +155,13 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     // keep search query cleared
     setProjectSearchQuery('');
     try {
-      await onSave(updatedTask);
+      const savedTask = await updateTask(updatedTask);
+      // Update formData with the saved task to ensure we have the latest data
+      setFormData(savedTask);
+      // Notify parent to update the task list without closing the modal
+      if (onTaskUpdate) {
+        onTaskUpdate(savedTask);
+      }
     } catch (error) {
       console.error('Error removing project:', error);
       // Revert on error
@@ -151,16 +176,30 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     setIsCreatingProject(true);
     try {
       const created = await createProject(trimmed);
-      // select created project
-      setFormData(prev => ({ ...prev, Proyecto: created.id }));
+      // select created project and save to database WITHOUT closing the modal
+      const updatedTask = { ...formData, Proyecto: created.id };
+      setFormData(updatedTask);
       setProjectSearchQuery('');
       setShowProjectDropdown(false);
       setProjectSearchResults([]);
+      
+      // Save the updated task to the database
+      const savedTask = await updateTask(updatedTask);
+      // Update formData with the saved task to ensure we have the latest data
+      setFormData(savedTask);
+      
+      // Notify parent to update the task list without closing the modal
+      if (onTaskUpdate) {
+        onTaskUpdate(savedTask);
+      }
+      
       // notify parent so it can refresh cached list
       if (onProjectCreated) onProjectCreated(created as Project);
     } catch (error) {
       console.error('Error creating project:', error);
       alert('No se pudo crear el proyecto');
+      // Revert on error
+      setFormData(formData);
     } finally {
       setIsCreatingProject(false);
     }
@@ -366,7 +405,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
   return (
     <div 
-        className="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-center p-2 sm:p-4" 
+        className="fixed inset-0 bg-black bg-opacity-40 z-[100] flex justify-center items-center p-2 sm:p-4" 
         onClick={onClose} 
         aria-modal="true" 
         role="dialog"
@@ -392,6 +431,19 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             <p className="text-xs sm:text-sm text-slate-500 mt-1">Modifica los detalles de tu tarea.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {onGanttFocus && (
+              <button
+                onClick={() => {
+                  onGanttFocus(task.ID);
+                  onClose();
+                }}
+                className="p-1.5 sm:p-2 rounded-full text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                title="Ver en Gantt"
+                aria-label="Ver en Gantt"
+              >
+                <Icon name="gantt" className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
             {canEdit && (
               <button
                 onClick={async () => {
@@ -411,29 +463,29 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                     // Actualizar el estado local inmediatamente
                     const updatedFormData = { 
                       ...formData, 
-                      Prioridad: data.newPriority as any 
+                      Importancia: data.newImportance as any 
                     };
                     setFormData(updatedFormData);
                     
                     // Guardar en el backend para que se refleje en todas las vistas
                     await onSave(updatedFormData);
                     
-                    console.log('Prioridad actualizada:', data.newPriority);
+                    console.log('Importancia actualizada:', data.newImportance);
                   } catch (error) {
                     console.error('Error al marcar como importante:', error);
                     alert('Error al actualizar la importancia');
                   }
                 }}
                 className={`p-1.5 sm:p-2 rounded-full transition-colors ${
-                  formData.Prioridad === 'alta' 
+                  formData.Importancia === 'alta' 
                     ? 'text-yellow-500 hover:bg-yellow-50' 
                     : 'text-slate-400 hover:bg-slate-100 hover:text-yellow-500'
                 }`}
-                title={formData.Prioridad === 'alta' ? 'Desmarcar como importante' : 'Marcar como importante'}
-                aria-label={formData.Prioridad === 'alta' ? 'Desmarcar como importante' : 'Marcar como importante'}
+                title={formData.Importancia === 'alta' ? 'Desmarcar como importante' : 'Marcar como importante'}
+                aria-label={formData.Importancia === 'alta' ? 'Desmarcar como importante' : 'Marcar como importante'}
               >
                 <Icon 
-                  name={formData.Prioridad === 'alta' ? 'starFilled' : 'starEmpty'} 
+                  name={formData.Importancia === 'alta' ? 'starFilled' : 'starEmpty'} 
                   className="w-5 h-5 sm:w-6 sm:h-6" 
                 />
               </button>
@@ -482,7 +534,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
               {isParentTask ? (
                 <div className="flex items-center">
-                  <Icon name="check" className="w-4 h-4 text-green-600 mr-2" />
+                  
                   <span className="text-sm font-medium text-slate-700"> ✔ Esta es una tarea principal</span>
                 </div>
               ) : (

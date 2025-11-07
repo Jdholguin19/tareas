@@ -244,17 +244,6 @@ export const EisenhowerMatrix: React.FC<EisenhowerMatrixProps> = ({
             <p className="text-sm text-slate-600">Organiza tus tareas por urgencia e importancia</p>
           </div>
         </div>
-        
-        <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span className="text-slate-600"><strong>Urgente:</strong> Prioridad Alta</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span className="text-slate-600"><strong>Importante:</strong> Importancia Alta</span>
-          </div>
-        </div>
       </div>
 
       {/* Matrix Grid */}

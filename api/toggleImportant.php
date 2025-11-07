@@ -21,7 +21,7 @@ if (!$taskId) {
 try {
     // Verificar que el usuario tenga permisos para modificar la tarea
     $stmt = $pdo->prepare("
-        SELECT t.*, t.prioridad 
+        SELECT t.*, t.importancia 
         FROM tareas t
         WHERE t.id = ? AND (t.creado_por = ? OR EXISTS (
             SELECT 1 FROM tareas_asignados ta WHERE ta.tarea_id = t.id AND ta.usuario_id = ?
@@ -35,22 +35,22 @@ try {
         exit;
     }
 
-    // Alternar la prioridad: si es 'alta' cambiar a 'media', si no es 'alta' cambiar a 'alta'
-    $newPriority = ($task['prioridad'] === 'alta') ? 'media' : 'alta';
+    // Alternar la IMPORTANCIA: si es 'alta' cambiar a 'baja', si no es 'alta' cambiar a 'alta'
+    $newImportance = ($task['importancia'] === 'alta') ? 'baja' : 'alta';
 
-    // Actualizar la prioridad
+    // Actualizar la IMPORTANCIA
     $stmt = $pdo->prepare("
         UPDATE tareas 
-        SET prioridad = ? 
+        SET importancia = ? 
         WHERE id = ?
     ");
-    $stmt->execute([$newPriority, $taskId]);
+    $stmt->execute([$newImportance, $taskId]);
 
     echo json_encode([
         'success' => true,
         'taskId' => $taskId,
-        'newPriority' => $newPriority,
-        'isImportant' => $newPriority === 'alta'
+        'newImportance' => $newImportance,
+        'isImportant' => $newImportance === 'alta'
     ]);
 
 } catch (Exception $e) {

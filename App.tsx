@@ -4,6 +4,7 @@ import { TaskList } from './components/TaskList';
 import { GanttChart } from './components/GanttChart';
 import { KanbanBoard } from './components/KanbanBoard';
 import { EisenhowerMatrix } from './components/EisenhowerMatrix';
+import { Dashboard } from './components/Dashboard';
 import { Icon } from './components/Icon';
 import type { Task, Project, TaskDependency, TaskType } from './types';
 import { TaskPriority } from './types';
@@ -34,8 +35,12 @@ const App: React.FC = () => {
   // Current user state
   const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
 
+  // Page state - para alternar entre Dashboard y App de Tareas
+  const [currentPage, setCurrentPage] = useState<'tasks' | 'dashboard'>('tasks');
+
   // View state
   const [activeView, setActiveView] = useState<'list' | 'kanban' | 'gantt' | 'matrix'>('list');
+  const [ganttFocusedTaskId, setGanttFocusedTaskId] = useState<number | null>(null);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -463,6 +468,33 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRefreshTasks = async () => {
+    setIsLoading(true);
+    try {
+      // Recargar todas las tareas, proyectos, tipos de tarea y dependencias
+      await Promise.all([
+        fetchTasks(),
+        fetchProjects(),
+        fetchTaskTypes(),
+        fetchDependencies()
+      ]);
+      
+      // Recargar asignaciones de usuarios
+      if (currentUser) {
+        const taskIds = tasks.map(task => task.ID);
+        if (taskIds.length > 0) {
+          const assignees = await getAllTaskAssignees(taskIds);
+          setTaskAssigneesRecord(assignees);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh tasks:", error);
+      alert('Error al recargar las tareas. Por favor, intenta de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleScrollToCreateTask = () => {
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -522,6 +554,34 @@ const App: React.FC = () => {
       link.click();
       document.body.removeChild(link);
     }
+  };
+
+  const handleGanttFocus = async (taskId: number) => {
+    // Cambiar a vista Gantt primero
+    setActiveView('gantt');
+    
+    // Esperar a que la vista Gantt se renderice completamente
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Activar pantalla completa del Gantt
+    const ganttRoot = document.querySelector('.gantt-chart');
+    if (ganttRoot && (ganttRoot as any).requestFullscreen) {
+      try {
+        await (ganttRoot as any).requestFullscreen();
+        // Esperar a que el fullscreen se complete
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (e) {
+        console.log('Fullscreen not available, continuing without it');
+      }
+    }
+    
+    // Ahora establecer el ID de la tarea a enfocar (después del fullscreen)
+    setGanttFocusedTaskId(taskId);
+    
+    // Limpiar el focusedTaskId después de que se haya procesado
+    setTimeout(() => {
+      setGanttFocusedTaskId(null);
+    }, 5000); // 5 segundos para dar tiempo al highlight
   };
 
   // Filter functions
@@ -912,6 +972,19 @@ const App: React.FC = () => {
         ) : (
           <LoginForm onLogin={() => window.location.reload()} onSwitchToRegister={() => setShowRegister(true)} />
         )
+      ) : currentPage === 'dashboard' ? (
+        // Show Dashboard page
+        <Dashboard 
+          tasks={tasks}
+          projects={projects}
+          currentUser={currentUser}
+          taskAssigneesRecord={taskAssigneesRecord}
+          onBackToTasks={() => setCurrentPage('tasks')}
+          onEditTask={(task) => {
+            setEditingTask(task);
+            // NO cambiar la página, mantener en dashboard
+          }}
+        />
       ) : (
         // show main app when authenticated
         <>
@@ -1012,13 +1085,23 @@ const App: React.FC = () => {
               )}
             </div>
             <button
-              onClick={handleExportCSV}
+              onClick={handleRefreshTasks}
+              disabled={isLoading}
+              className="flex items-center space-x-2 bg-white text-slate-600 px-3 py-2 sm:px-4 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
+              aria-label="Recargar tareas"
+              title="Recargar tareas"
+            >
+              <Icon name="refresh" className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoading ? 'animate-spin' : ''}`}/>
+              <span className="font-medium hidden sm:inline"></span>
+            </button>
+            <button
+              onClick={() => setCurrentPage('dashboard')}
               className="flex items-center space-x-2 bg-white text-slate-600 px-3 py-2 sm:px-4 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
               disabled={tasks.length === 0}
-              aria-label="Exportar tareas a CSV"
+              aria-label="Ir al Dashboard"
             >
-              <Icon name="download" className="w-4 h-4 sm:w-5 sm:h-5"/>
-              <span className="font-medium hidden sm:inline">Exportar</span>
+              <Icon name="chart" className="w-4 h-4 sm:w-5 sm:h-5"/>
+              <span className="font-medium hidden sm:inline"></span>
             </button>
             <button
               onClick={handleLogout}
@@ -1434,6 +1517,11 @@ const App: React.FC = () => {
                   dependencies={dependencies}
                   projects={projects}
                   currentUser={currentUser}
+                  focusedTaskId={ganttFocusedTaskId}
+                  onFullscreenChange={(isFullscreen) => {
+                    // Opcional: manejar cambios de fullscreen si es necesario
+                    console.log('Gantt fullscreen:', isFullscreen);
+                  }}
                   onTaskUpdate={handleGanttTaskUpdate}
                   onDependencyCreate={async (pre, suc, tipo) => {
                     try {
@@ -1462,15 +1550,6 @@ const App: React.FC = () => {
         {activeView === 'matrix' && (
           <section className="mb-12">
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-              <div className="mb-6">
-                <div className="flex items-center gap-3">
-                  <Icon name="grid" className="w-6 h-6 text-slate-500" />
-                  <h3 className="text-xl font-semibold text-slate-800">Matriz de Eisenhower</h3>
-                </div>
-                <p className="text-slate-600 mt-2">
-                  Organiza tus tareas según urgencia e importancia
-                </p>
-              </div>
               {isLoading ? (
                 <div className="p-8">
                   <TaskSkeleton />
@@ -1491,25 +1570,6 @@ const App: React.FC = () => {
         
       </main>
 
-      {editingTask && (
-        <EditTaskModal 
-          task={editingTask} 
-          allTasks={tasks}
-          projects={projects}
-          currentUser={currentUser}
-          onProjectCreated={handleProjectCreated}
-          onClose={handleCloseModal}
-          onSave={async (task) => {
-            await handleUpdateTask(task);
-            handleCloseModal();
-          }}
-          onCreateSubtask={handleCreateSubTask}
-          onDelete={handleDeleteTask}
-          onSubtaskClick={handleSubtaskClick}
-          hasNavigationHistory={taskNavigationHistory.length > 0}
-        />
-      )}
-
       {/* Floating Scroll to Top Button */}
       <button
         onClick={handleScrollToCreateTask}
@@ -1524,6 +1584,30 @@ const App: React.FC = () => {
         <p>&copy; {new Date().getFullYear()} Planics. All rights reserved.</p>
       </footer>
         </>
+      )}
+
+      {/* EditTaskModal - Renderizado globalmente para funcionar en Dashboard y Tasks */}
+      {editingTask && (
+        <div className="fixed inset-0 z-[100]">
+          <EditTaskModal 
+            task={editingTask} 
+            allTasks={tasks}
+            projects={projects}
+            currentUser={currentUser}
+            onProjectCreated={handleProjectCreated}
+            onClose={handleCloseModal}
+            onSave={async (task) => {
+              await handleUpdateTask(task);
+              handleCloseModal();
+            }}
+            onTaskUpdate={handleUpdateTask}
+            onGanttFocus={handleGanttFocus}
+            onCreateSubtask={handleCreateSubTask}
+            onDelete={handleDeleteTask}
+            onSubtaskClick={handleSubtaskClick}
+            hasNavigationHistory={taskNavigationHistory.length > 0}
+          />
+        </div>
       )}
     </div>
   );
