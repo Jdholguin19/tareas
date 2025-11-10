@@ -6,10 +6,11 @@ import { Icon } from './Icon';
 interface DashboardProps {
   tasks: Task[];
   projects: Project[];
-  currentUser: { id: number; username: string; email: string } | null;
+  currentUser: { id: number; username: string; email: string; rol_id?: number } | null;
   taskAssigneesRecord: Record<number, {id: number, username: string}[]>;
   onBackToTasks: () => void;
   onEditTask?: (task: Task) => void;
+  onGoToAdmin?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -18,7 +19,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   currentUser,
   taskAssigneesRecord,
   onBackToTasks,
-  onEditTask
+  onEditTask,
+  onGoToAdmin
 }) => {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -302,6 +304,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </button>
               <div className="h-6 w-px bg-slate-300"></div>
               <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+              
+              {/* Botón Admin - Solo visible para admins */}
+              {currentUser && parseInt(String(currentUser.rol_id)) === 2 && onGoToAdmin && (
+                <>
+                  <div className="h-6 w-px bg-slate-300"></div>
+                  <button
+                    onClick={onGoToAdmin}
+                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+                  >
+                    <Icon name="settings" className="w-5 h-5" />
+                    <span className="font-medium">Admin</span>
+                  </button>
+                </>
+              )}
             </div>
             {currentUser && (
               <div className="flex items-center space-x-2 text-sm text-slate-600">

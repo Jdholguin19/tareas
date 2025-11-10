@@ -10,8 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 
 try {
-    // Obtener información del usuario actual
-    $stmt = $pdo->prepare("SELECT id, username, email FROM usuarios WHERE id = ?");
+    // Obtener información del usuario actual incluyendo rol_id
+    $stmt = $pdo->prepare("SELECT id, username, email, rol_id FROM usuarios WHERE id = ?");
     $stmt->execute([$userId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 

@@ -53,7 +53,7 @@ $database = getenv('DB_DATABASE') ?: 'portalao_ReunionesCS';
 
 // Opciones de PDO: 
 // 1. Forzar manejo de errores con excepciones.
-$timezone = getenv('DB_TIMEZONE') ?: '-05:00'; // Lee la nueva variable del .env
+$timezone = getenv('DB_TIMEZONE') ?: '-02:00'; // Lee la nueva variable del .env
 
 // 2. Ejecutar comando SET time_zone = '-05:00' (Ecuador) al conectar.
 $options = [
@@ -64,6 +64,7 @@ $options = [
 try {
     // Usamos las opciones en la función new PDO
     $pdo = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $user, $password, $options);
+    $pdo->exec("SET time_zone = '-02:00';");
     
     // Ya no es necesario $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     // porque está incluido en $options.

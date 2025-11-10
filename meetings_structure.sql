@@ -71,8 +71,11 @@ DROP TABLE IF EXISTS `departamentos`;
 CREATE TABLE `departamentos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
+  `manager_id` int(11) DEFAULT NULL COMMENT 'ID del manager/jefe del departamento',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `nombre` (`nombre`)
+  UNIQUE KEY `nombre` (`nombre`),
+  KEY `idx_manager_id` (`manager_id`),
+  CONSTRAINT `fk_departamentos_manager` FOREIGN KEY (`manager_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -101,7 +104,29 @@ CREATE TABLE `dependencias_tareas` (
   KEY `idx_fecha_creacion` (`fecha_creacion`),
   CONSTRAINT `dependencias_tareas_ibfk_1` FOREIGN KEY (`tarea_predecesora_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `dependencias_tareas_ibfk_2` FOREIGN KEY (`tarea_sucesora_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla para manejar dependencias entre tareas en vista Gantt';
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla para manejar dependencias entre tareas en vista Gantt';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `roles`
+--
+
+DROP TABLE IF EXISTS `roles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `roles` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descripcion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `permisos` text COLLATE utf8mb4_unicode_ci COMMENT 'JSON con permisos específicos del rol',
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `nombre` (`nombre`),
+  KEY `idx_activo` (`activo`),
+  KEY `idx_nombre` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de roles de usuario';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -142,7 +167,7 @@ CREATE TABLE `proyectos` (
   KEY `idx_tipo_estado` (`tipos_proyectos_id`,`estado`),
   CONSTRAINT `proyectos_ibfk_1` FOREIGN KEY (`manager_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
   CONSTRAINT `proyectos_ibfk_2` FOREIGN KEY (`tipos_proyectos_id`) REFERENCES `tipos_proyectos` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -164,7 +189,8 @@ CREATE TABLE `tareas` (
   `tipos_tareas_id` int(11) DEFAULT NULL COMMENT 'Referencia al tipo de tarea',
   `nivel_esquema` int(11) DEFAULT '1' COMMENT 'Nivel jerárquico en el esquema de tareas enfocado para rubros o bitacoras',
   `estado` enum('pendiente','en_progreso','en_revision','completada','cancelada') DEFAULT 'pendiente',
-  `prioridad` enum('baja','media','alta','critica') DEFAULT 'media',
+  `prioridad` enum('baja','media','alta') DEFAULT 'baja' COMMENT 'Prioridad de la tarea (urgencia)',
+  `importancia` enum('baja','media','alta') DEFAULT 'baja' COMMENT 'Importancia de la tarea para Matriz de Eisenhower (impacto)',
   `progreso` decimal(5,2) DEFAULT '0.00',
   `fecha_inicio` date DEFAULT NULL,
   `fecha_vencimiento` date DEFAULT NULL,
@@ -185,13 +211,15 @@ CREATE TABLE `tareas` (
   KEY `idx_tipo_estado` (`tipos_tareas_id`,`estado`),
   KEY `idx_nivel_esquema` (`nivel_esquema`),
   KEY `idx_padre_nivel` (`tarea_padre_id`,`nivel_esquema`),
+  KEY `idx_importancia` (`importancia`),
+  KEY `idx_eisenhower` (`importancia`,`prioridad`,`estado`),
   CONSTRAINT `tareas_ibfk_1` FOREIGN KEY (`proyecto_id`) REFERENCES `proyectos` (`id`) ON DELETE SET NULL,
   CONSTRAINT `tareas_ibfk_2` FOREIGN KEY (`departamento_id`) REFERENCES `departamentos` (`id`) ON DELETE SET NULL,
   CONSTRAINT `tareas_ibfk_3` FOREIGN KEY (`asignado_a`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
   CONSTRAINT `tareas_ibfk_4` FOREIGN KEY (`creado_por`) REFERENCES `usuarios` (`id`),
   CONSTRAINT `tareas_ibfk_5` FOREIGN KEY (`tarea_padre_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `tareas_ibfk_6` FOREIGN KEY (`tipos_tareas_id`) REFERENCES `tipos_tareas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=313 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=337 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -212,7 +240,7 @@ CREATE TABLE `tareas_asignados` (
   KEY `usuario_id` (`usuario_id`),
   CONSTRAINT `tareas_asignados_ibfk_1` FOREIGN KEY (`tarea_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `tareas_asignados_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=179 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=198 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -291,6 +319,7 @@ CREATE TABLE `usuarios` (
   `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `departamento_id` int(11) DEFAULT NULL,
+  `rol_id` int(11) DEFAULT 1 COMMENT 'ID del rol del usuario (1=usuario, 2=admin)',
   `estado` enum('activo','inactivo','suspendido') COLLATE utf8mb4_unicode_ci DEFAULT 'activo',
   `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -300,8 +329,11 @@ CREATE TABLE `usuarios` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_email` (`email`),
   KEY `idx_username` (`username`),
+  KEY `idx_rol_id` (`rol_id`),
+  KEY `idx_rol_estado` (`rol_id`, `estado`),
   KEY `departamento_id` (`departamento_id`),
-  CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`departamento_id`) REFERENCES `departamentos` (`id`) ON DELETE SET NULL
+  CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`departamento_id`) REFERENCES `departamentos` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_usuarios_rol` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -322,4 +354,4 @@ CREATE TABLE `usuarios` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-11-06  9:21:27
+-- Dump completed on 2025-11-07 15:18:23

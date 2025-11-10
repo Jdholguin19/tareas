@@ -5,6 +5,7 @@ import { GanttChart } from './components/GanttChart';
 import { KanbanBoard } from './components/KanbanBoard';
 import { EisenhowerMatrix } from './components/EisenhowerMatrix';
 import { Dashboard } from './components/Dashboard';
+import { AdminPanel } from './components/AdminPanel';
 import { Icon } from './components/Icon';
 import type { Task, Project, TaskDependency, TaskType } from './types';
 import { TaskPriority } from './types';
@@ -33,10 +34,10 @@ const App: React.FC = () => {
   const [isCreateTaskHighlighted, setIsCreateTaskHighlighted] = useState(false);
 
   // Current user state
-  const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string} | null>(null);
+  const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string, rol_id?: number} | null>(null);
 
-  // Page state - para alternar entre Dashboard y App de Tareas
-  const [currentPage, setCurrentPage] = useState<'tasks' | 'dashboard'>('tasks');
+  // Page state - para alternar entre Dashboard, Admin y App de Tareas
+  const [currentPage, setCurrentPage] = useState<'tasks' | 'dashboard' | 'admin'>('tasks');
 
   // View state
   const [activeView, setActiveView] = useState<'list' | 'kanban' | 'gantt' | 'matrix'>('list');
@@ -972,6 +973,12 @@ const App: React.FC = () => {
         ) : (
           <LoginForm onLogin={() => window.location.reload()} onSwitchToRegister={() => setShowRegister(true)} />
         )
+      ) : currentPage === 'admin' ? (
+        // Show Admin Panel
+        <AdminPanel 
+          currentUser={currentUser}
+          onBackToDashboard={() => setCurrentPage('dashboard')}
+        />
       ) : currentPage === 'dashboard' ? (
         // Show Dashboard page
         <Dashboard 
@@ -980,6 +987,7 @@ const App: React.FC = () => {
           currentUser={currentUser}
           taskAssigneesRecord={taskAssigneesRecord}
           onBackToTasks={() => setCurrentPage('tasks')}
+          onGoToAdmin={() => setCurrentPage('admin')}
           onEditTask={(task) => {
             setEditingTask(task);
             // NO cambiar la página, mantener en dashboard
