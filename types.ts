@@ -2,6 +2,7 @@
 export enum TaskState {
     PENDIENTE = 'pendiente',
     EN_PROGRESO = 'en_progreso',
+    EN_ESPERA = 'en_espera',
     COMPLETADA = 'completada'
 }
 
@@ -54,6 +55,9 @@ export interface Task {
     Tipos_Tareas_ID?: number; // Optional field for task type
     Prioridad?: TaskPriority; // Optional field for task priority (urgencia)
     Importancia?: TaskImportance; // Optional field for task importance
+    TipoObjetivo_ID?: number; // Optional field for DPE mapping
+    Producto_ID?: number; // Optional field for DPE mapping
+    Etapa_ID?: number; // Optional field for DPE mapping
 }
 
 export interface User {
@@ -63,6 +67,21 @@ export interface User {
 }
 
 export interface Project {
+    id: number;
+    nombre: string;
+}
+
+export interface TipoObjetivo {
+    id: number;
+    nombre: string;
+}
+
+export interface Producto {
+    id: number;
+    nombre: string;
+}
+
+export interface Etapa {
     id: number;
     nombre: string;
 }

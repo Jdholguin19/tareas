@@ -34,7 +34,10 @@ tareas/
 │   ├── login.php               # Inicio de sesión
 │   ├── logout.php              # Cierre de sesión
 │   ├── register.php            # Registro de nuevos usuarios
+│   ├── getCurrentUser.php      # Obtener datos del usuario actual
 │   ├── getTasks.php            # Obtener tareas del usuario
+│   ├── getTasksByUser.php      # Obtener tareas de un usuario específico (con permisos)
+│   ├── getTasksForProjects.php # Obtener TODAS las tareas de proyectos asignados
 │   ├── getTaskTypes.php        # Obtener tipos de tarea (tareas, obras, notas)
 │   ├── createQuickTask.php     # Crear tarea rápida
 │   ├── updateTask.php          # Actualizar tarea (con Tipos_Tareas_ID)
@@ -42,11 +45,17 @@ tareas/
 │   ├── createSubTask.php       # Crear subtarea (hereda proyecto_id)
 │   ├── toggleImportant.php     # Toggle importancia (Eisenhower)
 │   ├── getProjects.php         # Obtener proyectos del usuario
+│   ├── getProjectsByUser.php   # Obtener proyectos de un usuario específico
+│   ├── getAllProjects.php      # Obtener todos los proyectos (admin)
 │   ├── createProject.php       # Crear nuevo proyecto
+│   ├── updateProject.php       # Actualizar proyecto (admin)
 │   ├── searchUsers.php         # Buscar usuarios para asignación
 │   ├── assignUserToTask.php    # Asignar usuario a tarea
 │   ├── unassignUserFromTask.php # Desasignar usuario
-│   ├── getAllTaskAssignees.php # Obtener todos los asignados
+│   ├── getAllTaskAssignees.php # Obtener todos los asignados (optimizado para muchas tareas)
+│   ├── getTaskAssignees.php    # Obtener asignados de una tarea (con permisos ampliados)
+│   ├── getUsersByDepartment.php # Obtener usuarios según permisos y departamento
+│   ├── updateDepartment.php    # Actualizar departamento (admin)
 │   ├── getDependencies.php     # Obtener dependencias de tareas
 │   ├── createDependency.php    # Crear dependencia
 │   ├── deleteDependency.php    # Eliminar dependencia
@@ -59,6 +68,8 @@ tareas/
 │   ├── KanbanBoard.tsx         # Vista Kanban (drag & drop)
 │   ├── GanttChart.tsx          # Vista Gantt (timeline)
 │   ├── EisenhowerMatrix.tsx    # Matriz de Eisenhower (4 cuadrantes)
+│   ├── Dashboard.tsx           # Dashboard con métricas y selector de usuarios
+│   ├── AdminPanel.tsx          # Panel de administración (departamentos, usuarios, proyectos)
 │   ├── Icon.tsx                # Sistema de iconos SVG
 │   ├── LoginForm.tsx           # Formulario de login
 │   ├── RegisterForm.tsx        # Formulario de registro
@@ -183,8 +194,19 @@ php -S localhost:8000  # Servidor de desarrollo PHP
 - `GET /api/searchUsers.php?q={query}` - Buscar usuarios (mínimo 1 caracter)
 - `POST /api/assignUserToTask.php` - Asignar usuario a tarea
 - `POST /api/unassignUserFromTask.php` - Desasignar usuario de tarea
-- `POST /api/getAllTaskAssignees.php` - Obtener todos los usuarios asignados a múltiples tareas
-- `GET /api/getTaskAssignees.php?taskId={id}` - Obtener asignados de una tarea específica
+- `GET /api/getAllTaskAssignees.php` - Obtener todos los usuarios asignados (optimizado, 1 query)
+- `GET /api/getTaskAssignees.php?taskId={id}` - Obtener asignados de una tarea específica (permisos ampliados)
+- `GET /api/getUsersByDepartment.php` - Obtener usuarios por departamento según permisos (admin/manager/mismo dept)
+
+### Administración (Solo Admin)
+- `GET /api/getAllProjects.php` - Obtener todos los proyectos con info de manager y total de tareas
+- `POST /api/updateProject.php` - Actualizar nombre y manager de proyecto
+- `POST /api/updateDepartment.php` - Actualizar nombre y manager de departamento
+
+### Dashboard
+- `GET /api/getTasksByUser.php?userId={id}` - Obtener tareas de usuario específico (valida permisos)
+- `GET /api/getProjectsByUser.php?userId={id}` - Obtener proyectos de usuario específico
+- `GET /api/getTasksForProjects.php` - Obtener TODAS las tareas de proyectos donde estoy asignado
 
 ### Dependencias (para Gantt)
 - `GET /api/getDependencies.php` - Obtener dependencias de tareas
@@ -284,6 +306,84 @@ if (normalizeId(task.ID) === normalizeId(selectedId)) { ... }
    - Drag & drop entre cuadrantes
    - Actualización automática del eje correspondiente
 
+## 🔐 Sistema de Permisos Multi-Nivel
+
+La aplicación implementa un sistema de permisos de 3 niveles que controla el acceso a usuarios, tareas y proyectos:
+
+### **Nivel 1: Admin (rol_id = 2)**
+- ✅ Acceso **completo** a TODOS los usuarios del sistema
+- ✅ Ve **todas** las tareas, proyectos y departamentos
+- ✅ Puede editar cualquier dato (tareas, proyectos, departamentos)
+- ✅ Panel de administración exclusivo
+- ✅ Selector de usuarios sin restricciones
+
+### **Nivel 2: Manager (manager_id en tabla departamentos)**
+- ✅ Ve usuarios de los **departamentos que gestiona**
+- ✅ Accede a tareas y proyectos de sus departamentos
+- ✅ Puede modificar datos de sus departamentos
+- ✅ Vista limitada en Dashboard
+- ⚠️ No puede ver usuarios de otros departamentos
+
+### **Nivel 3: Usuario Regular**
+- ✅ Ve solo usuarios de su **mismo departamento**
+- ✅ Accede únicamente a:
+  - Tareas creadas por él
+  - Tareas donde está asignado
+  - **Todas** las tareas de proyectos donde está asignado (excepto General)
+- ✅ Vista estándar del Dashboard
+- ⚠️ Proyecto "General" (id=1): Solo ve sus propias tareas
+
+### Endpoints que Implementan este Sistema
+
+```php
+// getUsersByDepartment.php
+if ($usuario['rol_id'] == 2) {
+    // Admin: todos los usuarios activos
+    return getAllUsers();
+}
+
+$managedDeptIds = getManagerDepartments($userId);
+if (!empty($managedDeptIds)) {
+    // Manager: usuarios de departamentos gestionados
+    return getUsersByDepartments($managedDeptIds);
+}
+
+// Usuario regular: mismo departamento
+return getUsersBySameDepartment($usuario['departamento_id']);
+```
+
+```php
+// getTasksByUser.php - Validación de permisos antes de retornar tareas
+if ($usuario['rol_id'] != 2) {  // Si NO es admin
+    $targetUserDept = getUserDepartment($targetUserId);
+    $isManager = isManagerOfDepartment($userId, $targetUserDept);
+    $isSameDept = ($usuario['departamento_id'] == $targetUserDept);
+    
+    if (!$isManager && !$isSameDept) {
+        return error("No tienes permisos para ver las tareas de este usuario");
+    }
+}
+```
+
+### Flujo de Permisos en Dashboard
+
+```
+Usuario selecciona otro usuario en dropdown
+    ↓
+Frontend llama getTasksByUser(selectedUserId)
+    ↓
+Backend valida permisos (admin/manager/mismo dept)
+    ↓
+Si es permitido → Retorna tareas del usuario
+    ↓
+Dashboard muestra:
+  - Tareas propias del usuario (creadas + asignadas)
+  - Todas las tareas de proyectos donde está asignado
+  - Excepción: Proyecto General solo muestra sus tareas
+```
+
+---
+
 ### Funcionalidades Principales
 - ✅ **Creación rápida de tareas** con micrófono
 - ✅ **Subtareas jerárquicas** con herencia de proyecto
@@ -299,6 +399,11 @@ if (normalizeId(task.ID) === normalizeId(selectedId)) { ... }
 - ✅ **Estados visuales** diferenciados por colores
 - ✅ **Progreso automático** en tareas padre
 - ✅ **Modal de edición persistente** (no cierra al asignar proyecto)
+- ✅ **Dashboard con métricas** en tiempo real y visualización de progreso
+- ✅ **Selector de usuarios** con permisos por departamento y roles
+- ✅ **Panel de administración** (departamentos, usuarios, proyectos)
+- ✅ **Vista de proyectos** con todas las tareas del proyecto (excepto General)
+- ✅ **Optimización de carga** para muchas tareas (1 query vs N queries)
 
 ### Sistema de Búsqueda y Filtrado
 - **Dropdown con sugerencias**: Tareas y proyectos en tiempo real
@@ -328,6 +433,65 @@ if (normalizeId(task.ID) === normalizeId(selectedId)) { ... }
 const normalizeId = (id: any): number => parseInt(String(id));
 if (normalizeId(task.ID) === normalizeId(selectedId)) { ... }
 ```
+
+### 2. Optimización de carga de asignados con muchas tareas
+**Problema**: 118 tareas → 118 peticiones HTTP separadas, timeout en producción
+**Solución**: Nuevo endpoint `getAllTaskAssignees.php` que obtiene todos los asignados en 1 sola query
+```php
+// Antes: Promise.all con 118 llamadas a getTaskAssigneesForDisplay()
+// Ahora: 1 sola llamada a getAllTaskAssignees.php
+```
+
+### 3. Permisos de visualización de tareas de proyectos
+**Problema**: No se podían ver asignados de tareas del proyecto donde estás asignado
+**Solución**: `getTaskAssignees.php` ampliado con validación de:
+- Creador de la tarea ✅
+- Asignado a la tarea ✅
+- Proyecto donde está asignado ✅ (NUEVO)
+- Mismo departamento ✅ (NUEVO)
+- Admin ✅ (NUEVO)
+
+### 4. Conteo incorrecto de tareas en Dashboard
+**Problema**: Tareas de proyectos (no propias) se contaban en "Total de Tareas"
+**Solución**: Separar `userOwnTasks` (solo propias) de `projectTasks` (todas del proyecto)
+```typescript
+// Métricas: usar solo userOwnTasks (creadas o asignadas directamente)
+// Top 5 Proyectos: usar projectTasks (todas las del proyecto)
+```
+
+### 5. Proyecto General mostraba tareas de todos
+**Problema**: En proyecto "General" (id=1) se veían todas las tareas del equipo
+**Solución**: Excepción específica para proyecto General
+```typescript
+const isGeneralProject = normalizeId(projectId) === 1;
+// General → solo tareas propias
+// Otros → todas las tareas del proyecto
+```
+
+### 6. Selector de usuarios no respetaba permisos
+**Problema**: Todos veían todos los usuarios sin importar departamento/rol
+**Solución**: Nuevo endpoint `getUsersByDepartment.php` con lógica de 3 niveles:
+- **Admin (rol_id=2)**: Ve TODOS los usuarios del sistema
+- **Manager**: Ve usuarios de departamentos que gestiona
+- **Usuario regular**: Ve solo usuarios de su mismo departamento
+
+### 7. Botón "Ver todo" en proyectos no aparecía
+**Problema**: Estado `showAllProjects` no se reflejaba en la UI
+**Solución**: Agregar `metrics.allProjects` para comparar con `tasksByProject` (top 5)
+```typescript
+{metrics.allProjects.length > 5 && (
+  <button onClick={() => setShowAllProjects(!showAllProjects)}>
+    {showAllProjects ? 'Ver menos' : `Ver todo (${metrics.allProjects.length})`}
+  </button>
+)}
+```
+
+### 8. Tareas de otros usuarios no cargaban correctamente
+**Problema**: Filtro frontend solo funcionaba para usuario actual, no para otros
+**Solución**: Backend `getTasksByUser.php` que:
+- Trae tareas del usuario objetivo (creadas + asignadas)
+- Valida permisos (mismo dept, manager, admin)
+- Incluye TODAS las tareas de proyectos donde está asignado
 
 ### 2. Filtro por tipo de tarea no aplicaba por defecto
 **Problema**: Default filter (solo "tareas") no se aplicaba en producción
@@ -381,7 +545,230 @@ if (normalizeId(task.ID) === normalizeId(selectedId)) { ... }
 **Problema**: `getTasks.php` tenía filtro hardcoded `AND (t.tipos_tareas_id = 1 OR ...)`
 **Solución**: Remover filtro del backend, dejar que frontend maneje con checkboxes
 
-## 🔍 Decisiones Técnicas Importantes
+## � Dashboard - Vista Completa de Gestión
+
+El Dashboard es el componente principal que proporciona una vista completa del estado de tareas y proyectos con métricas en tiempo real.
+
+### Componentes del Dashboard
+
+#### 1. **Selector de Usuarios** (Header)
+```typescript
+// Dropdown con permisos inteligentes
+<select value={selectedUserId || ''} onChange={handleUserChange}>
+  <option value="">Mis Tareas</option>
+  {availableUsers.map(user => (
+    <option key={user.id} value={user.id}>
+      {user.username} - {user.departamento_nombre}
+    </option>
+  ))}
+</select>
+```
+- **Admin**: Ve todos los usuarios del sistema
+- **Manager**: Ve usuarios de departamentos gestionados
+- **Usuario regular**: Ve solo su mismo departamento
+- **Carga automática**: Al seleccionar usuario, recarga tareas y proyectos
+
+#### 2. **Métricas Principales** (Cards superiores)
+```typescript
+// Calculadas solo con userOwnTasks (excluyendo extras de proyectos)
+- Total de Tareas: userOwnTasks.length
+- Completadas: filter(t => t.Estado === 'completed')
+- En Progreso: filter(t => t.Estado === 'in_progress')
+- Pendientes: filter(t => t.Estado === 'pending')
+- Porcentaje de progreso: (completadas / total) * 100
+```
+**Importante**: No cuenta tareas extras de proyectos para evitar inflación de métricas
+
+#### 3. **Mis Tareas Asignadas** (Lista principal)
+```typescript
+// Tareas donde el usuario seleccionado está asignado
+const assignedTasks = userOwnTasks.filter(task => {
+  const assignees = taskAssigneesRecord[task.ID] || [];
+  return assignees.some(a => normalizeId(a.id) === normalizeId(selectedUserId));
+});
+```
+- Agrupa por proyecto
+- Muestra título, fecha de vencimiento, estado
+- Click abre modal de edición
+- Lista vacía si el usuario no tiene asignaciones
+
+#### 4. **Top 5 Proyectos** (Con botón "Ver todo")
+```typescript
+const tasksByProject = projects.map(project => {
+  const projectId = normalizeId(project.id);
+  const isGeneralProject = projectId === 1;  // EXCEPCIÓN
+  
+  // General: solo tareas propias
+  // Otros: todas las tareas del proyecto
+  const sourceTasksForProject = isGeneralProject 
+    ? tasks 
+    : tasksForProjectCalculation;
+  
+  return {
+    id: projectId,
+    name: project.nombre,
+    count: filteredProjectTasks.length,
+    completed: filteredProjectTasks.filter(t => t.Estado === 'completed').length
+  };
+});
+
+// Mostrar top 5 o todos
+const displayedProjects = showAllProjects 
+  ? tasksByProject 
+  : tasksByProject.slice(0, 5);
+```
+
+**Funcionalidades**:
+- Barra de progreso visual (% completadas)
+- Click expande vista jerárquica de tareas
+- Botón "Ver todo" aparece si hay más de 5 proyectos
+- **Excepción especial**: Proyecto "General" (id=1) solo muestra tareas propias
+
+#### 5. **Vista Jerárquica de Proyecto** (Modal expandido)
+```typescript
+const getProjectTasksHierarchy = (projectId: number) => {
+  const isGeneralProject = normalizeId(projectId) === 1;
+  
+  // Determinar fuente de tareas
+  const allProjectTasks = isGeneralProject
+    ? tasks.filter(t => normalizeId(t.Proyecto) === projectId)
+    : (isOwnUser 
+        ? projectTasks.filter(t => normalizeId(t.Proyecto) === projectId)
+        : tasks.filter(t => normalizeId(t.Proyecto) === projectId));
+  
+  // Construir jerarquía padre-hijo
+  const taskMap: Record<number, Task & { children: Task[] }> = {};
+  const rootTasks: (Task & { children: Task[] })[] = [];
+  
+  allProjectTasks.forEach(task => {
+    taskMap[task.ID] = { ...task, children: [] };
+  });
+  
+  allProjectTasks.forEach(task => {
+    if (task.Tarea_Padre_ID && taskMap[task.Tarea_Padre_ID]) {
+      taskMap[task.Tarea_Padre_ID].children.push(taskMap[task.ID]);
+    } else {
+      rootTasks.push(taskMap[task.ID]);
+    }
+  });
+  
+  return rootTasks;
+};
+```
+
+**Muestra**:
+- Tareas padre con sus subtareas indentadas
+- Estado, prioridad, fecha de vencimiento
+- Usuarios asignados con avatares
+- Click en tarea abre modal de edición
+- Estructura recursiva completa
+
+#### 6. **Gráfico de Estado de Tareas** (Circular)
+```typescript
+// Distribución visual de estados
+const stateDistribution = {
+  pending: userOwnTasks.filter(t => t.Estado === 'pending').length,
+  in_progress: userOwnTasks.filter(t => t.Estado === 'in_progress').length,
+  completed: userOwnTasks.filter(t => t.Estado === 'completed').length
+};
+```
+- Representa % de cada estado
+- Colores diferenciados (gris, amarillo, verde)
+- Tooltip con número exacto de tareas
+
+### Lógica de Carga de Datos
+
+```typescript
+useEffect(() => {
+  const loadDataForUser = async () => {
+    setLoading(true);
+    
+    try {
+      // Cargar en paralelo tareas y proyectos del usuario seleccionado
+      const [userTasks, userProjects] = await Promise.all([
+        getTasksByUser(selectedUserId),      // Incluye tareas de proyectos
+        getProjectsByUser(selectedUserId)
+      ]);
+      
+      setTasks(userTasks);
+      setProjects(userProjects);
+      
+      // Solo cargar projectTasks si es el usuario actual
+      if (currentUser && selectedUserId === currentUser.id) {
+        const projTasks = await getTasksForProjects();
+        setProjectTasks(projTasks);
+      } else {
+        setProjectTasks([]);
+      }
+      
+      // Cargar asignados de todas las tareas (optimizado)
+      if (userTasks.length > 0) {
+        const taskIds = userTasks.map(t => t.ID);
+        const assignees = await getAllTaskAssignees(taskIds);
+        setTaskAssigneesRecord(assignees);
+      }
+      
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      setError('Error al cargar datos del usuario');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  if (selectedUserId) {
+    loadDataForUser();
+  }
+}, [selectedUserId]);
+```
+
+### Optimizaciones Implementadas
+
+1. **Carga paralela**: `Promise.all` para tareas y proyectos
+2. **1 query para asignados**: `getAllTaskAssignees` en lugar de N queries
+3. **Memoización**: `useMemo` para `userOwnTasks` y `tasksByProject`
+4. **Carga condicional**: `projectTasks` solo para usuario actual
+5. **Skeleton loaders**: Indicadores visuales durante carga
+
+### Estados Manejados
+
+```typescript
+const [tasks, setTasks] = useState<Task[]>(initialTasks);
+const [projects, setProjects] = useState<Project[]>(initialProjects);
+const [projectTasks, setProjectTasks] = useState<Task[]>([]);
+const [availableUsers, setAvailableUsers] = useState<Array<...>>([]);
+const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+const [showAllProjects, setShowAllProjects] = useState(false);
+const [expandedProjectId, setExpandedProjectId] = useState<number | null>(null);
+const [taskAssigneesRecord, setTaskAssigneesRecord] = useState<Record<number, ...>>({});
+```
+
+### Casos de Uso Principales
+
+1. **Ver mis propias tareas** (Default)
+   - Muestra todas las tareas creadas o asignadas
+   - Incluye tareas de proyectos donde estoy asignado
+   - General solo muestra mis tareas
+
+2. **Ver tareas de compañero de departamento** (Usuario regular)
+   - Selecciona usuario del dropdown
+   - Sistema valida mismo departamento
+   - Carga tareas y proyectos del compañero
+   - Muestra métricas y vista de proyectos
+
+3. **Ver tareas de departamento gestionado** (Manager)
+   - Dropdown muestra usuarios de departamentos gestionados
+   - Acceso completo a métricas y proyectos
+   - Puede editar tareas si es creador/asignado
+
+4. **Ver cualquier usuario** (Admin)
+   - Dropdown sin restricciones
+   - Acceso total a todos los datos
+   - Panel de administración adicional
+
+---
+
+## �🔍 Decisiones Técnicas Importantes
 
 ### Arquitectura y Patrones
 
@@ -469,6 +856,54 @@ Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para más deta
 
 ## 📊 Changelog Reciente
 
+### Versión 2.1.0 (Diciembre 2025) 🚀
+
+#### Dashboard y Sistema de Permisos
+- ✨ **Dashboard completo** con métricas en tiempo real y visualización de progreso
+- ✨ **Selector de usuarios** con permisos por departamento y roles (admin/manager/usuario)
+- ✨ **Sistema de permisos multi-nivel**: Admin acceso total, Manager departamentos gestionados, Usuario mismo departamento
+- ✨ **Vista de proyectos** con TODAS las tareas del proyecto (si estás asignado)
+- ✨ **Excepción proyecto General**: Solo muestra tareas propias en proyecto id=1
+- ✨ **Botón "Ver todo"** para proyectos (aparece si hay más de 5)
+- ✨ **Vista jerárquica de proyectos** con estructura padre-hijo completa
+- ✨ **Panel de administración** para gestión de departamentos y proyectos (solo admin)
+
+#### APIs y Endpoints Nuevos
+- 🔧 **getUsersByDepartment.php**: Retorna usuarios según permisos (admin/manager/mismo dept)
+- 🔧 **getTasksByUser.php**: Obtiene tareas de usuario específico con validación de permisos
+- 🔧 **getProjectsByUser.php**: Obtiene proyectos de usuario específico
+- 🔧 **getTasksForProjects.php**: Obtiene TODAS las tareas de proyectos asignados
+- 🔧 **getAllTaskAssignees.php**: Optimizado para obtener asignados en 1 sola query
+- 🔧 **getAllProjects.php**: Lista completa de proyectos con info de manager (admin only)
+- 🔧 **updateProject.php**: Actualiza nombre y manager de proyecto (admin only)
+- 🔧 **updateDepartment.php**: Actualiza nombre y manager de departamento (admin only)
+
+#### Optimizaciones de Rendimiento
+- ⚡ **Optimización N+1 queries**: getAllTaskAssignees hace 1 query para todos los asignados (antes 118 queries para 118 tareas)
+- ⚡ **Carga paralela**: Promise.all para tareas y proyectos del usuario
+- ⚡ **Memoización inteligente**: useMemo para userOwnTasks y tasksByProject
+- ⚡ **Carga condicional**: projectTasks solo se cargan para usuario actual
+- ⚡ **Skeleton loaders**: Indicadores visuales durante carga de datos
+
+#### Bugs Resueltos (Dashboard)
+- 🐛 **Fix**: Tareas no cargaban al seleccionar otro usuario (getTasksByUser.php)
+- 🐛 **Fix**: "No tienes permisos" al ver usuarios del mismo departamento
+- 🐛 **Fix**: Conteo incorrecto de tareas (48 mostradas cuando eran 12) - separación userOwnTasks/projectTasks
+- 🐛 **Fix**: Proyecto General mostraba tareas de todos (ahora solo propias con id===1 exception)
+- 🐛 **Fix**: "Error loading task assignees" con muchas tareas (timeout por N queries)
+- 🐛 **Fix**: Permisos de getTaskAssignees.php demasiado restrictivos (ampliados)
+- 🐛 **Fix**: Botón "Ver todo" no aparecía (comparación con metrics.allProjects)
+- 🐛 **Fix**: Filtro de tareas no aplicaba al seleccionar otros usuarios
+
+#### Mejoras de Usabilidad
+- 📊 **Métricas precisas**: Total, completadas, en progreso, pendientes con % de progreso
+- 📊 **Gráfico de distribución**: Estados visualizados en gráfico circular
+- 📊 **Top 5 Proyectos**: Con barra de progreso visual y click para expandir
+- 📊 **Mis Tareas Asignadas**: Vista agrupada por proyecto
+- 📊 **Usuarios asignados**: Avatares y nombres en cada tarea del proyecto
+
+---
+
 ### Versión 2.0.0 (Noviembre 2025) 🎉
 
 #### Nuevas Funcionalidades
@@ -529,10 +964,11 @@ Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para más deta
 
 ## 📈 Estadísticas del Proyecto
 
-- **Total de endpoints**: 20+ APIs REST
-- **Componentes React**: 15+
-- **Líneas de código**: ~10,000+ (TypeScript + PHP)
-- **Build size (gzipped)**: 94.36 kB
+- **Total de endpoints**: 30+ APIs REST
+- **Componentes React**: 17+
+- **Líneas de código**: ~15,000+ (TypeScript + PHP)
+- **Build size (gzipped)**: ~102 kB
 - **Tiempo de build**: ~900ms (Vite optimizado)
 - **Compatibilidad**: Chrome, Firefox, Safari, Edge (últimas 2 versiones)
 - **Mobile**: iOS 12+, Android 8+
+- **Usuarios concurrentes**: Optimizado para 100+ usuarios simultáneos

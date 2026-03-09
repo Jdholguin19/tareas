@@ -69,18 +69,43 @@ try {
         $markCompleted = true;
     }
 
+    // Normalize incoming Fecha_Completada when provided; ensure MySQL DATETIME/TIMESTAMP format
+    if (isset($data['Fecha_Completada'])) {
+        if ($data['Fecha_Completada'] === '' || $data['Fecha_Completada'] === null) {
+            $data['Fecha_Completada'] = null;
+        } else {
+            $ts = strtotime($data['Fecha_Completada']);
+            if ($ts !== false) {
+                $data['Fecha_Completada'] = date('Y-m-d H:i:s', $ts);
+            } else {
+                $data['Fecha_Completada'] = null;
+            }
+        }
+    }
+
+    // Normalize date-only fields: Fecha_Inicio and Fecha_Vencimiento
+    foreach (['Fecha_Inicio', 'Fecha_Vencimiento'] as $dateField) {
+        if (isset($data[$dateField])) {
+            if ($data[$dateField] === '' || $data[$dateField] === null || $data[$dateField] === '0000-00-00') {
+                $data[$dateField] = null;
+            } else {
+                $ts = strtotime($data[$dateField]);
+                if ($ts !== false) {
+                    $data[$dateField] = date('Y-m-d', $ts);
+                } else {
+                    $data[$dateField] = null;
+                }
+            }
+        }
+    }
+
     if ($markCompleted) {
-        // Set completion date to today if not provided
-        if (!isset($data['Fecha_Completada']) || empty($data['Fecha_Completada'])) {
-            $data['Fecha_Completada'] = date('Y-m-d');
+        // If completion date not provided, set current server datetime (include time)
+        if (!isset($data['Fecha_Completada']) || $data['Fecha_Completada'] === null) {
+            $data['Fecha_Completada'] = date('Y-m-d H:i:s');
         }
-        // If task has no due date, default due date to today
-        if (
-            (!isset($data['Fecha_Vencimiento']) || $data['Fecha_Vencimiento'] === null || $data['Fecha_Vencimiento'] === '')
-            && (empty($currentTask['fecha_vencimiento']))
-        ) {
-            $data['Fecha_Vencimiento'] = date('Y-m-d');
-        }
+        // Do NOT auto-set Fecha_Vencimiento when marking completed. Keep due date unchanged unless explicitly provided.
+        // (Previously defaulted Fecha_Vencimiento to today when completing; removed per UX requirement.)
     }
 
     $fields = [];
@@ -151,6 +176,101 @@ try {
     $task = $stmt->fetch(PDO::FETCH_ASSOC);
     
     $task['Adjuntos_URL'] = json_decode($task['Adjuntos_URL'] ?? '[]', true);
+
+    // If the task was just marked as completed and it has assignees, send an email to the creator
+    if ($markCompleted) {
+        // Fetch assignees for this task (include id to compare with current user)
+        $stmtAssignees = $pdo->prepare("SELECT u.id, u.username, u.email FROM tareas_asignados ta JOIN usuarios u ON ta.usuario_id = u.id WHERE ta.tarea_id = ?");
+        $stmtAssignees->execute([$id]);
+        $assignees = $stmtAssignees->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($assignees) > 0) {
+            // Fetch creator info
+            $creatorId = $task['Usuario_Creador_ID'];
+            $stmtCreator = $pdo->prepare("SELECT username, email FROM usuarios WHERE id = ?");
+            $stmtCreator->execute([$creatorId]);
+            $creator = $stmtCreator->fetch(PDO::FETCH_ASSOC);
+
+            // Only send email when the user who completed the task is one of the assignees
+            // AND the creator is different from that assignee (i.e. someone else assigned it to them)
+            $assigneeIds = array_map(function($a){ return intval($a['id']); }, $assignees);
+            $currentUserId = intval($userId);
+            $creatorIdInt = intval($creatorId);
+
+            if (in_array($currentUserId, $assigneeIds) && $creatorIdInt !== $currentUserId) {
+                if ($creator && !empty($creator['email'])) {
+                // Build email body
+                $assignedNames = array_map(function($a){ return $a['username']; }, $assignees);
+                $assignedStr = implode(', ', $assignedNames);
+
+                $subject = "Tarea completada: " . ($task['Titulo'] ?? 'Tarea');
+                $fecha_inicio = $task['Fecha_Inicio'] ?? 'N/A';
+                $fecha_fin = $task['Fecha_Vencimiento'] ?? 'N/A';
+                $fecha_completada = $task['Fecha_Completada'] ?? date('Y-m-d H:i:s');
+
+                $body = "<html><body>";
+                $body .= "<div style='font-family: Arial, Helvetica, sans-serif; color:#222;'>";
+                $body .= "<h2 style='color:#0f172a'>Notificación: Se ha completadado una tarea asignada</h2>";
+                $body .= "<table style='width:100%; border-collapse:collapse;'>";
+                $body .= "<tr><td style='padding:6px;border:1px solid #eee;'><strong>Título</strong></td><td style='padding:6px;border:1px solid #eee;'>" . htmlspecialchars($task['Titulo']) . "</td></tr>";
+                $body .= "<tr><td style='padding:6px;border:1px solid #eee;'><strong>Fecha inicio</strong></td><td style='padding:6px;border:1px solid #eee;'>" . htmlspecialchars($fecha_inicio) . "</td></tr>";
+                $body .= "<tr><td style='padding:6px;border:1px solid #eee;'><strong>Fecha fin</strong></td><td style='padding:6px;border:1px solid #eee;'>" . htmlspecialchars($fecha_fin) . "</td></tr>";
+                $body .= "<tr><td style='padding:6px;border:1px solid #eee;'><strong>Fecha completada</strong></td><td style='padding:6px;border:1px solid #eee;'>" . htmlspecialchars($fecha_completada) . "</td></tr>";
+                $body .= "<tr><td style='padding:6px;border:1px solid #eee;'><strong>Asignado/s</strong></td><td style='padding:6px;border:1px solid #eee;'>" . htmlspecialchars($assignedStr) . "</td></tr>";
+                $body .= "</table>";
+                $body .= "<p style='margin-top:12px;color:#555;'>La tarea asignada se ha marcado como completada.</p>";
+                $body .= "<p style='font-size:12px;color:#888;'>Este es un mensaje automático.</p>";
+                $body .= "</div></body></html>";
+
+                // Use centralized EmailHelper (Microsoft Graph)
+                require_once __DIR__ . '/../email/EmailHelper.php';
+
+                // Use the tenant/app credentials (adapted from existing implementation)
+                $tenantId = getenv('AZURE_TENANT_ID') ?: '';
+                $clientId = getenv('AZURE_CLIENT_ID') ?: '';
+                $clientSecret = getenv('AZURE_CLIENT_SECRET') ?: '';
+                $fromEmail = getenv('NOTIFICATION_FROM_EMAIL') ?: 'no-replay@thaliavictoria.com.ec';
+
+                $tokenResp = getAccessToken($tenantId, $clientId, $clientSecret);
+                if (isset($tokenResp['access_token'])) {
+                    $accessToken = $tokenResp['access_token'];
+                    $sendRes = sendEmail($accessToken, $fromEmail, $creator['email'], $subject, $body);
+                    // Optionally log errors
+                    if (isset($sendRes['error'])) {
+                        error_log("Failed to send completion email for task $id: " . $sendRes['error']);
+                    }
+                } else {
+                    error_log('Failed to obtain access token: ' . json_encode($tokenResp));
+                }
+            }
+        }}
+    }
+
+    // Trigger metrics sync: notify Metrics app that this Planics task was completed.
+    try {
+        // Build sync URL to metrics endpoint. Use current host as base.
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
+        $syncUrl = $scheme . '://' . $host . '/api/metrics/sync/sync_from_planics.php?planics_task_id=' . urlencode($id);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $syncUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        // Optional: don't verify SSL if running locally
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $resp = curl_exec($ch);
+        if ($resp === false) {
+            error_log('sync_from_planics request failed: ' . curl_error($ch));
+        } else {
+            // log short response for traceability
+            error_log('sync_from_planics response: ' . substr($resp, 0, 400));
+        }
+        curl_close($ch);
+    } catch (Throwable $e) {
+        error_log('sync_from_planics exception: ' . $e->getMessage());
+    }
 
     echo json_encode($task);
 } catch (Exception $e) {

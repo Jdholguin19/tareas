@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Task, Project } from '../types';
-import { TaskState, TaskPriority } from '../types';
+import { TaskState, TaskPriority, TaskImportance } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
@@ -27,7 +27,7 @@ const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: str
   today.setHours(0, 0, 0, 0);
   const isOverdue = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento + 'T00:00:00') < today && task.Estado !== TaskState.COMPLETADA : false;
 
-  // If we're in the urgent section, always use overdue color regardless of task state
+  // For border/status determination: if we're in the urgent section, force overdue border
   if (sectionType === 'urgent') {
     return { statusClass: 'overdue', statusColor: 'var(--color-overdue)', isOverdue: true };
   }
@@ -65,8 +65,28 @@ const getTaskStatusInfo = (task: Task, sectionType?: string): { statusClass: str
   }
 };
 
+// Determine the card background variable based on importance and section context.
+// IMPORTANT: only apply the green 'important' interior when viewing the "Importantes" section (sectionType === 'today').
+const getCardBackgroundVar = (task: Task, statusClass: string, sectionType?: string) => {
+  // Only consider marking interior as 'important' when the current section is the Importantes view
+  const isImportantInImportantesView = sectionType === 'today' && (task.Importancia === TaskImportance.ALTA || task.Prioridad === TaskPriority.ALTA);
+
+  if (isImportantInImportantesView) {
+    return 'var(--color-in-progress-bg)';
+  }
+
+  // For scheduled section and non-important tasks, use proximate/neutral bg
+  if (sectionType === 'scheduled') {
+    return 'var(--color-proximate-bg)';
+  }
+
+  // Default: use the status-based background
+  return `var(--color-${statusClass}-bg)`;
+};
+
 
 export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlobal, projects, onTaskClick, onUpdate, onDelete, level, taskAssigneesRecord, focusedTaskId, onFocusTask, sectionType, hideChildren = false, subtaskCounts }) => {
+  const [collapsed, setCollapsed] = useState(false);
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -97,12 +117,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
           Porcentaje_Avance: isCompleted ? 100 : 0,
           Estado: isCompleted ? TaskState.COMPLETADA : TaskState.PENDIENTE,
           Fecha_Completada: isCompleted ? new Date().toISOString() : null,
-          // Si no tiene fecha de vencimiento, al completar se establece hoy
-          Fecha_Vencimiento: isCompleted
-            ? (task.Fecha_Vencimiento && task.Fecha_Vencimiento.trim() !== ''
-                ? task.Fecha_Vencimiento
-                : todayStr)
-            : task.Fecha_Vencimiento,
+          // Do NOT change Fecha_Vencimiento automatically when marking completed
+          Fecha_Vencimiento: task.Fecha_Vencimiento,
       });
   };
   
@@ -699,6 +715,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
   };
 
   const { statusClass, statusColor, isOverdue } = getTaskStatusInfo(task, sectionType);
+  const cardBackgroundVar = getCardBackgroundVar(task, statusClass, sectionType);
   const isFocused = parseInt(String(focusedTaskId)) === parseInt(String(task.ID));
 
   // Hijos para render (según la sección actual)
@@ -744,8 +761,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
         style={{
           paddingLeft,
           borderLeft: `4px solid ${statusColor}`,
+          // card background determined by importance/section or status
           // @ts-ignore
-          backgroundColor: `var(--color-${statusClass}-bg)`,
+          backgroundColor: cardBackgroundVar,
           // Visual focus overlay (semi-transparent dark gray)
           boxShadow: isFocused ? 'inset 0 0 0 999px rgba(55, 65, 81, 0.18)' : undefined
         }}
@@ -802,6 +820,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
               tabIndex={0}
               aria-label={`Editar tarea: ${task.Titulo}`}
           >
+            {/* Collapse/expand button for parents with children (moved to action area) */}
             <span
               className={`text-slate-800 ${task.Estado === TaskState.COMPLETADA ? 'line-through text-slate-500' : ''}`}
               style={{
@@ -824,17 +843,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
         
         <div className="flex items-center gap-2 sm:gap-4 text-sm text-slate-600 shrink-0 pl-8 sm:pl-0 flex-wrap">
           {level === 0 && (
-            <div className="relative group flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-0.5 rounded-full cursor-pointer hover:border-blue-500" onClick={e => e.stopPropagation()}>
-                <Icon name="folder" className="w-4 h-4 text-slate-500"/>
-                <select 
-                  value={task.Proyecto}
-                  onChange={handleProjectChange}
-                  className="appearance-none bg-transparent font-medium focus:outline-none cursor-pointer pr-1"
-                  aria-label="Cambiar proyecto"
-                >
-                   {projects.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                </select>
-            </div>
+            <div className="relative group flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-0.5 rounded-full cursor-pointer hover:border-blue-500 min-w-0" onClick={e => e.stopPropagation()}>
+                  <Icon name="folder" className="w-4 h-4 text-slate-500"/>
+                  <select 
+                    value={task.Proyecto}
+                    onChange={handleProjectChange}
+                    className="appearance-none bg-transparent font-medium focus:outline-none cursor-pointer pr-1 max-w-[100px] truncate"
+                    aria-label="Cambiar proyecto"
+                    title={projects.find(p => p.id === Number(task.Proyecto))?.nombre || ''}
+                  >
+                     {projects.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  </select>
+              </div>
           )}
 
           {/* Mostrar usuarios asignados */}
@@ -884,6 +904,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
               <div ref={progressFillRef} className="h-2 rounded-full" style={{ width: `${task.Porcentaje_Avance}%`, backgroundColor: statusColor }}></div>
           </div>
 
+          {children.length > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setCollapsed(c => !c); }}
+              aria-expanded={!collapsed}
+              aria-controls={`task-children-${task.ID}`}
+              className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+              title={collapsed ? `Mostrar ${children.length} subtareas` : `Ocultar ${children.length} subtareas`}
+              aria-label={collapsed ? `Mostrar ${children.length} subtareas` : `Ocultar ${children.length} subtareas`}
+            >
+              <Icon name={collapsed ? 'chevronUp' : 'chevronDown'} className="w-3 h-3" />
+            </button>
+          )}
+
           <button
             onClick={handleDeleteClick}
             className="p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors opacity-60 hover:opacity-100"
@@ -895,28 +928,28 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, allTasks, allTasksGlob
         </div>
       </div>
 
-      {children.length > 0 && !hideChildren && (
-        <ul className="mt-2 space-y-2">
-            {children.map(child => (
-                <TaskItem
-                    key={child.ID}
-                    task={child}
-                    allTasks={allTasks}
-                    allTasksGlobal={allTasksGlobal}
-                    projects={projects}
-                    taskAssigneesRecord={taskAssigneesRecord}
-                    onTaskClick={onTaskClick}
-                    onUpdate={onUpdate}
-                    onDelete={onDelete}
-                    level={level + 1}
-                    focusedTaskId={focusedTaskId}
-                    onFocusTask={onFocusTask}
-                    sectionType={sectionType}
-                    subtaskCounts={subtaskCounts}
-                />
-            ))}
+        {children.length > 0 && !hideChildren && !collapsed && (
+        <ul id={`task-children-${task.ID}`} className="mt-2 space-y-2">
+          {children.map(child => (
+            <TaskItem
+              key={child.ID}
+              task={child}
+              allTasks={allTasks}
+              allTasksGlobal={allTasksGlobal}
+              projects={projects}
+              taskAssigneesRecord={taskAssigneesRecord}
+              onTaskClick={onTaskClick}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+              level={level + 1}
+              focusedTaskId={focusedTaskId}
+              onFocusTask={onFocusTask}
+              sectionType={sectionType}
+              subtaskCounts={subtaskCounts}
+            />
+          ))}
         </ul>
-      )}
+        )}
 
       <DeleteConfirmationModal
         isOpen={showDeleteModal}

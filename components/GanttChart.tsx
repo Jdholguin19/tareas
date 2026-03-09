@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Task, TaskDependency, GanttTask, GanttTimelineScale, TaskState, Project } from '../types';
 import { EditTaskModal } from './EditTaskModal';
-import { createSubTask, deleteTask } from '../services/apiService';
+import { createSubTask, deleteTask, getProjectTasksForUser, getAllTaskAssignees } from '../services/apiService';
 import { Icon } from './Icon';
 
 interface GanttChartProps {
     tasks: Task[];
+    allTasks?: Task[];
     dependencies: TaskDependency[];
     projects: Project[];
     onTaskUpdate?: (taskId: number, updates: Partial<Task>) => void;
+    onCreateSubTask?: (parentTaskId: number, title: string) => Promise<void>;
+    onDeleteTask?: (taskId: number) => Promise<void>;
     onDependencyCreate?: (predecesora: number, sucesora: number, tipo: string) => void;
     onDependencyDelete?: (dependencyId: number) => void;
     currentUser?: {id: number, username: string, email: string} | null;
+    taskAssigneesRecord?: Record<number, {id: number, username: string}[]>;
     onProjectCreated?: (project: Project) => void;
     focusedTaskId?: number | null; // New: ID of task to focus and highlight
     onFullscreenChange?: (isFullscreen: boolean) => void; // New: callback when fullscreen changes
@@ -19,12 +23,16 @@ interface GanttChartProps {
 
 const GanttChart: React.FC<GanttChartProps> = ({
     tasks = [],
+    allTasks,
     dependencies = [],
     projects = [],
     onTaskUpdate,
+    onCreateSubTask,
+    onDeleteTask,
     onDependencyCreate,
     onDependencyDelete,
     currentUser,
+    taskAssigneesRecord,
     onProjectCreated,
     focusedTaskId,
     onFullscreenChange
@@ -46,6 +54,87 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const ganttRootRef = useRef<HTMLDivElement | null>(null);
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
+    const [availableUsers, setAvailableUsers] = useState<Array<{id: number, username: string, email: string}>>([]);
+    const [userSearchQuery, setUserSearchQuery] = useState('');
+    const [selectedUserFilterId, setSelectedUserFilterId] = useState<number | null>(null);
+    const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+    const userDropdownRef = useRef<HTMLDivElement | null>(null);
+    const [showAllProjectTasks, setShowAllProjectTasks] = useState(false);
+    const [projectScopeTasks, setProjectScopeTasks] = useState<Task[]>([]);
+    const [isProjectScopeLoading, setIsProjectScopeLoading] = useState(false);
+    const [projectScopeAssignees, setProjectScopeAssignees] = useState<Record<number, {id: number, username: string}[]>>({});
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+                setIsUserDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const loadAvailableUsers = async () => {
+            if (!currentUser) return;
+            try {
+                const response = await fetch('/api/getUsersByDepartment.php', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (!data.error) {
+                    setAvailableUsers(data);
+                }
+            } catch (error) {
+                console.error('Error loading available users:', error);
+            }
+        };
+
+        loadAvailableUsers();
+    }, [currentUser]);
+
+    useEffect(() => {
+        const loadProjectScopeTasks = async () => {
+            if (!showAllProjectTasks || selectedProjectId === null) return;
+            if (isProjectScopeLoading || projectScopeTasks.length > 0) return;
+
+            setIsProjectScopeLoading(true);
+            try {
+                const data = await getProjectTasksForUser();
+                setProjectScopeTasks(data || []);
+            } catch (error) {
+                console.error('Error loading project scope tasks:', error);
+            } finally {
+                setIsProjectScopeLoading(false);
+            }
+        };
+
+        loadProjectScopeTasks();
+    }, [showAllProjectTasks, selectedProjectId, isProjectScopeLoading, projectScopeTasks.length]);
+
+    useEffect(() => {
+        const loadProjectScopeAssignees = async () => {
+            if (!showAllProjectTasks || projectScopeTasks.length === 0) return;
+            const taskIds = projectScopeTasks.map(t => t.ID);
+            try {
+                const assignees = await getAllTaskAssignees(taskIds);
+                setProjectScopeAssignees(assignees || {});
+            } catch (error) {
+                console.error('Error loading project scope assignees:', error);
+            }
+        };
+
+        loadProjectScopeAssignees();
+    }, [showAllProjectTasks, projectScopeTasks]);
     
     // Estados adicionales para acordeón y edición
     const [collapsedTasks, setCollapsedTasks] = useState<Set<number>>(new Set());
@@ -56,6 +145,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const [columnWidths, setColumnWidths] = useState({
         id: 50,
         tareas: 350,
+        asignados: 140,
         inicio: 80,
         fin: 80,
         predecesoras: 100,
@@ -70,13 +160,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const TASK_MARGIN = 8;
     const ROW_HEIGHT = TASK_HEIGHT + TASK_MARGIN;
     const TIMELINE_HEIGHT = 60;
-    const DAY_WIDTH = window.innerWidth < 640 ? 20 : 30; // Smaller day width on mobile
+    const DAY_WIDTH = 40; // Fixed width for better visibility and touch targets
     const MIN_CHART_WIDTH = 320; // base mínima
     
     // Calcular ancho total del sidebar basado en las columnas
     const SIDEBAR_WIDTH = useMemo(() => {
-        return columnWidths.id + columnWidths.tareas + columnWidths.inicio + 
-               columnWidths.fin + columnWidths.predecesoras + columnWidths.duracion;
+         return columnWidths.id + columnWidths.tareas + columnWidths.asignados + 
+             columnWidths.inicio + columnWidths.fin + columnWidths.predecesoras + columnWidths.duracion;
     }, [columnWidths]);
 
     // Generar timeline basado en la escala seleccionada (debe ir antes de usar timelineDays)
@@ -165,17 +255,135 @@ const GanttChart: React.FC<GanttChartProps> = ({
         return `${diffDays}d`;
     };
 
-    // Filtrar tareas por proyecto seleccionado
-    const filteredTasks = useMemo(() => {
-        if (selectedProjectId === null) {
-            return tasks;
+    const getInitials = (name: string): string => {
+        const trimmed = name.trim();
+        if (!trimmed) return '';
+        const parts = trimmed.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+            return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
         }
-        return tasks.filter(task => {
-            const taskProjectId = parseInt(String(task.Proyecto || 0));
-            const normalizedSelectedProjectId = parseInt(String(selectedProjectId));
+        return trimmed.slice(0, 2).toUpperCase();
+    };
+
+    const normalizeId = (id: any): number => parseInt(String(id));
+
+    const combinedAssigneesRecord = useMemo(() => ({
+        ...(taskAssigneesRecord || {}),
+        ...(projectScopeAssignees || {})
+    }), [taskAssigneesRecord, projectScopeAssignees]);
+
+    const getTaskAssignees = (task: Task): {id: number, username: string}[] => {
+        const fromRecord = combinedAssigneesRecord?.[task.ID];
+        if (fromRecord && fromRecord.length > 0) return fromRecord;
+        if (task.Usuario_Asignado_ID && task.asignado_a_username) {
+            return [{ id: task.Usuario_Asignado_ID, username: task.asignado_a_username }];
+        }
+        return [];
+    };
+
+    const getTaskAssigneeIds = (task: Task): number[] => {
+        const ids = new Set<number>();
+        if (task.Usuario_Asignado_ID) {
+            ids.add(normalizeId(task.Usuario_Asignado_ID));
+        }
+        getTaskAssignees(task).forEach(a => ids.add(normalizeId(a.id)));
+        return Array.from(ids);
+    };
+
+    const sourceTasksForUsers = useMemo(() => {
+        if (showAllProjectTasks && projectScopeTasks.length > 0) return projectScopeTasks;
+        return allTasks && allTasks.length > 0 ? allTasks : tasks;
+    }, [showAllProjectTasks, projectScopeTasks, allTasks, tasks]);
+
+    const availableUserMap = useMemo(() => {
+        const map = new Map<number, {id: number, username: string, email: string}>();
+        availableUsers.forEach(u => map.set(normalizeId(u.id), u));
+        sourceTasksForUsers.forEach(task => {
+            getTaskAssignees(task).forEach(a => {
+                const key = normalizeId(a.id);
+                if (!map.has(key)) {
+                    map.set(key, { id: a.id, username: a.username, email: '' });
+                }
+            });
+        });
+        return map;
+    }, [availableUsers, sourceTasksForUsers]);
+
+    const availableFilterUsers = useMemo(() => {
+        if (!currentUser) return [] as Array<{id: number, username: string, email: string}>;
+        const currentId = normalizeId(currentUser.id);
+        const candidateIds = new Set<number>();
+
+        sourceTasksForUsers.forEach(task => {
+            const creatorId = normalizeId(task.Usuario_Creador_ID);
+            const assigneeIds = getTaskAssigneeIds(task);
+            const isAssignedToMe = assigneeIds.some(id => id === currentId);
+            const isCreatedByMe = creatorId === currentId;
+
+            if (isAssignedToMe && creatorId !== currentId) {
+                candidateIds.add(creatorId);
+            }
+
+            if (isCreatedByMe) {
+                assigneeIds.forEach(id => {
+                    if (id !== currentId) candidateIds.add(id);
+                });
+            }
+        });
+
+        return Array.from(candidateIds)
+            .map(id => availableUserMap.get(id) || { id, username: `Usuario ${id}`, email: '' })
+            .sort((a, b) => a.username.localeCompare(b.username));
+    }, [currentUser, sourceTasksForUsers, availableUserMap]);
+
+    const filteredUserOptions = useMemo(() => {
+        if (!userSearchQuery.trim()) return availableFilterUsers;
+        const term = userSearchQuery.toLowerCase().trim();
+        return availableFilterUsers.filter(u =>
+            u.username.toLowerCase().includes(term) || u.email.toLowerCase().includes(term)
+        );
+    }, [userSearchQuery, availableFilterUsers]);
+
+    // Filtrar tareas por proyecto y usuario seleccionado (por defecto)
+    const baseFilteredTasks = useMemo(() => {
+        let result = tasks;
+
+        if (selectedProjectId !== null) {
+            const normalizedSelectedProjectId = normalizeId(selectedProjectId);
+            result = result.filter(task => {
+                const taskProjectId = normalizeId(task.Proyecto || 0);
+                return taskProjectId === normalizedSelectedProjectId;
+            });
+        }
+
+        if (selectedUserFilterId !== null) {
+            const normalizedUserId = normalizeId(selectedUserFilterId);
+            result = result.filter(task => {
+                const creatorId = normalizeId(task.Usuario_Creador_ID);
+                const assigneeIds = getTaskAssigneeIds(task);
+                return creatorId === normalizedUserId || assigneeIds.some(id => id === normalizedUserId);
+            });
+        }
+
+        return result;
+    }, [tasks, selectedProjectId, selectedUserFilterId]);
+
+    // Cuando se activa "Ver todas" con proyecto seleccionado, traer todas las tareas del proyecto
+    const projectAllTasks = useMemo(() => {
+        if (selectedProjectId === null) return [] as Task[];
+        const normalizedSelectedProjectId = normalizeId(selectedProjectId);
+        return sourceTasksForUsers.filter(task => {
+            const taskProjectId = normalizeId(task.Proyecto || 0);
             return taskProjectId === normalizedSelectedProjectId;
         });
-    }, [tasks, selectedProjectId]);
+    }, [selectedProjectId, sourceTasksForUsers]);
+
+    const filteredTasks = useMemo(() => {
+        if (selectedProjectId !== null && showAllProjectTasks) {
+            return projectAllTasks;
+        }
+        return baseFilteredTasks;
+    }, [selectedProjectId, showAllProjectTasks, projectAllTasks, baseFilteredTasks]);
 
     // Función para alternar colapso de tareas padre
     const toggleTaskCollapse = (taskId: number) => {
@@ -189,6 +397,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
             return newSet;
         });
     };
+
+    useEffect(() => {
+        if (selectedProjectId === null) {
+            setShowAllProjectTasks(false);
+        }
+    }, [selectedProjectId]);
 
     // Funciones para redimensionar columnas
     const handleColumnResizeStart = (columnName: string, e: React.MouseEvent) => {
@@ -321,8 +535,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
         const dates = filteredTasks
             .filter(task => task.Fecha_Inicio || task.Fecha_Vencimiento)
             .flatMap(task => [
-                task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : null,
-                task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : null
+                task.Fecha_Inicio ? new Date(task.Fecha_Inicio + 'T12:00:00') : null,
+                task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento + 'T12:00:00') : null
             ])
             .filter(date => date !== null) as Date[];
 
@@ -353,8 +567,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
     // Convertir tareas a formato Gantt usando el orden jerárquico y visibilidad
     const ganttTasks = useMemo((): GanttTask[] => {
         return getVisibleHierarchicalTasks.map((task, index) => {
-            const startDate = task.Fecha_Inicio ? new Date(task.Fecha_Inicio) : new Date();
-            const endDate = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento) : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+            // Agregar 1 día a las fechas para corregir el offset de timezone
+            const startDate = task.Fecha_Inicio ? new Date(task.Fecha_Inicio + 'T12:00:00') : new Date();
+            const endDate = task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento + 'T12:00:00') : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
             
             // Calcular posición y ancho basado en la escala de tiempo
             let x = 0;
@@ -409,13 +624,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const getTaskColor = (estado: TaskState, progreso: number) => {
         switch (estado) {
             case TaskState.COMPLETADA:
-                return 'bg-green-500';
+                return 'bg-emerald-500 border border-emerald-600 shadow-sm';
             case TaskState.EN_PROGRESO:
-                return 'bg-blue-500';
+                return 'bg-blue-500 border border-blue-600 shadow-sm';
+            case TaskState.EN_ESPERA:
+                return 'bg-amber-500 border border-amber-600 shadow-sm';
             case TaskState.PENDIENTE:
-                return 'bg-gray-400';
             default:
-                return 'bg-gray-400';
+                return 'bg-slate-400 border border-slate-500 shadow-sm';
         }
     };
 
@@ -518,7 +734,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
     };
 
     // Obtener la tarea que se está editando
-    const taskToEdit = editingTask ? tasks.find(t => t.ID === editingTask) : null;
+    const taskToEditSource = showAllProjectTasks && projectScopeTasks.length > 0 ? projectScopeTasks : tasks;
+    const taskToEdit = editingTask ? taskToEditSource.find(t => t.ID === editingTask) : null;
 
     const handleMouseMove = (e: React.MouseEvent) => {
         // Actualizar posición de arrastre de tareas
@@ -719,19 +936,50 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const toggleFullscreen = async () => {
         try {
             if (!isFullscreen) {
-                if (ganttRootRef.current && (ganttRootRef.current as any).requestFullscreen) {
-                    await (ganttRootRef.current as any).requestFullscreen();
-                } else {
-                    // Fallback a clases CSS si Fullscreen API no está disponible
-                    setIsFullscreen(true);
-                    if (onFullscreenChange) {
-                        onFullscreenChange(true);
+                if (ganttRootRef.current) {
+                    // Primero solicitar fullscreen
+                    if ((ganttRootRef.current as any).requestFullscreen) {
+                        await (ganttRootRef.current as any).requestFullscreen();
+                    } else {
+                        // Fallback a clases CSS si Fullscreen API no está disponible
+                        setIsFullscreen(true);
+                        if (onFullscreenChange) {
+                            onFullscreenChange(true);
+                        }
+                    }
+
+                    // En móvil, intentar forzar orientación horizontal DESPUÉS de entrar en fullscreen
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    
+                    if (isMobile && (screen as any).orientation && (screen as any).orientation.lock) {
+                        try {
+                            // Pequeño delay para asegurar que el navegador registró el estado fullscreen
+                            setTimeout(async () => {
+                                try {
+                                    await (screen as any).orientation.lock('landscape');
+                                } catch (e) {
+                                    console.log('No se pudo forzar orientación horizontal:', e);
+                                }
+                            }, 100);
+                        } catch (e) {
+                            console.log('Error al intentar bloquear orientación:', e);
+                        }
                     }
                 }
             } else {
                 if (document.fullscreenElement && document.exitFullscreen) {
                     await document.exitFullscreen();
                 }
+                
+                // Desbloquear orientación
+                if ((screen as any).orientation && (screen as any).orientation.unlock) {
+                    try {
+                        (screen as any).orientation.unlock();
+                    } catch (e) {
+                        console.log('No se pudo desbloquear orientación:', e);
+                    }
+                }
+                
                 setIsFullscreen(false);
                 if (onFullscreenChange) {
                     onFullscreenChange(false);
@@ -756,17 +1004,70 @@ const GanttChart: React.FC<GanttChartProps> = ({
             {/* Header */}
             <div className="gantt-header bg-gray-50 border-b p-2 sm:p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h3 className="text-lg font-semibold text-gray-800">Vista Gantt</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">Gantt</h3>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4">
-                        {/* Botón de pantalla completa (izquierda del selector de proyecto) */}
-                        <button
-                            onClick={toggleFullscreen}
-                            className="inline-flex items-center justify-center p-2 border rounded bg-white text-gray-700 hover:bg-gray-100"
-                            title={isFullscreen ? 'Salir de pantalla completa' : 'Ampliar pantalla'}
-                            aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Ampliar pantalla'}
-                        >
-                            <Icon name={isFullscreen ? 'compress' : 'expand'} className="w-5 h-5" />
-                        </button>
+                        {/* User Filter (Combo con búsqueda) */}
+                        <div className="relative w-full sm:w-56" ref={userDropdownRef}>
+                            <input
+                                type="text"
+                                placeholder="Buscar usuario..."
+                                value={userSearchQuery}
+                                onChange={(e) => {
+                                    setUserSearchQuery(e.target.value);
+                                    setSelectedUserFilterId(null);
+                                    setIsUserDropdownOpen(true);
+                                }}
+                                onFocus={() => setIsUserDropdownOpen(true)}
+                                className="px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm w-full"
+                            />
+                            {userSearchQuery && (
+                                <button
+                                    onClick={() => {
+                                        setUserSearchQuery('');
+                                        setSelectedUserFilterId(null);
+                                    }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    type="button"
+                                >
+                                    <Icon name="close" className="w-3 h-3" />
+                                </button>
+                            )}
+                            {isUserDropdownOpen && (
+                                <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg max-h-56 overflow-auto">
+                                    <button
+                                        type="button"
+                                        onMouseDown={() => {
+                                            setSelectedUserFilterId(null);
+                                            setUserSearchQuery('');
+                                            setIsUserDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-slate-100"
+                                    >
+                                        Todos los usuarios
+                                    </button>
+                                    {filteredUserOptions.map(user => (
+                                        <button
+                                            type="button"
+                                            key={user.id}
+                                            onMouseDown={() => {
+                                                setSelectedUserFilterId(user.id);
+                                                setUserSearchQuery(user.username);
+                                                setIsUserDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-slate-100"
+                                        >
+                                            {user.username}
+                                        </button>
+                                    ))}
+                                    {filteredUserOptions.length === 0 && (
+                                        <div className="px-3 py-2 text-xs sm:text-sm text-slate-500">
+                                            Sin resultados
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         {/* Project Selector */}
                         <select 
                             value={selectedProjectId || ''}
@@ -780,6 +1081,18 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 </option>
                             ))}
                         </select>
+
+                        {selectedProjectId && (
+                            <label className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                                <input
+                                    type="checkbox"
+                                    checked={showAllProjectTasks}
+                                    onChange={(e) => setShowAllProjectTasks(e.target.checked)}
+                                    className="h-4 w-4"
+                                />
+                                Ver todas
+                            </label>
+                        )}
                         
                         {/* Timeline Scale Selector */}
                         <select 
@@ -803,88 +1116,123 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                 </span>
                             )}
                         </span>
+
+                        {/* Botón de pantalla completa*/}
+                        <button
+                            onClick={toggleFullscreen}
+                            className="inline-flex items-center justify-center p-2 border rounded bg-white text-gray-700 hover:bg-gray-100"
+                            title={isFullscreen ? 'Salir de pantalla completa' : 'Ampliar pantalla'}
+                            aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Ampliar pantalla'}
+                        >
+                            <Icon name={isFullscreen ? 'compress' : 'expand'} className="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
             </div>
 
             {/* Main Content */}
-            <div className="gantt-content flex flex-col lg:flex-row min-h-0 flex-1 overflow-hidden">
+            <div className="gantt-content flex flex-row min-h-0 flex-1 overflow-hidden">
                 {/* Sidebar con lista de tareas */}
                 <div 
-                    className="gantt-sidebar bg-gray-50 border-r lg:border-b-0 border-b flex flex-col flex-shrink-0" 
+                    className="gantt-sidebar bg-slate-50 border-r flex flex-col flex-shrink-0 transition-all duration-300" 
                     style={{ 
-                        width: `${SIDEBAR_WIDTH}px`,
-                        minWidth: `${SIDEBAR_WIDTH}px`,
-                        maxWidth: `${SIDEBAR_WIDTH}px`,
+                        width: isMobile ? '45vw' : `${SIDEBAR_WIDTH}px`,
+                        minWidth: isMobile ? '45vw' : `${SIDEBAR_WIDTH}px`,
+                        maxWidth: isMobile ? '45vw' : `${SIDEBAR_WIDTH}px`,
                         overflow: 'hidden'
                     }}
                 >
                     {/* Timeline header con columnas - FIJO */}
                     <div
-                        className="h-[60px] border-b bg-gray-100 grid items-center flex-shrink-0"
+                        className="h-[60px] border-b bg-slate-100 grid items-center flex-shrink-0"
                         style={{ 
-                            gridTemplateColumns: `${columnWidths.id}px ${columnWidths.tareas}px ${columnWidths.inicio}px ${columnWidths.fin}px ${columnWidths.predecesoras}px ${columnWidths.duracion}px` 
+                            gridTemplateColumns: isMobile 
+                                ? '50px 1fr' 
+                                : `${columnWidths.id}px ${columnWidths.tareas}px ${columnWidths.asignados}px ${columnWidths.inicio}px ${columnWidths.fin}px ${columnWidths.predecesoras}px ${columnWidths.duracion}px` 
                         }}
                     >
                         {/* Columna ID */}
-                        <div className="px-1 sm:px-2 border-r relative group">
-                            <span className="text-xs font-medium text-gray-600">ID</span>
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
-                                onMouseDown={(e) => handleColumnResizeStart('id', e)}
-                            />
+                        <div className="px-1 sm:px-2 border-r relative group h-full flex items-center justify-center">
+                            <span className="text-xs font-bold text-slate-600">ID</span>
+                            {!isMobile && (
+                                <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                    onMouseDown={(e) => handleColumnResizeStart('id', e)}
+                                />
+                            )}
                         </div>
                         
                         {/* Columna Tareas */}
-                        <div className="px-2 sm:px-4 border-r relative group">
-                            <span className="text-xs sm:text-sm font-medium text-gray-700">Tareas</span>
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
-                                onMouseDown={(e) => handleColumnResizeStart('tareas', e)}
-                            />
+                        <div className="px-2 sm:px-4 border-r relative group h-full flex items-center">
+                            <span className="text-xs sm:text-sm font-bold text-slate-700">Tareas</span>
+                            {!isMobile && (
+                                <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                    onMouseDown={(e) => handleColumnResizeStart('tareas', e)}
+                                />
+                            )}
                         </div>
+
+                        {!isMobile && (
+                            <div className="px-1 sm:px-2 border-r relative group h-full flex items-center justify-center">
+                                <span className="text-xs font-medium text-slate-600">Asignado/s</span>
+                                <div
+                                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                    onMouseDown={(e) => handleColumnResizeStart('asignados', e)}
+                                />
+                            </div>
+                        )}
                         
-                        {/* Columna Inicio */}
-                        <div className="px-1 sm:px-2 border-r text-center relative group">
-                            <span className="text-xs font-medium text-gray-600">Inicio</span>
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
-                                onMouseDown={(e) => handleColumnResizeStart('inicio', e)}
-                            />
-                        </div>
-                        
-                        {/* Columna Fin */}
-                        <div className="px-1 sm:px-2 border-r text-center relative group">
-                            <span className="text-xs font-medium text-gray-600">Fin</span>
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
-                                onMouseDown={(e) => handleColumnResizeStart('fin', e)}
-                            />
-                        </div>
-                        
-                        {/* Columna Predecesoras */}
-                        <div className="px-1 sm:px-2 border-r text-center relative group">
-                            <span className="text-xs font-medium text-gray-600">Predec.</span>
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
-                                onMouseDown={(e) => handleColumnResizeStart('predecesoras', e)}
-                            />
-                        </div>
-                        
-                        {/* Columna Duración */}
-                        <div className="px-1 sm:px-2 text-center relative group">
-                            <span className="text-xs font-medium text-gray-600">Duración</span>
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
-                                onMouseDown={(e) => handleColumnResizeStart('duracion', e)}
-                            />
-                        </div>
+                        {!isMobile && (
+                            <>
+                                {/* Columna Inicio */}
+                                <div className="px-1 sm:px-2 border-r text-center relative group h-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-slate-600">Inicio</span>
+                                    <div
+                                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                        onMouseDown={(e) => handleColumnResizeStart('inicio', e)}
+                                    />
+                                </div>
+                                
+                                {/* Columna Fin */}
+                                <div className="px-1 sm:px-2 border-r text-center relative group h-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-slate-600">Fin</span>
+                                    <div
+                                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                        onMouseDown={(e) => handleColumnResizeStart('fin', e)}
+                                    />
+                                </div>
+                                
+                                {/* Columna Predecesoras */}
+                                <div className="px-1 sm:px-2 border-r text-center relative group h-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-slate-600">Predec.</span>
+                                    <div
+                                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                        onMouseDown={(e) => handleColumnResizeStart('predecesoras', e)}
+                                    />
+                                </div>
+                                
+                                {/* Columna Duración */}
+                                <div className="px-1 sm:px-2 text-center relative group h-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-slate-600">Duración</span>
+                                    <div
+                                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-300"
+                                        onMouseDown={(e) => handleColumnResizeStart('duracion', e)}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                     
                     {/* Task list con jerarquía, fechas y acordeón - SCROLLABLE */}
                     <div 
                         ref={sidebarRef}
-                        className="gantt-task-list flex-1 overflow-auto"
+                        className="gantt-task-list flex-1"
+                        style={{
+                            overflow: 'auto',
+                            WebkitOverflowScrolling: 'touch',
+                            touchAction: 'pan-y'
+                        }}
                         onScroll={(e) => {
                             const target = chartAreaRef.current;
                             if (target && target.scrollTop !== e.currentTarget.scrollTop) {
@@ -914,7 +1262,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                     }`}
                                     style={{ 
                                         height: ROW_HEIGHT, 
-                                        gridTemplateColumns: `${columnWidths.id}px ${columnWidths.tareas}px ${columnWidths.inicio}px ${columnWidths.fin}px ${columnWidths.predecesoras}px ${columnWidths.duracion}px` 
+                                        gridTemplateColumns: isMobile 
+                                            ? '50px 1fr' 
+                                            : `${columnWidths.id}px ${columnWidths.tareas}px ${columnWidths.asignados}px ${columnWidths.inicio}px ${columnWidths.fin}px ${columnWidths.predecesoras}px ${columnWidths.duracion}px` 
                                     }}
                                     onDoubleClick={(e) => handleTaskDoubleClick(task.ID, e)}
                                 >
@@ -972,52 +1322,90 @@ const GanttChart: React.FC<GanttChartProps> = ({
                                         </div>
                                     </div>
                                     
-                                    {/* Columna fecha inicio */}
-                                    <div className="px-1 sm:px-2 border-r text-center">
-                                        <span className="text-xs text-gray-600">
-                                            {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio)) : '-'}
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Columna fecha fin */}
-                                    <div className="px-1 sm:px-2 border-r text-center">
-                                        <span className="text-xs text-gray-600">
-                                            {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento)) : '-'}
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Columna Predecesoras */}
-                                    <div className="px-1 sm:px-2 border-r text-center">
-                                        {predecessors ? (
-                                            <div className="flex flex-wrap gap-1 justify-center items-center">
-                                                {predecessors.split(', ').map((predId, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className="text-xs text-blue-600 font-mono cursor-pointer hover:text-blue-800 hover:underline"
-                                                        onDoubleClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const taskId = parseInt(predId.trim());
-                                                            if (!isNaN(taskId)) {
-                                                                handleTaskDoubleClick(taskId, e as any);
-                                                            }
-                                                        }}
-                                                        title="Doble click para editar esta tarea"
-                                                    >
-                                                        {predId.trim()}{idx < predecessors.split(', ').length - 1 ? ',' : ''}
-                                                    </span>
-                                                ))}
+                                    {!isMobile && (
+                                        <>
+                                            {/* Columna Asignado/s */}
+                                            <div className="px-1 sm:px-2 border-r text-center">
+                                                {(() => {
+                                                    const assignees = getTaskAssignees(task);
+                                                    const isOwner = currentUser && parseInt(String(task.Usuario_Creador_ID)) === parseInt(String(currentUser.id));
+                                                    const onlyOwnerAssigned = isOwner && assignees.length === 1 && parseInt(String(assignees[0].id)) === parseInt(String(currentUser?.id));
+
+                                                    if (assignees.length === 0 || onlyOwnerAssigned) {
+                                                        return null;
+                                                    }
+
+                                                    const primary = assignees[0];
+                                                    const extraCount = Math.min(Math.max(assignees.length - 1, 0), 9);
+
+                                                    return (
+                                                        <div className="relative inline-flex items-center group">
+                                                            <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center border border-blue-200">
+                                                                {getInitials(primary.username)}
+                                                            </div>
+                                                            {extraCount > 0 && (
+                                                                <div className="-ml-2 w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold flex items-center justify-center border border-slate-300">
+                                                                    +{extraCount}
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-20">
+                                                                <div className="bg-slate-900 text-white text-xs rounded-md px-3 py-2 shadow-lg whitespace-nowrap">
+                                                                    {assignees.map(a => a.username).join(', ')}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
-                                        ) : (
-                                            <span className="text-xs text-gray-600">-</span>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Columna duración */}
-                                    <div className="px-1 sm:px-2 text-center">
-                                        <span className="text-xs text-gray-600 font-medium">
-                                            {calculateDuration(task.Fecha_Inicio, task.Fecha_Vencimiento)}
-                                        </span>
-                                    </div>
+
+                                            {/* Columna fecha inicio */}
+                                            <div className="px-1 sm:px-2 border-r text-center">
+                                                <span className="text-xs text-gray-600">
+                                                    {task.Fecha_Inicio ? formatDate(new Date(task.Fecha_Inicio + 'T12:00:00')) : '-'}
+                                                </span>
+                                            </div>
+                                            
+                                            {/* Columna fecha fin */}
+                                            <div className="px-1 sm:px-2 border-r text-center">
+                                                <span className="text-xs text-gray-600">
+                                                    {task.Fecha_Vencimiento ? formatDate(new Date(task.Fecha_Vencimiento + 'T12:00:00')) : '-'}
+                                                </span>
+                                            </div>
+                                            
+                                            {/* Columna Predecesoras */}
+                                            <div className="px-1 sm:px-2 border-r text-center">
+                                                {predecessors ? (
+                                                    <div className="flex flex-wrap gap-1 justify-center items-center">
+                                                        {predecessors.split(', ').map((predId, idx) => (
+                                                            <span
+                                                                key={idx}
+                                                                className="text-xs text-blue-600 font-mono cursor-pointer hover:text-blue-800 hover:underline"
+                                                                onDoubleClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const taskId = parseInt(predId.trim());
+                                                                    if (!isNaN(taskId)) {
+                                                                        handleTaskDoubleClick(taskId, e as any);
+                                                                    }
+                                                                }}
+                                                                title="Doble click para editar esta tarea"
+                                                            >
+                                                                {predId.trim()}{idx < predecessors.split(', ').length - 1 ? ',' : ''}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-600">-</span>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Columna duración */}
+                                            <div className="px-1 sm:px-2 text-center">
+                                                <span className="text-xs text-gray-600 font-medium">
+                                                    {calculateDuration(task.Fecha_Inicio, task.Fecha_Vencimiento)}
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             );
                         })}
@@ -1029,8 +1417,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     {/* Timeline Header - FIJO */}
                     <div
                         ref={timelineHeaderRef}
-                        className="gantt-timeline-header bg-gray-100 border-b overflow-x-hidden flex-shrink-0"
-                        style={{ height: TIMELINE_HEIGHT }}
+                        className="gantt-timeline-header bg-gray-100 border-b flex-shrink-0"
+                        style={{ 
+                            height: TIMELINE_HEIGHT,
+                            overflowX: 'auto',
+                            WebkitOverflowScrolling: 'touch',
+                            touchAction: 'pan-x'
+                        }}
                     >
                         <div
                             className="relative"
@@ -1058,7 +1451,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     {/* Chart Area - SCROLLABLE */}
                     <div 
                         ref={chartAreaRef}
-                        className="gantt-chart-area relative bg-white overflow-auto flex-1"
+                        className="gantt-chart-area relative bg-white flex-1"
+                        style={{
+                            overflow: 'auto',
+                            WebkitOverflowScrolling: 'touch',
+                            touchAction: 'pan-x pan-y'
+                        }}
                         onScroll={(e) => {
                             const target = timelineHeaderRef.current;
                             if (target && target.scrollLeft !== e.currentTarget.scrollLeft) {
@@ -1436,13 +1834,19 @@ const GanttChart: React.FC<GanttChartProps> = ({
                      }}
                      onClose={handleCloseEditModal}
                      onCreateSubtask={async (parentTaskId: number, title: string) => {
-                         await createSubTask(parentTaskId, title);
-                         // Refresh tasks would be handled by parent component
+                         if (onCreateSubTask) {
+                             await onCreateSubTask(parentTaskId, title);
+                         } else {
+                             await createSubTask(parentTaskId, title);
+                         }
                      }}
                      onDelete={async (taskId: number) => {
-                         await deleteTask(taskId);
-                         handleCloseEditModal();
-                         // Refresh tasks would be handled by parent component
+                        if (onDeleteTask) {
+                            await onDeleteTask(taskId);
+                        } else {
+                            await deleteTask(taskId);
+                        }
+                        handleCloseEditModal();
                      }}
                      onProjectCreated={onProjectCreated}
                  />

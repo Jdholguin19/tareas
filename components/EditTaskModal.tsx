@@ -3,7 +3,9 @@ import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 import { Icon } from './Icon';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, createProject, updateTask } from '../services/apiService';
+import { TaskAttachments } from './TaskAttachments';
+import { AttachmentUploadModal } from './AttachmentUploadModal';
+import { searchUsers, getTaskAssignees, assignUserToTask, unassignUserFromTask, createProject, updateTask, getTaskComments, addTaskComment, getAllProjects } from '../services/apiService';
 
 interface EditTaskModalProps {
   task: Task;
@@ -36,30 +38,97 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
   const [taskCreator, setTaskCreator] = useState<{id: number, username: string, email: string} | null>(null);
   const [isLoadingCreator, setIsLoadingCreator] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [isPostingComment, setIsPostingComment] = useState(false);
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [projectSearchResults, setProjectSearchResults] = useState<{id: number, nombre: string}[]>([]);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [isSearchingProjects, setIsSearchingProjects] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const userSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const commentsPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const commentsRef = useRef<any[]>([]);
   
   // Estado para el checkbox de convertir en tarea principal
   const [makeParentTask, setMakeParentTask] = useState(false);
+  
+  // Estado para el modal de adjuntos
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [attachmentRefreshKey, setAttachmentRefreshKey] = useState(0);
 
   useEffect(() => {
-    console.log('EditTaskModal - task received:', task);
-    console.log('EditTaskModal - task.Proyecto:', task.Proyecto);
-    console.log('EditTaskModal - Number(task.Proyecto):', Number(task.Proyecto));
+    
     setFormData({
       ...task,
-      Fecha_Inicio: task.Fecha_Inicio || task.Fecha_Creacion,
+      // Do NOT default Fecha_Inicio to Fecha_Creacion — keep it empty if not set
+      Fecha_Inicio: task.Fecha_Inicio ?? null,
       Proyecto: Number(task.Proyecto) // Ensure Proyecto is always a number
     });
     // Load assigned users and task creator
     loadAssignedUsers();
     loadTaskCreator();
+    loadComments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.ID]); // Solo cuando cambie el ID de la tarea
+
+  const loadComments = async (opts?: { silent?: boolean; sinceId?: number }) => {
+    const silent = !!opts?.silent;
+    if (!silent) setIsLoadingComments(true);
+    try {
+      const c = await getTaskComments(task.ID, opts?.sinceId);
+      if (opts?.sinceId) {
+        // append only new comments
+        if (Array.isArray(c) && c.length > 0) {
+          setComments(prev => {
+            const merged = [...prev, ...c];
+            commentsRef.current = merged;
+            return merged;
+          });
+        }
+      } else {
+        setComments(c || []);
+        commentsRef.current = c || [];
+      }
+    } catch (err) {
+      console.error('Error loading comments:', err);
+      if (!opts?.sinceId) setComments([]);
+    } finally {
+      if (!silent) setIsLoadingComments(false);
+    }
+  };
+
+  // Poll comments periodically and refresh when window/tab regains focus
+  useEffect(() => {
+    // Start polling for the current task
+    if (commentsPollingRef.current) {
+      // already polling
+      return;
+    }
+
+    // Poll every 3 seconds; request only comments after the last known id
+    commentsPollingRef.current = setInterval(() => {
+      const lastId = commentsRef.current && commentsRef.current.length ? commentsRef.current[commentsRef.current.length - 1].id : 0;
+      loadComments({ silent: true, sinceId: lastId || undefined });
+    }, 3000) as unknown as NodeJS.Timeout;
+
+    const onFocus = () => { loadComments(); };
+    const onVisibilityChange = () => { if (document.visibilityState === 'visible') loadComments(); };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      if (commentsPollingRef.current) {
+        try { clearInterval(commentsPollingRef.current as any); } catch (e) {}
+        commentsPollingRef.current = null;
+      }
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // restart polling when task.ID changes
+  }, [task.ID]);
 
   const loadAssignedUsers = async () => {
     setIsLoadingAssignees(true);
@@ -110,15 +179,22 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     userSearchTimeoutRef.current = setTimeout(async () => {
       setIsSearchingProjects(true);
       try {
-        // Filter projects locally since we already have them
-        const filteredProjects = projects.filter(project =>
+        // Fetch all projects to ensure we have everything (including those not in the initial props)
+        const allProjects = await getAllProjects();
+        
+        const filteredProjects = allProjects.filter(project =>
           project.nombre.toLowerCase().includes(query.toLowerCase())
         );
         setProjectSearchResults(filteredProjects);
         setShowProjectDropdown(true);
       } catch (error) {
         console.error('Error searching projects:', error);
-        setProjectSearchResults([]);
+        // Fallback to local filtering if API fails
+        const filteredProjects = projects.filter(project =>
+          project.nombre.toLowerCase().includes(query.toLowerCase())
+        );
+        setProjectSearchResults(filteredProjects);
+        setShowProjectDropdown(true);
       } finally {
         setIsSearchingProjects(false);
       }
@@ -223,7 +299,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   }, [onClose]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    // Treat '0000-00-00' as cleared/empty for date inputs
+    if ((name === 'Fecha_Inicio' || name === 'Fecha_Vencimiento' || name === 'Fecha_Completada') && value === '0000-00-00') {
+      value = '';
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
@@ -300,6 +380,33 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     setIsAddingSubtask(false);
   };
 
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    setIsPostingComment(true);
+    try {
+      const res = await addTaskComment(task.ID, newComment.trim());
+      if (res && res.success) {
+        // append comment
+        setComments(prev => {
+          const merged = [...prev, res.comment];
+          commentsRef.current = merged;
+          return merged;
+        });
+        setNewComment('');
+        // Fetch any comments posted after this one silently
+        try { await loadComments({ silent: true, sinceId: res.comment.id }); } catch (e) { /* ignore */ }
+      } else {
+        throw new Error(res?.error || 'Error posting comment');
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      alert('No se pudo publicar el comentario');
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
+
   const handleUserSearch = async (query: string) => {
     setUserSearchQuery(query);
     
@@ -338,11 +445,27 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
     }
 
     try {
-      await assignUserToTask(task.ID, user.id);
-      setAssignedUsers(prev => [...prev, { ...user, fecha_asignacion: new Date().toISOString() }]);
-      setUserSearchQuery('');
-      setShowUserDropdown(false);
-      setUserSearchResults([]);
+      const res = await assignUserToTask(task.ID, user.id);
+      if (res && res.success) {
+        // Refresh assigned users from server to avoid race conditions
+        await loadAssignedUsers();
+        // Notify parent to refresh global assignees record if available
+        if (onTaskUpdate) {
+          // Fetch latest task data and notify parent
+          try {
+            const updated = await updateTask({ ...task });
+            onTaskUpdate(updated);
+          } catch (err) {
+            // ignore secondary failure
+          }
+        }
+        setUserSearchQuery('');
+        setShowUserDropdown(false);
+        setUserSearchResults([]);
+      } else {
+        console.error('Assign API responded with error', res);
+        alert(res?.message || 'Error al asignar usuario');
+      }
     } catch (error) {
       console.error('Error assigning user:', error);
       alert('Error al asignar usuario');
@@ -351,8 +474,20 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
   const handleRemoveAssignee = async (assigneeId: number) => {
     try {
-      await unassignUserFromTask(task.ID, assigneeId);
-      setAssignedUsers(prev => prev.filter(user => user.id !== assigneeId));
+      const res = await unassignUserFromTask(task.ID, assigneeId);
+      if (res && res.success) {
+        // Refresh assigned users
+        await loadAssignedUsers();
+        if (onTaskUpdate) {
+          try {
+            const updated = await updateTask({ ...task });
+            onTaskUpdate(updated);
+          } catch (err) {}
+        }
+      } else {
+        console.error('Unassign API responded with error', res);
+        alert(res?.message || 'Error al quitar asignación');
+      }
     } catch (error) {
       console.error('Error unassigning user:', error);
       alert('Error al quitar asignación');
@@ -384,7 +519,11 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
 
   const formatDateForInput = (dateString: string | null) => {
     if (!dateString) return '';
-    return dateString.split('T')[0];
+    // Handle both "T" (ISO) and space (SQL) separators
+    const datePart = dateString.split('T')[0].split(' ')[0];
+    // Treat MySQL zero-date as empty
+    if (datePart === '0000-00-00') return '';
+    return datePart;
   };
 
   const isCreator = currentUser && currentUser.id === task.Usuario_Creador_ID;
@@ -398,6 +537,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
   const canAssign = isCreator || isAssigned;
   const canUnassign = isCreator; // Solo el creador puede quitar asignaciones
   const canDelete = isCreator; // Solo el creador puede eliminar la tarea
+  const canComment = isCreator || isAssigned;
 
   const isCompleted = formData.Porcentaje_Avance === 100;
   const subtasks = allTasks.filter(t => t.Parent_ID === task.ID);
@@ -527,37 +667,60 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                 className="w-full p-2 sm:p-2.5 border border-slate-300 bg-slate-50 text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                 disabled={!canEdit}
               />
+              
+              {/* Adjuntos de la tarea */}
+              <TaskAttachments
+                tareaId={task.ID}
+                refreshKey={attachmentRefreshKey}
+                onUploadClick={() => setShowAttachmentModal(true)}
+              />
             </div>
             
-            {/* 2. Div del Checkbox (tu código original) */}
-            {/* Ahora está dentro del agrupador */}
-            <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
-              {isParentTask ? (
-                <div className="flex items-center">
-                  
-                  <span className="text-sm font-medium text-slate-700"> ✔ Esta es una tarea principal</span>
-                </div>
-              ) : (
-                <>
-                  <input 
-                    type="checkbox" 
-                    id="makeParentTaskCheckbox" 
-                    checked={makeParentTask} 
-                    onChange={handleMakeParentTaskToggle} 
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    disabled={!canEditProgress} 
-                  />
-                  <label htmlFor="makeParentTaskCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">
-                    Convertir en tarea principal
-                  </label>
-                </>
-              )}
+            {/* 2. Checkboxes de Convertir en tarea principal y Marcar como completada */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Checkbox Convertir en tarea principal */}
+              <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+                {isParentTask ? (
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-slate-700"> ✔ Esta es una tarea principal</span>
+                  </div>
+                ) : (
+                  <>
+                    <input 
+                      type="checkbox" 
+                      id="makeParentTaskCheckbox" 
+                      checked={makeParentTask} 
+                      onChange={handleMakeParentTaskToggle} 
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                      disabled={!canEditProgress} 
+                    />
+                    <label htmlFor="makeParentTaskCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">
+                      Convertir en tarea principal
+                    </label>
+                  </>
+                )}
+              </div>
+
+              {/* Checkbox Marcar como completada */}
+              <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+                <input 
+                  type="checkbox" 
+                  id="isCompletedCheckbox" 
+                  checked={isCompleted} 
+                  onChange={handleCompletedToggle} 
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  disabled={!canEditProgress} 
+                />
+                <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">
+                  Marcar como completada
+                </label>
+              </div>
             </div>
 
             {/* 3. Div de la Descripción (MOVIDO AQUÍ DENTRO) */}
             {/* Ahora también está dentro del agrupador */}
             <div>
-              <label htmlFor="Descripcion" className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
+              <label htmlFor="Descripcion" className="block text-sm font-medium text-slate-700 mb-1">Observaciones</label>
               <textarea
                 id="Descripcion"
                 name="Descripcion"
@@ -588,7 +751,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
               {/* Mostrar proyecto seleccionado */}
               {formData.Proyecto ? (
                 <>
-                  {console.log('EditTaskModal - formData.Proyecto:', formData.Proyecto, 'projects:', projects.map(p => ({id: p.id, nombre: p.nombre})))}
+                  
                 <div className="mb-3 flex items-center space-x-2">
                   <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm w-fit">
                     <Icon name="folder" className="w-4 h-4 mr-2"/>
@@ -634,6 +797,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                         <button
                           key={project.id}
                           type="button"
+                          onMouseDown={(e) => e.preventDefault()}
                           onClick={() => handleProjectSelect(project)}
                           className="w-full text-left px-3 py-2 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
                         >
@@ -645,6 +809,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                         <div className="text-sm text-slate-700">No hay proyectos</div>
                         <button 
                           type="button" 
+                          onMouseDown={(e) => e.preventDefault()}
                           onClick={() => handleCreateProject(projectSearchQuery)} 
                           disabled={isCreatingProject}
                           className="ml-2 inline-flex items-center px-2 py-1 border border-slate-200 rounded text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -713,6 +878,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                       <button
                         key={user.id}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleUserSelect(user)}
                         className="w-full text-left px-3 py-2 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none border-b border-slate-100 last:border-b-0"
                       >
@@ -789,15 +955,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
             </div>
           </div>
           
-          {/* Checkboxes en fila horizontal */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Checkbox de completada */}
-            <div className="flex items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
-              <input type="checkbox" id="isCompletedCheckbox" checked={isCompleted} onChange={handleCompletedToggle} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!canEditProgress} />
-              <label htmlFor="isCompletedCheckbox" className="ml-2 sm:ml-3 block text-sm font-medium text-slate-700">Marcar como completada</label>
-            </div>
-
-          </div>
+          {/* Checkboxes en fila horizontal - REMOVED (movido junto a Convertir en tarea principal) */}
 
           <div>
             <label htmlFor="Porcentaje_Avance" className="block text-sm font-medium text-slate-700 mb-2">
@@ -832,7 +990,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
           <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200">
               <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-slate-700 mb-2 sm:mb-3">Sub-tareas</h3>
               {subtasks.length > 0 && (
-                  <ul className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
+                  <ul className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 max-h-[200px] overflow-y-auto pr-1">
                       {subtasks.map(st => (
                           <li key={st.ID} 
                               className={`flex items-center justify-between bg-slate-50 p-2 sm:p-2.5 rounded-md text-xs sm:text-sm transition-colors ${st.Estado === TaskState.COMPLETADA ? 'text-slate-500' : 'text-slate-800'} ${onSubtaskClick ? 'hover:bg-slate-100 cursor-pointer' : ''}`}
@@ -870,6 +1028,50 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
                   </button>
               </div>
           </div>
+          
+          {/* Comments Section */}
+          <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200">
+            <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-slate-700 mb-2 sm:mb-3">Comentarios</h3>
+            {isLoadingComments ? (
+              <div className="text-sm text-slate-500">Cargando comentarios...</div>
+            ) : (
+              <div className="space-y-3 mb-3">
+                {comments.length === 0 ? (
+                  <div className="text-sm text-slate-500">No hay comentarios aún.</div>
+                ) : (
+                  comments.map(c => (
+                    <div key={c.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-sm font-medium text-slate-800">{c.username || 'Usuario'}</div>
+                        <div className="text-xs text-slate-400">{new Date(c.fecha_creacion).toLocaleString()}</div>
+                      </div>
+                      <div className="text-sm text-slate-700 whitespace-pre-wrap">{c.contenido}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {canComment ? (
+              <div className="space-y-2">
+                <textarea
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  placeholder="Escribe un comentario..."
+                  className="w-full p-2 sm:p-2.5 border border-slate-300 bg-white text-slate-900 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 transition-colors text-sm sm:text-base"
+                  rows={3}
+                  disabled={isPostingComment}
+                />
+                <div className="flex justify-end">
+                  <button onClick={handleAddComment} disabled={!newComment.trim() || isPostingComment} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 text-sm">
+                    {isPostingComment ? 'Publicando...' : 'Publicar comentario'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-slate-500">Solo el creador y usuarios asignados pueden comentar.</div>
+            )}
+          </div>
         </div>
         
         <div className="flex flex-col-reverse sm:flex-row justify-end items-center pt-4 sm:pt-6 lg:pt-6 xl:pt-8 mt-4 sm:mt-6 lg:mt-6 xl:mt-8 border-t border-slate-200 space-y-2 sm:space-y-3 space-y-reverse sm:space-y-0 sm:space-x-3">
@@ -900,6 +1102,19 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, allTasks, pr
         taskTitle={task.Titulo}
         isDeleting={isDeleting}
       />
+      
+      {/* Modal para subir adjuntos */}
+      {showAttachmentModal && (
+        <AttachmentUploadModal
+          isOpen={showAttachmentModal}
+          tareaId={task.ID}
+          onClose={() => setShowAttachmentModal(false)}
+          onUploadSuccess={() => {
+            setShowAttachmentModal(false);
+            setAttachmentRefreshKey(prev => prev + 1);
+          }}
+        />
+      )}
     </div>
   );
 };

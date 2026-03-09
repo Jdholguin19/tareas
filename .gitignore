@@ -26,3 +26,5 @@ dist-ssr
 .github/instructions/intructions.instructions.md
 .github/copilot-instructions.md
 api/config.php
+session_data/
+api/config/env_sharepoint.php

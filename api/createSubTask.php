@@ -62,12 +62,12 @@ try {
 
     // Crear la subtarea - SIEMPRE con proyecto_id heredado
     $stmt = $pdo->prepare("
-        INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_vencimiento, adjuntos_url, tipos_tareas_id)
-        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, ?, '[]', ?)
+        INSERT INTO tareas (titulo, descripcion, estado, progreso, fecha_creacion, creado_por, tarea_padre_id, proyecto_id, asignado_a, fecha_inicio, fecha_vencimiento, adjuntos_url, tipos_tareas_id)
+        VALUES (?, NULL, 'pendiente', 0, NOW(), ?, ?, ?, ?, NULL, NULL, '[]', ?)
     ");
     // Heredar tipos_tareas_id del padre también
     $tiposTareasId = $parent['tipos_tareas_id'] ?? 1;
-    $stmt->execute([$titulo, $userId, $parentId, $proyectoId, $parent['asignado_a'], $parent['fecha_vencimiento'], $tiposTareasId]);
+    $stmt->execute([$titulo, $userId, $parentId, $proyectoId, $parent['asignado_a'] ?? null, $tiposTareasId]);
     $taskId = $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("

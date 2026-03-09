@@ -15,14 +15,39 @@ if (!$taskId) {
     exit;
 }
 
-// Verificar que el usuario tenga permisos para ver los asignados (creador o asignado)
+// Verificar que el usuario tenga permisos para ver los asignados
+// Permisos: creador, asignado, o pertenece a un proyecto donde está asignado
 $stmt = $pdo->prepare("
-    SELECT id FROM tareas
-    WHERE id = ? AND (creado_por = ? OR id IN (
-        SELECT tarea_id FROM tareas_asignados WHERE usuario_id = ?
-    ))
+    SELECT t.id, t.proyecto_id
+    FROM tareas t
+    WHERE t.id = ? AND (
+        -- Es creador de la tarea
+        t.creado_por = ? 
+        -- Es asignado a la tarea
+        OR t.id IN (
+            SELECT tarea_id FROM tareas_asignados WHERE usuario_id = ?
+        )
+        -- La tarea pertenece a un proyecto donde el usuario está asignado a alguna tarea
+        OR t.proyecto_id IN (
+            SELECT DISTINCT t2.proyecto_id 
+            FROM tareas t2
+            LEFT JOIN tareas_asignados ta2 ON t2.id = ta2.tarea_id
+            WHERE t2.creado_por = ? OR ta2.usuario_id = ?
+        )
+        -- Es del mismo departamento
+        OR EXISTS (
+            SELECT 1 FROM usuarios u1, usuarios u2
+            WHERE u1.id = ? AND u2.id = t.creado_por
+            AND u1.departamento_id = u2.departamento_id
+            AND u1.departamento_id IS NOT NULL
+        )
+        -- Es admin
+        OR EXISTS (
+            SELECT 1 FROM usuarios WHERE id = ? AND rol_id = 2
+        )
+    )
 ");
-$stmt->execute([$taskId, $userId, $userId]);
+$stmt->execute([$taskId, $userId, $userId, $userId, $userId, $userId, $userId]);
 $task = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$task) {

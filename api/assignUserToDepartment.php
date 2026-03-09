@@ -23,7 +23,7 @@ try {
     // Obtener datos del POST
     $data = json_decode(file_get_contents('php://input'), true);
     $userId = $data['user_id'] ?? null;
-    $departmentId = $data['department_id'] ?? null;
+    $departmentIds = $data['department_ids'] ?? [];
 
     if (!$userId) {
         http_response_code(400);
@@ -31,11 +31,38 @@ try {
         exit();
     }
 
-    // Actualizar usuario
-    $stmt = $pdo->prepare("UPDATE usuarios SET departamento_id = ? WHERE id = ?");
-    $stmt->execute([$departmentId, $userId]);
+    // Iniciar transacción
+    $pdo->beginTransaction();
 
-    echo json_encode(['success' => true, 'message' => 'Usuario asignado correctamente']);
+    try {
+        // Eliminar asignaciones existentes
+        $deleteStmt = $pdo->prepare("DELETE FROM usuario_departamentos WHERE usuario_id = ?");
+        $deleteStmt->execute([$userId]);
+
+        // Insertar nuevas asignaciones
+        if (!empty($departmentIds)) {
+            $insertStmt = $pdo->prepare("INSERT INTO usuario_departamentos (usuario_id, departamento_id) VALUES (?, ?)");
+            
+            foreach ($departmentIds as $deptId) {
+                $insertStmt->execute([$userId, $deptId]);
+            }
+
+            // Actualizar departamento_id principal (el primero) en usuarios por compatibilidad
+            $updateStmt = $pdo->prepare("UPDATE usuarios SET departamento_id = ? WHERE id = ?");
+            $updateStmt->execute([$departmentIds[0], $userId]);
+        } else {
+            // Si no hay departamentos, limpiar el campo en usuarios
+            $updateStmt = $pdo->prepare("UPDATE usuarios SET departamento_id = NULL WHERE id = ?");
+            $updateStmt->execute([$userId]);
+        }
+
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Departamentos asignados correctamente']);
+
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 
 } catch (PDOException $e) {
     http_response_code(500);

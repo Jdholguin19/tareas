@@ -45,15 +45,15 @@ if (file_exists($envFile)) {
     }
 }
 
-// Database configuration (keeps current env/defaults)
-$host = getenv('DB_HOST') ?: 'box5500.bluehost.com';
+// Database configuration (keeps current env/defaults box5500.bluehost.com )
+$host = getenv('DB_HOST') ?: 'localhost';
 $user = getenv('DB_USER') ?: 'portalao_jholguin';
 $password = getenv('DB_PASSWORD') ?: 'jofCTV321!*';
 $database = getenv('DB_DATABASE') ?: 'portalao_ReunionesCS';
 
 // Opciones de PDO: 
 // 1. Forzar manejo de errores con excepciones.
-$timezone = getenv('DB_TIMEZONE') ?: '-02:00'; // Lee la nueva variable del .env
+$timezone = getenv('DB_TIMEZONE') ?: '-05:00'; // Lee la nueva variable del .env
 
 // 2. Ejecutar comando SET time_zone = '-05:00' (Ecuador) al conectar.
 $options = [
@@ -64,7 +64,7 @@ $options = [
 try {
     // Usamos las opciones en la función new PDO
     $pdo = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $user, $password, $options);
-    $pdo->exec("SET time_zone = '-02:00';");
+    $pdo->exec("SET time_zone = '-05:00';");
     
     // Ya no es necesario $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     // porque está incluido en $options.
@@ -76,21 +76,37 @@ try {
     exit();
 }
 
-// Configurar duración de sesión a 48 horas
+// Configurar duración de sesión (configurable via .env SESSION_LIFETIME en segundos)
 if (session_status() === PHP_SESSION_NONE) {
-    // 48 horas = 172800 segundos
-    ini_set('session.gc_maxlifetime', 172800);
-    
-    // Configurar cookie de sesión para que dure 48 horas
+    $defaultLifetime = getenv('SESSION_LIFETIME') ? intval(getenv('SESSION_LIFETIME')) : 2592000; // 30 días por defecto
+
+    // Asegurar un path de sesiones local y writable para evitar problemas de permisos en el path del sistema
+    $localSessionPath = __DIR__ . '/../session_data';
+    if (!is_dir($localSessionPath)) {
+        @mkdir($localSessionPath, 0700, true);
+    }
+
+    if (is_dir($localSessionPath) && is_writable($localSessionPath)) {
+        ini_set('session.save_path', $localSessionPath);
+    }
+
+    // GC settings y lifetime
+    ini_set('session.gc_maxlifetime', (string)$defaultLifetime);
+    ini_set('session.gc_probability', '1');
+    ini_set('session.gc_divisor', '100');
+
+    // Configurar cookie de sesión para que dure SESSION_LIFETIME
+    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
     session_set_cookie_params([
-        'lifetime' => 172800, // 48 horas en segundos
+        'lifetime' => $defaultLifetime,
         'path' => '/',
-        'domain' => '', // Dejar vacío para usar el dominio actual
-        'secure' => false, // Cambiar a true si usas HTTPS
+        'domain' => '',
+        'secure' => $secure,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
-    
+
     session_start();
 }
 ?>

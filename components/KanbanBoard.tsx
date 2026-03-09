@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Task, Project } from '../types';
 import { TaskState } from '../types';
 
@@ -14,7 +14,22 @@ interface KanbanBoardProps {
 const columnTitle: Record<TaskState, string> = {
   [TaskState.PENDIENTE]: 'Pendiente',
   [TaskState.EN_PROGRESO]: 'En progreso',
+  [TaskState.EN_ESPERA]: 'En espera',
   [TaskState.COMPLETADA]: 'Completada'
+};
+
+const statusColors: Record<TaskState, string> = {
+  [TaskState.PENDIENTE]: 'bg-slate-100 text-slate-700 border-slate-200',
+  [TaskState.EN_PROGRESO]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [TaskState.EN_ESPERA]: 'bg-amber-50 text-amber-700 border-amber-200',
+  [TaskState.COMPLETADA]: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+};
+
+const statusHeaderColors: Record<TaskState, string> = {
+  [TaskState.PENDIENTE]: 'bg-slate-200 text-slate-800',
+  [TaskState.EN_PROGRESO]: 'bg-blue-100 text-blue-800',
+  [TaskState.EN_ESPERA]: 'bg-amber-100 text-amber-800',
+  [TaskState.COMPLETADA]: 'bg-emerald-100 text-emerald-800'
 };
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -27,37 +42,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 }) => {
   const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
   const [currentColumnIndex, setCurrentColumnIndex] = useState(0);
-  const [isDraggingToEdge, setIsDraggingToEdge] = useState(false);
-  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const columns = [TaskState.PENDIENTE, TaskState.EN_PROGRESO, TaskState.COMPLETADA];
+  const columns = [TaskState.PENDIENTE, TaskState.EN_PROGRESO, TaskState.EN_ESPERA, TaskState.COMPLETADA];
 
-  // Función para normalizar estados de tareas
-  const normalizeTaskState = (estado: string): TaskState | null => {
-    const estadoLower = estado.toLowerCase().trim();
-    switch (estadoLower) {
-      case 'pendiente':
-      case 'pending':
-        return TaskState.PENDIENTE;
-      case 'en progreso':
-      case 'en_progreso':
-      case 'in_progress':
-        return TaskState.EN_PROGRESO;
-      case 'completada':
-      case 'completado':
-      case 'completed':
-        return TaskState.COMPLETADA;
-      default:
-        return null;
-    }
+  // Función para normalizar estados (manejar variaciones de mayúsculas/minúsculas)
+  const normalizeTaskState = (status: string): TaskState => {
+    const normalized = status.toLowerCase();
+    if (normalized === 'pendiente') return TaskState.PENDIENTE;
+    if (normalized === 'en_progreso' || normalized === 'en progreso') return TaskState.EN_PROGRESO;
+    if (normalized === 'en_espera' || normalized === 'en espera') return TaskState.EN_ESPERA;
+    if (normalized === 'completada' || normalized === 'completado') return TaskState.COMPLETADA;
+    return TaskState.PENDIENTE; // Default
   };
 
   const grouped = useMemo(() => {
     const result = {
       [TaskState.PENDIENTE]: tasks.filter(t => normalizeTaskState(t.Estado) === TaskState.PENDIENTE),
       [TaskState.EN_PROGRESO]: tasks.filter(t => normalizeTaskState(t.Estado) === TaskState.EN_PROGRESO),
+      [TaskState.EN_ESPERA]: tasks.filter(t => normalizeTaskState(t.Estado) === TaskState.EN_ESPERA),
       [TaskState.COMPLETADA]: tasks.filter(t => normalizeTaskState(t.Estado) === TaskState.COMPLETADA)
     };
     
@@ -71,14 +73,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     if (!id || !onTaskUpdate) return;
     const task = tasks.find(t => parseInt(String(t.ID)) === id);
     if (!task || task.Estado === state) return;
+    
     const updates: Partial<Task> = { Estado: state };
     if (state === TaskState.COMPLETADA) {
       updates.Porcentaje_Avance = 100;
       updates.Fecha_Completada = new Date().toISOString();
-      const todayStr = new Date().toISOString().slice(0,10);
-      updates.Fecha_Vencimiento = task.Fecha_Vencimiento || todayStr;
+      // Do NOT auto-set Fecha_Vencimiento when marking completed
     } else if (state === TaskState.EN_PROGRESO) {
       updates.Porcentaje_Avance = 20;
+      if (task.Fecha_Completada) {
+        updates.Fecha_Completada = '';
+      }
+    } else if (state === TaskState.EN_ESPERA) {
+      // En Espera: mantener el mismo porcentaje, solo cambiar estado
       if (task.Fecha_Completada) {
         updates.Fecha_Completada = '';
       }
@@ -100,52 +107,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   const onDragEnd = () => {
     setDraggingTaskId(null);
-    setIsDraggingToEdge(false);
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current);
-      dragTimeoutRef.current = null;
-    }
-  };
-
-  // Función para detectar arrastre al borde y cambiar columna
-  const handleDragMove = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!draggingTaskId) return;
-    
-    const rect = carouselRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = e.clientX - rect.left;
-    const screenWidth = rect.width;
-    const edgeThreshold = 50; // 50px del borde
-    
-    setDragPosition({ x: e.clientX, y: e.clientY });
-    
-    // Detectar si está cerca del borde derecho
-    if (x > screenWidth - edgeThreshold && currentColumnIndex < columns.length - 1) {
-      if (!isDraggingToEdge) {
-        setIsDraggingToEdge(true);
-        dragTimeoutRef.current = setTimeout(() => {
-          setCurrentColumnIndex(prev => Math.min(prev + 1, columns.length - 1));
-          setIsDraggingToEdge(false);
-        }, 800); // 800ms de delay para cambiar
-      }
-    }
-    // Detectar si está cerca del borde izquierdo
-    else if (x < edgeThreshold && currentColumnIndex > 0) {
-      if (!isDraggingToEdge) {
-        setIsDraggingToEdge(true);
-        dragTimeoutRef.current = setTimeout(() => {
-          setCurrentColumnIndex(prev => Math.max(prev - 1, 0));
-          setIsDraggingToEdge(false);
-        }, 800);
-      }
-    }
-    // Si no está en el borde, cancelar el timeout
-    else if (isDraggingToEdge && dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current);
-      dragTimeoutRef.current = null;
-      setIsDraggingToEdge(false);
-    }
   };
 
   // Función para navegar manualmente entre columnas
@@ -159,51 +120,63 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       draggable
       onDragStart={onDragStart(task.ID)}
       onDragEnd={onDragEnd}
-      onDrag={handleDragMove}
       onClick={() => onTaskClick && onTaskClick(task)}
-      className={`bg-white rounded-md shadow-sm border border-slate-200 p-3 mb-3 cursor-grab active:cursor-grabbing transition-transform ${draggingTaskId === task.ID ? 'scale-[1.02] shadow-md' : 'hover:shadow-md'} overflow-hidden`}
+      className={`bg-white rounded-md shadow-sm border border-slate-200 p-3 mb-3 cursor-pointer sm:cursor-grab active:cursor-grabbing transition-transform ${
+        draggingTaskId === task.ID ? 'scale-[1.02] shadow-md' : 'hover:shadow-md'
+      }`}
       title={task.Descripcion || ''}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div
-            className="font-medium text-slate-800 break-words"
+            className="font-medium text-slate-800 text-sm mb-1"
             style={{
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
             }}
           >
             {task.Titulo}
           </div>
-          <div className="text-xs text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap">
+          <div 
+            className="text-xs text-slate-500 mb-1"
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
             {task.proyecto_nombre || 'Sin proyecto'}
           </div>
         </div>
-        <div className="text-xs text-slate-500 shrink-0 whitespace-nowrap text-right">
-          {Number(task.Porcentaje_Avance || 0).toFixed(2)}%
+        <div className="text-xs text-slate-500 flex-shrink-0 ml-2">
+          {Number(task.Porcentaje_Avance || 0).toFixed(0)}%
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-        <span>{task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento).toLocaleDateString() : 'Sin vencimiento'}</span>
-        <span className="capitalize">{task.Estado.replace('_', ' ')}</span>
+      <div className="mt-2 flex items-center justify-between text-xs text-slate-500 gap-2">
+        <span className="truncate">{task.Fecha_Vencimiento ? new Date(task.Fecha_Vencimiento).toLocaleDateString() : 'Sin vencimiento'}</span>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${statusColors[normalizeTaskState(task.Estado)] || 'bg-slate-100'}`}>
+          {columnTitle[normalizeTaskState(task.Estado)]}
+        </span>
       </div>
     </div>
   );
 
-  const columnClasses = 'bg-slate-50 rounded-lg border border-slate-200 p-3 min-h-[200px]';
+  const columnClasses = 'rounded-xl border p-3 min-h-[200px] flex flex-col h-full transition-colors duration-200';
 
   return (
     <div className="flex flex-col gap-4">
       {/* Filtro de proyecto */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-slate-600">Proyecto:</label>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <label className="text-sm text-slate-600 whitespace-nowrap">Proyecto:</label>
           <select
             value={selectedProjectId || ''}
             onChange={(e) => onProjectFilterChange(e.target.value ? Number(e.target.value) : null)}
-            className="text-sm border rounded-md px-2 py-1"
+            className="text-sm border border-slate-300 rounded-lg px-3 py-2 w-full sm:w-64 bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
           >
             <option value="">Todos los proyectos</option>
             {projects.map(p => (
@@ -211,137 +184,80 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             ))}
           </select>
         </div>
-        {(selectedProjectId !== null) && (
-          <div className="text-xs text-slate-500">Mostrando: {projects.find(p => parseInt(String(p.id)) === parseInt(String(selectedProjectId)))?.nombre || 'Proyecto'}</div>
-        )}
       </div>
 
-      {/* Vista Desktop - Grid de 3 columnas */}
+      {/* Vista Desktop - Grid de 4 columnas */}
       <div className="hidden sm:block">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
           {columns.map(state => (
             <div key={state}
-                 className={columnClasses}
+                 className={`${columnClasses} ${statusColors[state]}`}
                  onDragOver={(e) => e.preventDefault()}
                  onDrop={handleDropOnColumn(state)}
             >
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-slate-700">{columnTitle[state]}</h4>
-                <span className="text-xs text-slate-500">{grouped[state].length}</span>
+              <div className={`flex items-center justify-between mb-3 p-2 rounded-lg ${statusHeaderColors[state]}`}>
+                <h4 className="font-semibold text-sm">{columnTitle[state]}</h4>
+                <span className="text-xs font-bold bg-white/50 px-2 py-0.5 rounded-full">{grouped[state].length}</span>
               </div>
-              {grouped[state].length === 0 ? (
-                <div className="text-sm text-slate-500 py-6 text-center">No hay tareas</div>
-              ) : (
-                grouped[state].map(renderCard)
-              )}
+              
+              <div className="flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-1 custom-scrollbar">
+                {grouped[state].length === 0 ? (
+                  <div className="text-sm opacity-60 py-6 text-center italic">No hay tareas</div>
+                ) : (
+                  grouped[state].map(renderCard)
+                )}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Vista Mobile - Carrusel con drag-to-edge */}
-      <div className="sm:hidden">
-        {/* Indicadores de columna */}
-        <div className="flex justify-center mb-4 gap-2">
+      {/* Vista Mobile - Tabs Simples */}
+      <div className="sm:hidden flex flex-col h-[calc(100vh-220px)]">
+        {/* Selector de Columnas (Tabs) */}
+        <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide mb-2">
           {columns.map((state, index) => (
             <button
               key={state}
               onClick={() => navigateToColumn(index)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDropOnColumn(state)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                 index === currentColumnIndex 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                  ? statusHeaderColors[state] + ' shadow-sm ring-1 ring-black/5'
+                  : 'bg-white border border-slate-200 text-slate-600'
               }`}
             >
-              {columnTitle[state]} ({grouped[state].length})
+              {columnTitle[state]} 
+              <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${index === currentColumnIndex ? 'bg-white/60' : 'bg-slate-100'}`}>
+                {grouped[state].length}
+              </span>
             </button>
           ))}
         </div>
 
-        {/* Carrusel de columnas */}
-        <div 
-          ref={carouselRef}
-          className="relative overflow-hidden rounded-lg"
-          style={{ height: 'calc(100vh - 300px)', minHeight: '400px' }}
-        >
-          <div 
-            className="flex transition-transform duration-300 ease-out h-full"
-            style={{ 
-              transform: `translateX(-${currentColumnIndex * 100}%)`,
-              width: `${columns.length * 100}%`
-            }}
-          >
-            {columns.map((state, index) => (
-              <div 
-                key={state}
-                className="h-full flex-shrink-0 px-2"
-                style={{ width: `100%` }}
-              >
-                <div
-                  className={`${columnClasses} h-full relative`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={handleDropOnColumn(state)}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-slate-700 text-lg">{columnTitle[state]}</h4>
-                    <span className="text-sm text-slate-500 bg-white px-2 py-1 rounded-full">
-                      {grouped[state].length}
-                    </span>
-                  </div>
-                  
-                  <div className="overflow-y-auto h-full pb-16">
-                    {grouped[state].length === 0 ? (
-                      <div className="text-sm text-slate-500 py-8 text-center">
-                        No hay tareas
-                      </div>
-                    ) : (
-                      grouped[state].map(renderCard)
-                    )}
-                  </div>
+        {/* Columna Activa */}
+        <div className="flex-1 min-h-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+           {/* Header de la columna activa */}
+           <div className={`p-3 border-b border-slate-100 flex justify-between items-center ${statusColors[columns[currentColumnIndex]].split(' ')[0]}`}>
+              <h3 className={`font-bold ${statusColors[columns[currentColumnIndex]].split(' ')[1]}`}>
+                {columnTitle[columns[currentColumnIndex]]}
+              </h3>
+              <span className="text-xs text-slate-500">
+                {grouped[columns[currentColumnIndex]].length} tareas
+              </span>
+           </div>
+
+           {/* Lista de tareas scrollable */}
+           <div className="flex-1 overflow-y-auto p-3 bg-slate-50/50">
+              {grouped[columns[currentColumnIndex]].length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                  <p>No hay tareas en esta columna</p>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Indicador visual de drag-to-edge */}
-          {isDraggingToEdge && (
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium animate-pulse">
-                ← Cambiando columna...
-              </div>
-              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium animate-pulse">
-                Cambiando columna... →
-              </div>
-            </div>
-          )}
-
-          {/* Instrucciones de uso */}
-          {draggingTaskId && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm text-center">
-              Arrastra al borde para cambiar de columna
-            </div>
-          )}
-        </div>
-
-        {/* Navegación manual */}
-        <div className="flex justify-between mt-4">
-          <button
-            onClick={() => navigateToColumn(currentColumnIndex - 1)}
-            disabled={currentColumnIndex === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition-colors"
-          >
-            <span>←</span>
-            <span className="text-sm">Anterior</span>
-          </button>
-          
-          <button
-            onClick={() => navigateToColumn(currentColumnIndex + 1)}
-            disabled={currentColumnIndex === columns.length - 1}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition-colors"
-          >
-            <span className="text-sm">Siguiente</span>
-            <span>→</span>
-          </button>
+              ) : (
+                grouped[columns[currentColumnIndex]].map(renderCard)
+              )}
+           </div>
         </div>
       </div>
     </div>

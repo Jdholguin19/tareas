@@ -1,0 +1,26 @@
+#php_value date.timezone "America/Guayaquil"
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php7_module>
+   php_value date.timezone "America/Guayaquil"
+   php_value auto_prepend_file "/home1/portalao/public_html/mysql_timezone_fix.php"
+   php_value session.gc_maxlifetime 604800
+   php_value session.cookie_lifetime 604800
+</IfModule>
+<IfModule lsapi_module>
+   php_value date.timezone "America/Guayaquil"
+   php_value auto_prepend_file "/home1/portalao/public_html/mysql_timezone_fix.php"
+   php_value session.gc_maxlifetime 604800
+   php_value session.cookie_lifetime 604800
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “alt-php74” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-alt-php74___lsphp .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

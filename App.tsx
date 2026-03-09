@@ -8,8 +8,8 @@ import { Dashboard } from './components/Dashboard';
 import { AdminPanel } from './components/AdminPanel';
 import { Icon } from './components/Icon';
 import type { Task, Project, TaskDependency, TaskType } from './types';
-import { TaskPriority } from './types';
-import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency, getTaskTypes } from './services/apiService';
+import { TaskPriority, TaskImportance } from './types';
+import { getTasks, updateTask, createSubTask, getProjects, deleteTask, checkAuth, apiLogout, getMinimalTasks, getAllTaskAssignees, getCurrentUser, getDependencies, createDependency, deleteDependency, getTaskTypes, getUserDepartments } from './services/apiService';
 import { calculateTaskProgress, hasSubtasks } from './utils/taskUtils';
 import { EditTaskModal } from './components/EditTaskModal';
 import { TaskSkeleton } from './components/TaskSkeleton';
@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [selectedTaskTypes, setSelectedTaskTypes] = useState<number[]>([1]); // Por defecto solo "tareas" (id=1)
+  const [showOnlyMyTasks, setShowOnlyMyTasks] = useState<boolean>(false);
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -35,6 +36,7 @@ const App: React.FC = () => {
 
   // Current user state
   const [currentUser, setCurrentUser] = useState<{id: number, username: string, email: string, rol_id?: number} | null>(null);
+  const [userDepartments, setUserDepartments] = useState<{id: number, nombre: string}[]>([]);
 
   // Page state - para alternar entre Dashboard, Admin y App de Tareas
   const [currentPage, setCurrentPage] = useState<'tasks' | 'dashboard' | 'admin'>('tasks');
@@ -42,6 +44,10 @@ const App: React.FC = () => {
   // View state
   const [activeView, setActiveView] = useState<'list' | 'kanban' | 'gantt' | 'matrix'>('list');
   const [ganttFocusedTaskId, setGanttFocusedTaskId] = useState<number | null>(null);
+
+  const PAGE_SIZE = 50;
+  const [scheduledPage, setScheduledPage] = useState(1);
+  const [completedPage, setCompletedPage] = useState(1);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,19 +73,19 @@ const App: React.FC = () => {
   };
 
   const handleSearchSelect = (item: { type: 'task' | 'project', id: number, name: string }) => {
-    console.log('=== handleSearchSelect CALLED ===', { item, type: item.type });
+    
     justSelectedFromDropdownRef.current = true; // Set ref immediately
     setShowSearchDropdown(false);
     
     if (item.type === 'task') {
       // For tasks, set search to task title and apply filter immediately
-      console.log('Task selected, setting appliedSearchFilter to:', item.name);
+      
       setSearchQuery(item.name);
       setAppliedSearchFilter(item.name);
       setSelectedProjectId(null);
     } else {
       // For projects, set project filter only (no additional text search)
-      console.log('Project selected, ID:', item.id, 'Name:', item.name, 'Setting appliedSearchFilter to empty string');
+      
       setSearchQuery(item.name);
       setSelectedProjectId(parseInt(String(item.id)));
       setAppliedSearchFilter(''); // Clear text search when selecting a project
@@ -137,8 +143,30 @@ const App: React.FC = () => {
     }, 200);
   };
 
-  // Task type filter handler
+  useEffect(() => {
+    setScheduledPage(1);
+    setCompletedPage(1);
+  }, [appliedSearchFilter, selectedProjectId, selectedTaskTypes, showOnlyMyTasks]);
+
+  // Allowed task types for the filter (only show these IDs)
+  const ALLOWED_TASK_TYPE_IDS = [1, 4, 5];
+  const isTidDept = useMemo(
+    () => userDepartments.some(d => d.id === 3 || (d.nombre || '').toUpperCase() === 'TID'),
+    [userDepartments]
+  );
+  // Visible task types (only IDs defined above; hide id 4 unless user is TID/dep 3)
+  const visibleTaskTypes = useMemo(
+    () => taskTypes.filter(t => {
+      if (!ALLOWED_TASK_TYPE_IDS.includes(t.id)) return false;
+      if (t.id === 4 && !isTidDept) return false;
+      return true;
+    }),
+    [taskTypes, isTidDept]
+  );
+
+  // Task type filter handler (guard against toggling invalid ids)
   const handleTaskTypeToggle = (typeId: number) => {
+    if (!ALLOWED_TASK_TYPE_IDS.includes(typeId)) return; // ignore toggles for other types
     setSelectedTaskTypes(prev => {
       if (prev.includes(typeId)) {
         // Si es el único seleccionado, no permitir desmarcarlo
@@ -216,16 +244,21 @@ const App: React.FC = () => {
       const types = await getTaskTypes();
       console.log('Loaded task types:', types);
       setTaskTypes(types);
-      // Asegurar que solo "tareas" (id=1) esté seleccionado por defecto
-      // Solo establecer si aún no se ha modificado
+
+      // Constrain selectedTaskTypes to allowed IDs and set sensible default
+      const allowedIds = ALLOWED_TASK_TYPE_IDS;
+      const has1 = types.some(t => t.id === 1);
+      const has4 = types.some(t => t.id === 4);
+
       setSelectedTaskTypes(prev => {
-        // Si ya tiene valores personalizados, no tocar
-        if (prev.length !== 1 || prev[0] !== 1) {
-          return prev;
-        }
-        // Asegurar que el ID 1 existe en los tipos cargados
-        const tareasType = types.find(t => t.id === 1);
-        return tareasType ? [1] : (types.length > 0 ? [types[0].id] : [1]);
+        // Keep only allowed ids from previous selection
+        const filteredPrev = prev.filter(id => allowedIds.includes(id));
+        if (filteredPrev.length > 0) return filteredPrev;
+        // If nothing remained, prefer [1] if available, then [4], otherwise fallback to the first allowed type we find
+        if (has1) return [1];
+        if (has4) return [4];
+        const firstAllowed = types.find(t => allowedIds.includes(t.id));
+        return firstAllowed ? [firstAllowed.id] : (types.length > 0 ? [types[0].id] : [1]);
       });
     } catch (error) {
       console.error("Failed to fetch task types:", error);
@@ -238,6 +271,16 @@ const App: React.FC = () => {
       setDependencies(deps);
     } catch (error) {
       console.error('Failed to fetch dependencies:', error);
+    }
+  }, []);
+
+  const loadUserDepartments = useCallback(async (userId: number) => {
+    try {
+      const depts = await getUserDepartments(userId);
+      setUserDepartments(depts || []);
+    } catch (error) {
+      console.error('Failed to load user departments:', error);
+      setUserDepartments([]);
     }
   }, []);
 
@@ -303,6 +346,15 @@ const App: React.FC = () => {
       console.log('Setting default task type filter to:', tareasType ? [1] : [taskTypes[0].id]);
     }
   }, [taskTypes, selectedTaskTypes.length]);
+
+  // Load departments for current user (for conditional task-type visibility)
+  useEffect(() => {
+    if (currentUser?.id) {
+      loadUserDepartments(currentUser.id);
+    } else {
+      setUserDepartments([]);
+    }
+  }, [currentUser?.id, loadUserDepartments]);
 
   // Load task assignees when tasks are loaded and user is authenticated
   useEffect(() => {
@@ -488,6 +540,32 @@ const App: React.FC = () => {
           setTaskAssigneesRecord(assignees);
         }
       }
+
+      // Además, intentar refrescar la sesión en el servidor (puede renovar cookies o session)
+      try {
+        const auth = await checkAuth();
+        if (auth && auth.authenticated) {
+          try {
+            const user = await getCurrentUser();
+            setIsAuthenticated(true);
+            setCurrentUser(user);
+            // Touch session config to encourage cookie refresh
+            try {
+              await fetch('/api/check_session_config.php', { credentials: 'include', cache: 'no-store' });
+            } catch (e) {
+              console.warn('Session refresh ping failed', e);
+            }
+          } catch (userErr) {
+            console.error('Failed to fetch current user after session refresh:', userErr);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      } catch (err) {
+        console.error('Failed to refresh session cookies:', err);
+      }
+
     } catch (error) {
       console.error("Failed to refresh tasks:", error);
       alert('Error al recargar las tareas. Por favor, intenta de nuevo.');
@@ -672,12 +750,39 @@ const App: React.FC = () => {
       }
       
       // SEGUNDO: Filtrar por permisos de usuario
-      // User created the task
-      if (task.Usuario_Creador_ID === currentUser.id) return true;
+      // Si el switch 'Ver solo mis tareas' está activo, incluir:
+      // - tareas que me asignaron (estoy en assignees o en Usuario_Asignado_ID)
+      // - tareas que yo creé pero que NO asigné a otras personas
+      // Ocultar tareas que yo asigné a otros usuarios.
+      if (showOnlyMyTasks) {
+        const assignees = taskAssigneesRecord[task.ID] || [];
+        const normalizedCurrentId = parseInt(String(currentUser.id));
+
+        const assignedViaRecord = assignees.some(assignee => parseInt(String(assignee.id)) === normalizedCurrentId);
+        const assignedViaField = task.Usuario_Asignado_ID && parseInt(String(task.Usuario_Asignado_ID)) === normalizedCurrentId;
+
+        // If I'm explicitly assigned, include
+        if (assignedViaRecord || assignedViaField) return true;
+
+        // If I'm the creator, include only when there are no assignees or all assignees are me
+        if (parseInt(String(task.Usuario_Creador_ID)) === normalizedCurrentId) {
+          if (assignees.length === 0) return true;
+          const allAssignedToMe = assignees.every(assignee => parseInt(String(assignee.id)) === normalizedCurrentId);
+          if (allAssignedToMe) return true;
+          // Otherwise I assigned it to others -> hide
+          return false;
+        }
+
+        // Otherwise not related to me -> hide
+        return false;
+      }
+
+      // User created the task - NORMALIZAR IDs para compatibilidad producción/local
+      if (parseInt(String(task.Usuario_Creador_ID)) === parseInt(String(currentUser.id))) return true;
       
-      // User is assigned to the task
+      // User is assigned to the task - NORMALIZAR IDs
       const assignees = taskAssigneesRecord[task.ID] || [];
-      if (assignees.some(assignee => assignee.id === currentUser.id)) return true;
+      if (assignees.some(assignee => parseInt(String(assignee.id)) === parseInt(String(currentUser.id)))) return true;
       
       return false;
     });
@@ -690,8 +795,7 @@ const App: React.FC = () => {
     
     const today = getCurrentDate();
 
-    console.log('=== DEBUG: getUrgentTasks ===');
-    console.log('📋 Total user tasks:', userTasks.length);
+   
 
     // Get all completed task IDs (100% progress)
     const completedTaskIds = new Set(
@@ -707,7 +811,17 @@ const App: React.FC = () => {
       // Apply search filter (check if either searchFilter OR selectedProjectId is set)
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
 
-      // Check if task is marked as important (high priority)
+      // Si tiene Importancia ALTA y Prioridad ALTA -> va a Urgente
+      if (task.Importancia === TaskImportance.ALTA && task.Prioridad === TaskPriority.ALTA) {
+        return true;
+      }
+
+      // Si tiene Importancia ALTA (con Prioridad MEDIA o BAJA) -> va a Importante (excluir de Urgente)
+      if (task.Importancia === TaskImportance.ALTA) {
+        return false;
+      }
+
+      // Si solo tiene Prioridad ALTA (sin Importancia ALTA) -> va a Urgente
       if (task.Prioridad === TaskPriority.ALTA) {
         return true;
       }
@@ -723,12 +837,12 @@ const App: React.FC = () => {
       return dueDate < today;
     });
 
-    // Separate important tasks from other urgent tasks
-    const importantTasks = urgentTasks.filter(task => task.Prioridad === TaskPriority.ALTA);
+    // Separate urgent tasks (Prioridad ALTA) from other urgent tasks
+    const urgentPriorityTasks = urgentTasks.filter(task => task.Prioridad === TaskPriority.ALTA);
     const otherUrgentTasks = urgentTasks.filter(task => task.Prioridad !== TaskPriority.ALTA);
 
-    // Sort important tasks by creation date (newest first) - NO HIERARCHY
-    const sortedImportantTasks = importantTasks.sort((a, b) => 
+    // Sort urgent priority tasks by creation date (newest first) - NO HIERARCHY
+    const sortedUrgentTasks = urgentPriorityTasks.sort((a, b) => 
       new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime()
     );
 
@@ -737,8 +851,8 @@ const App: React.FC = () => {
       new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime()
     );
 
-    // Return important tasks first, then other urgent tasks
-    const result = [...sortedImportantTasks, ...sortedOtherTasks];
+    // Return urgent priority tasks first, then other urgent tasks
+    const result = [...sortedUrgentTasks, ...sortedOtherTasks];
     return result;
   };
 
@@ -765,7 +879,17 @@ const App: React.FC = () => {
       // Apply search filter (check if either searchFilter OR selectedProjectId is set)
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
 
-      // Exclude important tasks (they appear in urgent section)
+      // Si tiene Importancia ALTA y Prioridad ALTA -> va a Urgente (excluir de Importante)
+      if (task.Importancia === TaskImportance.ALTA && task.Prioridad === TaskPriority.ALTA) {
+        return false;
+      }
+
+      // Si tiene Importancia ALTA (con Prioridad MEDIA o BAJA) -> va a Importante
+      if (task.Importancia === TaskImportance.ALTA) {
+        return true;
+      }
+
+      // Si solo tiene Prioridad ALTA (sin Importancia ALTA) -> va a Urgente (excluir de Importante)
       if (task.Prioridad === TaskPriority.ALTA) {
         return false;
       }
@@ -803,8 +927,10 @@ const App: React.FC = () => {
       // Apply search filter (check if either searchFilter OR selectedProjectId is set)
       if ((searchFilter || selectedProjectId !== null) && !matchesSearch(task, searchFilter, projects, selectedProjectId)) return false;
       
-      // Exclude important tasks (they appear in urgent section)
-      if (task.Prioridad === TaskPriority.ALTA) {
+      // Exclude tasks with high priority or high importance (those appear in Urgente/Importantes sections)
+      const taskPriority = String(task.Prioridad || '').toLowerCase();
+      const taskImportance = String(task.Importancia || '').toLowerCase();
+      if (taskPriority === 'alta' || taskImportance === 'alta') {
         return false;
       }
       
@@ -871,24 +997,108 @@ const App: React.FC = () => {
     });
   };
 
-  // Get only truly overdue tasks (without parents) for notifications
-  const getOverdueTasksForNotifications = (allTasks: Task[]) => {
+  // Build notification list: overdue, due today, due in 1 day, due in 7 days (only current user's tasks)
+  const getNotificationTasks = (allTasks: Task[]) => {
+    const userTasks = filterTasksForCurrentUser(allTasks);
     const today = getCurrentDate();
-    return allTasks.filter(task => {
-      if (!task.Fecha_Vencimiento) return false;
-      if (isCompleted(task)) return false;
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+    const notifications: (Task & { notifyType: 'overdue' | 'today' | 'in_1_day' | 'in_3_days' | 'in_7_days' })[] = [];
+
+    for (const task of userTasks) {
+      if (!task.Fecha_Vencimiento) continue;
+      if (isCompleted(task)) continue;
+
       const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
       dueDate.setHours(0, 0, 0, 0);
-      // Only consider overdue if due date is before today
-      return dueDate < today;
+
+      const diff = Math.round((dueDate.getTime() - today.getTime()) / MS_PER_DAY);
+
+      if (diff < 0) {
+        notifications.push({ ...task, notifyType: 'overdue' });
+      } else if (diff === 0) {
+        notifications.push({ ...task, notifyType: 'today' });
+      } else if (diff === 1) {
+        notifications.push({ ...task, notifyType: 'in_1_day' });
+      } else if (diff === 3) {
+        notifications.push({ ...task, notifyType: 'in_3_days' });
+      } else if (diff === 7) {
+        notifications.push({ ...task, notifyType: 'in_7_days' });
+      }
+    }
+
+    // Sort: overdue (most overdue first), today, in_1_day, in_7_days
+    notifications.sort((a, b) => {
+      const order = { overdue: 0, today: 1, in_1_day: 2, in_3_days: 3, in_7_days: 4 } as Record<string, number>;
+      if (order[a.notifyType] !== order[b.notifyType]) return order[a.notifyType] - order[b.notifyType];
+      // Within same category, sort by due date ascending
+      return new Date(a.Fecha_Vencimiento).getTime() - new Date(b.Fecha_Vencimiento).getTime();
     });
+
+    return notifications;
   };
 
-  const currentTasks = useMemo(() => getTodayTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
-  const urgentTasks = useMemo(() => getUrgentTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
-  const scheduledTasks = useMemo(() => getScheduledTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
-  const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes]);
-  const overdueTasksForNotifications = useMemo(() => getOverdueTasksForNotifications(tasks), [tasks]);
+  const currentTasks = useMemo(() => getTodayTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes, showOnlyMyTasks]);
+  const urgentTasks = useMemo(() => getUrgentTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes, showOnlyMyTasks]);
+  const scheduledTasks = useMemo(() => getScheduledTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes, showOnlyMyTasks]);
+  const completedTasks = useMemo(() => getCompletedTasks(tasks, appliedSearchFilter), [tasks, appliedSearchFilter, projects, currentUser, taskAssigneesRecord, selectedProjectId, selectedTaskTypes, showOnlyMyTasks]);
+  const notificationTasks = useMemo(() => getNotificationTasks(tasks), [tasks, selectedTaskTypes, showOnlyMyTasks]);
+
+  const scheduledTotalPages = Math.max(1, Math.ceil(scheduledTasks.length / PAGE_SIZE));
+  const completedTotalPages = Math.max(1, Math.ceil(completedTasks.length / PAGE_SIZE));
+
+  useEffect(() => {
+    if (scheduledPage > scheduledTotalPages) {
+      setScheduledPage(1);
+    }
+  }, [scheduledPage, scheduledTotalPages]);
+
+  useEffect(() => {
+    if (completedPage > completedTotalPages) {
+      setCompletedPage(1);
+    }
+  }, [completedPage, completedTotalPages]);
+
+  const pagedScheduledTasks = useMemo(() => {
+    const start = (scheduledPage - 1) * PAGE_SIZE;
+    return scheduledTasks.slice(start, start + PAGE_SIZE);
+  }, [scheduledTasks, scheduledPage]);
+
+  const pagedCompletedTasks = useMemo(() => {
+    const start = (completedPage - 1) * PAGE_SIZE;
+    return completedTasks.slice(start, start + PAGE_SIZE);
+  }, [completedTasks, completedPage]);
+
+  const renderPagination = (
+    currentPage: number,
+    totalPages: number,
+    onPageChange: (page: number) => void,
+    totalItems: number
+  ) => {
+    if (totalPages <= 1) return null;
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+    return (
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+        <div>
+          Mostrando {start}-{end} de {totalItems}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {pages.map(page => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`px-2 py-1 rounded border text-xs ${page === currentPage ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   // Global subtask counts map (does NOT depend on section filters)
   const subtaskCounts = useMemo(() => {
@@ -927,7 +1137,18 @@ const App: React.FC = () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     return allTasks.filter(task => {
-      if (!task.Fecha_Vencimiento || isCompleted(task)) return false;
+      if (isCompleted(task)) return false;
+      
+      // Si tiene Importancia ALTA y Prioridad ALTA -> va a Urgente
+      if (task.Importancia === TaskImportance.ALTA && task.Prioridad === TaskPriority.ALTA) return false;
+      
+      // Si tiene Importancia ALTA (con Prioridad MEDIA o BAJA) -> va a Importante
+      if (task.Importancia === TaskImportance.ALTA) return true;
+      
+      // Si solo tiene Prioridad ALTA -> va a Urgente
+      if (task.Prioridad === TaskPriority.ALTA) return false;
+      
+      if (!task.Fecha_Vencimiento) return false;
       const dueDate = new Date(task.Fecha_Vencimiento + 'T00:00:00');
       dueDate.setHours(0, 0, 0, 0);
       return dueDate >= today && dueDate < tomorrow;
@@ -939,7 +1160,13 @@ const App: React.FC = () => {
     return allTasks.filter(task => {
       if (isCompleted(task)) return false;
       
-      // Tareas importantes (prioridad alta)
+      // Si tiene Importancia ALTA y Prioridad ALTA -> va a Urgente
+      if (task.Importancia === TaskImportance.ALTA && task.Prioridad === TaskPriority.ALTA) return true;
+      
+      // Si tiene Importancia ALTA (sin Prioridad ALTA) -> va a Importante
+      if (task.Importancia === TaskImportance.ALTA) return false;
+      
+      // Si solo tiene Prioridad ALTA -> va a Urgente
       if (task.Prioridad === TaskPriority.ALTA) return true;
       
       // Sin fecha o atrasada
@@ -1006,34 +1233,43 @@ const App: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
             <div className="relative" ref={notificationMenuRef}>
-              <button
-                onClick={() => setIsNotificationMenuOpen(!isNotificationMenuOpen)}
-                className={`flex items-center space-x-2 px-3 py-2 sm:px-4 rounded-lg border transition-all duration-200 ${
-                  overdueTasksForNotifications.length > 0
+              {/** compute badges */}
+              {
+                (() => {
+                  const hasOverdue = notificationTasks.some(t => t.notifyType === 'overdue');
+                  const hasAny = notificationTasks.length > 0;
+                  const btnClass = hasOverdue
                     ? 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100 hover:border-red-400'
-                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100 hover:text-slate-800'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                aria-label="Notificaciones de tareas vencidas"
-              >
-                <Icon name="bell" className="w-4 h-4 sm:w-5 sm:h-5"/>
-                {overdueTasksForNotifications.length > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                    {overdueTasksForNotifications.length}
-                  </span>
-                )}
-              </button>
+                    : hasAny
+                      ? 'bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100 hover:border-yellow-400'
+                      : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100 hover:text-slate-800';
+
+                  return (
+                    <button
+                      onClick={() => setIsNotificationMenuOpen(!isNotificationMenuOpen)}
+                      className={`flex items-center space-x-2 px-3 py-2 sm:px-4 rounded-lg border transition-all duration-200 ${btnClass} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                      aria-label="Notificaciones de tareas"
+                    >
+                      <Icon name="bell" className="w-4 h-4 sm:w-5 sm:h-5"/>
+                      {hasAny && (
+                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                          {notificationTasks.length}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })()
+              }
 
               {/* Notification Dropdown Menu */}
               {isNotificationMenuOpen && (
-                <div className="fixed inset-x-4 top-20 sm:absolute sm:right-0 sm:left-auto sm:top-auto sm:inset-x-auto sm:mt-2 w-auto sm:w-80 bg-white rounded-lg shadow-lg border border-slate-200 z-50 max-h-96 overflow-y-auto">
+                <div className="fixed inset-x-4 top-20 sm:absolute sm:right-0 sm:left-auto sm:top-auto sm:inset-x-auto sm:mt-2 w-auto sm:w-96 bg-white rounded-lg shadow-lg border border-slate-200 z-50 max-h-96 overflow-y-auto">
                   <div className="p-4 border-b border-slate-200">
-                    <h3 className="text-sm font-semibold text-slate-800">
-                      Tareas Vencidas ({overdueTasksForNotifications.length})
-                    </h3>
+                    <h3 className="text-sm font-semibold text-slate-800">Notificaciones ({notificationTasks.length})</h3>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
-                    {overdueTasksForNotifications.length > 0 ? (
-                      overdueTasksForNotifications.map((task) => (
+                    {notificationTasks.length > 0 ? (
+                      notificationTasks.map((task) => (
                         <div
                           key={task.ID}
                           className="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
@@ -1044,23 +1280,25 @@ const App: React.FC = () => {
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">
-                                {task.Titulo}
-                              </p>
-                              {task.Descripcion && (
-                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                                  {task.Descripcion}
-                                </p>
-                              )}
+                              <p className="text-sm font-medium text-slate-800 truncate">{task.Titulo}</p>
+                              {task.Descripcion && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{task.Descripcion}</p>}
                               <div className="flex items-center mt-2 space-x-2">
-                                <span className="text-xs text-red-600 font-medium">
-                                  Vencida: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}
-                                </span>
-                                {task.Parent_ID && task.Parent_ID !== 0 && (
-                                  <span className="text-xs text-slate-400">
-                                    Subtarea
-                                  </span>
+                                {task.notifyType === 'overdue' && (
+                                  <span className="text-xs text-red-600 font-medium">Vencida: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}</span>
                                 )}
+                                {task.notifyType === 'today' && (
+                                  <span className="text-xs text-blue-600 font-medium">Hoy: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}</span>
+                                )}
+                                {task.notifyType === 'in_1_day' && (
+                                  <span className="text-xs text-orange-600 font-medium">Vence en 1 día: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}</span>
+                                )}
+                                {task.notifyType === 'in_3_days' && (
+                                  <span className="text-xs text-amber-600 font-medium">Vence en 3 días: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}</span>
+                                )}
+                                {task.notifyType === 'in_7_days' && (
+                                  <span className="text-xs text-yellow-700 font-medium">Vence en 7 días: {new Date(task.Fecha_Vencimiento!).toLocaleDateString('es-ES')}</span>
+                                )}
+                                {task.Parent_ID && task.Parent_ID !== 0 && <span className="text-xs text-slate-400">Subtarea</span>}
                               </div>
                             </div>
                           </div>
@@ -1068,20 +1306,17 @@ const App: React.FC = () => {
                       ))
                     ) : (
                       <div className="p-4 text-center text-slate-500">
-                        <p className="text-sm">¡Excelente! No tienes tareas vencidas.</p>
+                        <p className="text-sm">¡Excelente! No tienes notificaciones.</p>
                       </div>
                     )}
                   </div>
-                  {overdueTasksForNotifications.length > 0 && (
+                  {notificationTasks.some(t => t.notifyType === 'overdue') && (
                     <div className="p-3 bg-slate-50 border-t border-slate-200">
                       <button
                         onClick={() => {
                           setIsNotificationMenuOpen(false);
-                          // Scroll to overdue tasks section
                           const overdueSection = document.querySelector('[data-section="overdue"]');
-                          if (overdueSection) {
-                            overdueSection.scrollIntoView({ behavior: 'smooth' });
-                          }
+                          if (overdueSection) overdueSection.scrollIntoView({ behavior: 'smooth' });
                         }}
                         className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
                       >
@@ -1096,8 +1331,8 @@ const App: React.FC = () => {
               onClick={handleRefreshTasks}
               disabled={isLoading}
               className="flex items-center space-x-2 bg-white text-slate-600 px-3 py-2 sm:px-4 rounded-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
-              aria-label="Recargar tareas"
-              title="Recargar tareas"
+              aria-label="Recargar tareas y sesión"
+              title="Recargar tareas y sesión"
             >
               <Icon name="refresh" className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoading ? 'animate-spin' : ''}`}/>
               <span className="font-medium hidden sm:inline"></span>
@@ -1281,7 +1516,7 @@ const App: React.FC = () => {
               <div className="mt-4 pt-4 border-t border-slate-200">
                 <div className="flex items-center gap-4 flex-wrap">
                   <span className="text-sm font-medium text-slate-700">Filtrar por tipo:</span>
-                  {taskTypes.map(type => (
+                  {visibleTaskTypes.map(type => (
                     <label 
                       key={type.id} 
                       className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 px-3 py-2 rounded-lg transition-colors"
@@ -1301,6 +1536,21 @@ const App: React.FC = () => {
                       </span>
                     </label>
                   ))}
+
+                  <label className="ml-auto flex items-center gap-3 cursor-pointer">
+                    <span className="text-sm text-slate-700 select-none">Ver solo mis tareas</span>
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={showOnlyMyTasks}
+                        onChange={() => setShowOnlyMyTasks(v => !v)}
+                        aria-label="Ver solo mis tareas"
+                      />
+                      <div className="w-11 h-6 bg-slate-200 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
+                      <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow peer-checked:translate-x-5 transform transition-transform"></div>
+                    </div>
+                  </label>
                 </div>
               </div>
             )}
@@ -1429,7 +1679,10 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : scheduledTasks.length > 0 ? (
-                      <TaskList tasks={scheduledTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="scheduled" />
+                      <>
+                        <TaskList tasks={pagedScheduledTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="scheduled" />
+                        {renderPagination(scheduledPage, scheduledTotalPages, setScheduledPage, scheduledTasks.length)}
+                      </>
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">No hay tareas programadas para el futuro.</p>
@@ -1472,7 +1725,10 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <TaskSkeleton />
                     ) : completedTasks.length > 0 ? (
-                      <TaskList tasks={completedTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="completed" />
+                      <>
+                        <TaskList tasks={pagedCompletedTasks} allTasksGlobal={tasks} subtaskCounts={subtaskCounts} projects={projects} taskAssigneesRecord={taskAssigneesRecord} onTaskClick={handleSelectTask} onTaskUpdate={handleUpdateTask} onDelete={handleDeleteTask} sectionType="completed" />
+                        {renderPagination(completedPage, completedTotalPages, setCompletedPage, completedTasks.length)}
+                      </>
                     ) : (
                       <div className="text-center py-10 bg-white rounded-lg shadow-sm">
                         <p className="text-slate-500">Aún no has completado ninguna tarea.</p>
@@ -1522,9 +1778,13 @@ const App: React.FC = () => {
               ) : (
                 <GanttChart 
                   tasks={filteredTasks} 
+                  allTasks={tasks}
                   dependencies={dependencies}
                   projects={projects}
                   currentUser={currentUser}
+                  taskAssigneesRecord={taskAssigneesRecord}
+                  onCreateSubTask={handleCreateSubTask}
+                  onDeleteTask={handleDeleteTask}
                   focusedTaskId={ganttFocusedTaskId}
                   onFullscreenChange={(isFullscreen) => {
                     // Opcional: manejar cambios de fullscreen si es necesario
@@ -1589,7 +1849,7 @@ const App: React.FC = () => {
       </button>
 
       <footer className="text-center py-6 text-sm text-slate-500">
-        <p>&copy; {new Date().getFullYear()} Planics. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Planics. All rights reserved. Version 1.0.1</p>
       </footer>
         </>
       )}

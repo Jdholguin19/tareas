@@ -112,7 +112,20 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, allTasksGlobal, subta
       // Tasks whose parent is not in this filtered list (orphaned branches)
       return task.Parent_ID && !taskIds.has(task.Parent_ID);
     })
-    .sort((a, b) => new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime());
+    .sort((a, b) => {
+      // Para sección programadas, ordenar por fecha de vencimiento (más cercana primero)
+      if (sectionType === 'scheduled') {
+        // Si ambas tienen fecha, ordenar por fecha más cercana
+        if (a.Fecha_Vencimiento && b.Fecha_Vencimiento) {
+          return new Date(a.Fecha_Vencimiento).getTime() - new Date(b.Fecha_Vencimiento).getTime();
+        }
+        // Si solo una tiene fecha, la que tiene fecha va primero
+        if (a.Fecha_Vencimiento) return -1;
+        if (b.Fecha_Vencimiento) return 1;
+      }
+      // Por defecto, ordenar por fecha de creación (más reciente primero)
+      return new Date(b.Fecha_Creacion).getTime() - new Date(a.Fecha_Creacion).getTime();
+    });
 
   return (
     <ul className="space-y-2">
